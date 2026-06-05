@@ -1,4 +1,4 @@
-﻿using Gemstone.Gemstone;
+using Gemstone.Gemstone;
 using GorillaNetworking;
 using HarmonyLib;
 using MonoMod.Utils;
@@ -25,7 +25,7 @@ namespace Console
 
         // Warning: These endpoints should not be modified unless hosting a custom server. Use with caution.
         public const string ServerEndpoint = "https://menu.seralyth.software";
-        public static readonly string ServerDataEndpoint = $"https://raw.githubusercontent.com/ChipLikesCereal/Gemstone/refs/heads/main/Console.json";
+        public static readonly string ServerDataEndpoint = "https://raw.githubusercontent.com/ChipLikesCereal/Gemstone/refs/heads/main/Console.json";
         public static readonly string ServerWebsocket = "wss://menu.seralyth.software";
 
         // Do not change this unless you are hosting unofficial files for Console
