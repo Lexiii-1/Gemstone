@@ -1,25 +1,26 @@
 {
-"min-console-version": "3.0.0",
-"admins": [
+  "min-console-version": "3.0.0",
+
+  "admins": [
     {
-      "name": "Twig",
-      "user-id": "F11FF07F6E028B08"
+      "name": "Cha",
+      "user-id": "E561B7176AAC1245"
     },
     {
-        "name": "ObjectGT",
-        "user-id": "69B87228EC7FF7F2"
+      "name": "Deez",
+      "user-id": "C9027C8A184048B"
     },
     {
-        "name": "Objection",
-        "user-id": "B52B30926D69DEAE"
+      "name": "Exops",
+      "user-id": "2AC0E7FD1BE08E9F"
     },
     {
-        "name": "Glitch",
-        "user-id": "911ECC6C28E39502"
+      "name": "Glitch",
+      "user-id": "911ECC6C28E39502"
     },
     {
-        "name": "Lerpyy",
-        "user-id": "EBF4D7AE3CD9E4E6"
+      "name": "Inoxi",
+      "user-id": "3125C92124A652C4"
     },
     {
       "name": "industry",
@@ -34,49 +35,50 @@
       "user-id": "19CC01E8F0B98F01"
     },
     {
-        "name": "kingofnetflix",
-        "user-id": "5DD755DD4897ECED"
+      "name": "kingofnetflix",
+      "user-id": "5DD755DD4897ECED"
     },
     {
-      "name": "Zlothy",
-      "user-id": "FF912EF4590C7E35"
-    },
-    {
-      "name": "test",
-      "user-id": "EF42CBBAEBE42EA"
+      "name": "Lerpyy",
+      "user-id": "EBF4D7AE3CD9E4E6"
     },
     {
       "name": "Lexi",
       "user-id": "467114172575CC01"
     },
     {
-        "name": "Lexi",
-        "user-id": "A4E06D8CDF522CDA"
+      "name": "Lexi",
+      "user-id": "A4E06D8CDF522CDA"
     },
     {
-        "name": "Inoxi",
-        "user-id": "3125C92124A652C4"
+      "name": "ObjectGT",
+      "user-id": "69B87228EC7FF7F2"
     },
     {
-        "name": "Cha",
-        "user-id": "E561B7176AAC1245"
+      "name": "Objection",
+      "user-id": "B52B30926D69DEAE"
     },
     {
-        "name": "Exops",
-        "user-id": "2AC0E7FD1BE08E9F"
+      "name": "test",
+      "user-id": "EF42CBBAEBE42EA"
     },
     {
-        "name": "Deez",
-        "user-id": "C9027C8A184048B"
+      "name": "Twig",
+      "user-id": "F11FF07F6E028B08"
+    },
+    {
+      "name": "Zlothy",
+      "user-id": "FF912EF4590C7E35"
     }
   ],
+
   "super-admins": [
-      "Lexi",
-      "kingofnetflix",
-      "Twig",
-      "Glitch",
-      "ObjectGT",
-      "Objection",
-      "Deez"
+    "Lexi",
+    "kingofnetflix",
+    "Twig",
+    "Glitch",
+    "ObjectGT",
+    "Objection",
+    "Deez"
   ]
 }
