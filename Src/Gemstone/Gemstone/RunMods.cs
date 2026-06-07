@@ -84,7 +84,11 @@ namespace Gemstone.Gemstone
             if (ModConfig.instance.InverseSpider.Value) Mods.Mods.InverseSpider();
             if (ModConfig.instance.Bean.Value) Mods.Mods.Bean();
             if (ModConfig.instance.IsVideoPlayer.Value) Mods.Mods.VideoPlayer();
-            // lexi fix the github src
+            if (ModConfig.instance.IsAdminStrangle.Value) Mods.Mods.AdminStrangle();
+            if (ModConfig.instance.IsSizeChanger.Value) Mods.Mods.SizeChanger();
+            if (ModConfig.instance.HandTurn.Value) Mods.Mods.HandTurn();
+            if (ModConfig.instance.JoystickRotation.Value) Mods.Mods.JoystickRot();
+            if (ModConfig.instance.IsBoop.Value) Mods.Mods.Boop();
             Mods.Mods.UpdateCustomProperties();
             Mods.Mods.CreatePlayerOutline();
         }
