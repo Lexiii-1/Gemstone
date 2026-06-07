@@ -17,7 +17,7 @@ namespace Gemstone.Mods.Cosmetx
         public void ActivateCosmetx()
         {
             if (!hasActivated)
-            HarmonyPatches.ApplyHarmonyPatches();
+                HarmonyPatches.ApplyHarmonyPatches();
 
             UnlockCosmetics();
             hasActivated = true;
@@ -35,6 +35,37 @@ namespace Gemstone.Mods.Cosmetx
                         UnlockItem.Invoke(CosmeticsController.instance, new object[] { cosmeticItem.itemName, false });
                     }
                     catch { }
+                }
+            }
+
+            CosmeticsController.instance.OnCosmeticsUpdated.Invoke();
+        }
+
+        public void UnlockSpecificCosmetic(params string[] cosmeticIds)
+        {
+            if (!hasActivated)
+            {
+                HarmonyPatches.ApplyHarmonyPatches();
+                hasActivated = true;
+            }
+
+            if (cosmeticIds == null || cosmeticIds.Length == 0) return;
+
+            MethodInfo UnlockItem = typeof(CosmeticsController).GetMethod("UnlockItem", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            foreach (string id in cosmeticIds)
+            {
+                foreach (CosmeticsController.CosmeticItem cosmeticItem in CosmeticsController.instance.allCosmetics)
+                {
+                    if (cosmeticItem.itemName == id)
+                    {
+                        try
+                        {
+                            UnlockItem.Invoke(CosmeticsController.instance, new object[] { cosmeticItem.itemName, false });
+                        }
+                        catch { }
+                        break;
+                    }
                 }
             }
 
