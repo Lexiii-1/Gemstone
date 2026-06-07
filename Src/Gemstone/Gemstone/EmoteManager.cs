@@ -2,12 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Networking;
 using BepInEx;
 using GorillaLocomotion;
 using Photon.Voice.Unity;
 using GorillaNetworking;
 
-public class EmoteManager : MonoBehaviour // Creds to IIDK for the asset bundle AND most of the emote code
+public class EmoteManager : MonoBehaviour
 {
     private static EmoteManager instance;
     private static AssetBundle assetBundle;
@@ -15,14 +16,40 @@ public class EmoteManager : MonoBehaviour // Creds to IIDK for the asset bundle 
     private static float emoteEndTime;
     private static Vector3 archivePosition;
     private static Coroutine activeSoundCoroutine;
+    private static string currentAnimationName = "";
     private static readonly List<GameObject> portedCosmetics = new List<GameObject> { };
 
     private void Awake()
     {
         instance = this;
+        StartCoroutine(DownloadBundle());
     }
 
     private static string GetBundlePath() => Path.Combine(Paths.GameRootPath, "Gemstone", "fn");
+
+    private IEnumerator DownloadBundle()
+    {
+        string path = GetBundlePath();
+        if (File.Exists(path)) yield break;
+
+        Directory.CreateDirectory(Path.GetDirectoryName(path));
+
+        string url = "https://github.com/iiDk-the-actual/FortniteEmoteWheel/raw/refs/heads/master/Resources/fn";
+        using (UnityWebRequest webRequest = UnityWebRequest.Get(url))
+        {
+            yield return webRequest.SendWebRequest();
+
+            if (webRequest.result == UnityWebRequest.Result.Success)
+            {
+                File.WriteAllBytes(path, webRequest.downloadHandler.data);
+                Debug.Log("Emote bundle downloaded successfully.");
+            }
+            else
+            {
+                Debug.LogError("Failed to download emote bundle: " + webRequest.error);
+            }
+        }
+    }
 
     public static void DisableCosmetics()
     {
@@ -55,7 +82,14 @@ public class EmoteManager : MonoBehaviour // Creds to IIDK for the asset bundle 
 
     public static void PlayEmote(string animationName, string soundName, float duration = -1f, bool looping = false)
     {
+        if (activeKyle != null && currentAnimationName == animationName)
+        {
+            StopEmote();
+            return;
+        }
+
         StopEmote();
+        currentAnimationName = animationName;
 
         if (assetBundle == null)
             assetBundle = AssetBundle.LoadFromFile(GetBundlePath());
@@ -102,7 +136,7 @@ public class EmoteManager : MonoBehaviour // Creds to IIDK for the asset bundle 
         recorder.RestartRecording(true);
         recorder.DebugEchoMode = true;
 
-        yield return new WaitForSeconds(sound.length + 0.4f);
+        yield return new WaitForSeconds(sound.length);
 
         var resetRecorder = NetworkSystem.Instance.VoiceConnection.PrimaryRecorder;
         resetRecorder.SourceType = Recorder.InputSourceType.Microphone;
@@ -132,6 +166,7 @@ public class EmoteManager : MonoBehaviour // Creds to IIDK for the asset bundle 
             EnableCosmetics();
         }
         activeKyle = null;
+        currentAnimationName = "";
 
         VRRig.LocalRig.enabled = true;
         emoteEndTime = -1f;
@@ -139,8 +174,17 @@ public class EmoteManager : MonoBehaviour // Creds to IIDK for the asset bundle 
 
     private void Update()
     {
-        if (activeKyle != null && Time.time < emoteEndTime)
+        if (activeKyle != null)
         {
+            Animator animator = activeKyle.transform.Find("KyleRobot").GetComponent<Animator>();
+            AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+
+            if (Time.time >= emoteEndTime || (!animator.GetCurrentAnimatorStateInfo(0).loop && stateInfo.normalizedTime >= 1.0f))
+            {
+                StopEmote();
+                return;
+            }
+
             VRRig.LocalRig.enabled = false;
 
             Transform spine = activeKyle.transform.Find("KyleRobot/ROOT/Hips/Spine1/Spine2");
@@ -162,10 +206,6 @@ public class EmoteManager : MonoBehaviour // Creds to IIDK for the asset bundle 
             SyncFinger(lHand.Find("Middle1"), VRRig.LocalRig.leftMiddle);
             SyncFinger(rHand.Find("Index1"), VRRig.LocalRig.rightIndex);
             SyncFinger(rHand.Find("Middle1"), VRRig.LocalRig.rightMiddle);
-        }
-        else if (activeKyle != null)
-        {
-            StopEmote();
         }
     }
 
