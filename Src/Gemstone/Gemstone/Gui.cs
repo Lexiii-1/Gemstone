@@ -19,6 +19,7 @@ namespace Gemstone.Gemstone
         private Vector2 playerScrollPosition = Vector2.zero;
         private Vector2 soundboardScrollPosition = Vector2.zero;
         private Vector2 adminScrollPosition = Vector2.zero;
+        private Vector2 emotesScrollPosition = Vector2.zero;
 
         private int currentGuiTab = 0;
         private Player selectedPlayer = null;
@@ -598,6 +599,56 @@ namespace Gemstone.Gemstone
                     GUILayout.Space(5);
                 }
             }
+
+            GUILayout.EndScrollView();
+        }
+
+        private int emotePage = 0;
+        private const int maxEmotePages = 15;
+
+        private void DrawEmotes()
+        {
+            emotesScrollPosition = GUILayout.BeginScrollView(emotesScrollPosition, GUILayout.Width(300), GUILayout.Height(380));
+
+            GUILayout.Space(5);
+            DrawModButton("Dance Moves", () => EmoteManager.PlayEmote("Dance Moves", "default", -1f, true));
+            DrawModButton("Take The L", () => EmoteManager.PlayEmote("TakeTheL", "takethel", -1f, true));
+            DrawModButton("Reanimated", () => EmoteManager.PlayEmote("Reanimated", "reanimated", -1f, true));
+            DrawModButton("Electro Shuffle", () => EmoteManager.PlayEmote("ElectroShuffle", "electroshuffle", -1f, true));
+            DrawModButton("Floss", () => EmoteManager.PlayEmote("Emote_FlossDance_CMM", "floss", -1f, true));
+            DrawModButton("Disco Fever", () => EmoteManager.PlayEmote("DiscoFever", "discofever", -1f, true));
+            DrawModButton("Boogie Down", () => EmoteManager.PlayEmote("BoogieDownLoop", "boogiedown", -1f, true));
+            DrawModButton("The Robot", () => EmoteManager.PlayEmote("Emote_RobotDance", "therobot", -1f, true));
+
+            GUILayout.Space(10);
+            DrawModButton("Orange Justice", () => EmoteManager.PlayEmote("OrangeJustice", "oj", -1f, true));
+            DrawModButton("Ride The Pony", () => EmoteManager.PlayEmote("RideThePony", "ridethepony", -1f, true));
+            DrawModButton("Fresh", () => EmoteManager.PlayEmote("Emote_Fresh", "fresh", -1f, true));
+            DrawModButton("Electro Swing", () => EmoteManager.PlayEmote("ElectroSwing", "swing", -1f, true));
+            DrawModButton("Best Mates", () => EmoteManager.PlayEmote("BestMates", "bestmates", -1f, true));
+            DrawModButton("Get Griddy", () => EmoteManager.PlayEmote("Get Griddy", "Emote_Griddles_Music_Loop_01", -1f, true));
+            DrawModButton("Pull Up", () => EmoteManager.PlayEmote("Pull Up", "Gas_Station_Loop", -1f, true));
+
+            GUILayout.Space(10);;
+            DrawModButton("Snoop Walk", () => EmoteManager.PlayEmote("SnoopWalk", "snoopwalk", -1f, true));
+            DrawModButton("Scenario", () => EmoteManager.PlayEmote("Scenario", "scenario", -1f, true));
+            DrawModButton("Laugh It Up", () => EmoteManager.PlayEmote("LaughItUp", "Emote_Laugh_01", -1f, true));
+            DrawModButton("Hype", () => EmoteManager.PlayEmote("Hype", "hype", -1f, true));
+            DrawModButton("Zany", () => EmoteManager.PlayEmote("Zany", "zany", -1f, true));
+
+            GUILayout.Space(10);
+            DrawModButton("Say So", () => EmoteManager.PlayEmote("Say So", "Emote_HotPink_Loop_258", -1f, true));
+            DrawModButton("Never Gonna", () => EmoteManager.PlayEmote("Never Gonna Loop", "Emote_NeverGonna_Loop_01", -1f, true));
+            DrawModButton("Macarena", () => EmoteManager.PlayEmote("Macarena", "Emote_Macaroon_Music_Loop_01", -1f, true));
+            DrawModButton("Gangnam Style", () => EmoteManager.PlayEmote("gangnam", "gangnam", -1f, true));
+            DrawModButton("Jumpstyle", () => EmoteManager.PlayEmoteFromUrl("Hype", "https://github.com/objectgt/stuff/raw/refs/heads/main/jumping.wav", -1f, true));
+
+            GUILayout.Space(10);
+            DrawModButton("Stop All Emotes", () => EmoteManager.StopEmote());
+
+            GUILayout.Space(5);
+
+            GUILayout.Label("these are not all the emotes cuz im lazy", buttonStyle);
 
             GUILayout.EndScrollView();
         }

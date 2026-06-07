@@ -6,6 +6,7 @@ using BepInEx;
 using GorillaLocomotion;
 using Photon.Voice.Unity;
 using GorillaNetworking;
+using UnityEngine.Networking;
 
 public class EmoteManager : MonoBehaviour // Creds to IIDK for the asset bundle AND most of the emote code
 {
@@ -40,6 +41,111 @@ public class EmoteManager : MonoBehaviour // Creds to IIDK for the asset bundle 
             }
         }
         catch { }
+    }
+
+    public static void PlayEmoteFromUrl(string animationName, string audioUrl, float duration = -1f, bool looping = false)
+    {
+        StopEmote();
+
+        if (assetBundle == null)
+            assetBundle = AssetBundle.LoadFromFile(GetBundlePath());
+
+        archivePosition = GorillaTagger.Instance.transform.position;
+        VRRig.LocalRig.enabled = false;
+
+        DisableCosmetics();
+
+        activeKyle = Instantiate(assetBundle.LoadAsset<GameObject>("Rig"));
+        activeKyle.transform.position = VRRig.LocalRig.transform.Find("rig/body_pivot").position - new Vector3(0f, 1.15f, 0f);
+        activeKyle.transform.rotation = VRRig.LocalRig.transform.Find("rig/body_pivot").rotation;
+
+        activeKyle.transform.Find("KyleRobot/RobotKile").gameObject.GetComponent<Renderer>().renderingLayerMask = 0;
+
+        Animator animator = activeKyle.transform.Find("KyleRobot").GetComponent<Animator>();
+        animator.enabled = true;
+
+        AnimationClip clip = null;
+        foreach (AnimationClip c in animator.runtimeAnimatorController.animationClips)
+        {
+            if (c.name == animationName)
+            {
+                clip = c;
+                break;
+            }
+        }
+
+        if (clip != null)
+        {
+            clip.wrapMode = looping ? WrapMode.Loop : WrapMode.Default;
+            animator.Play(clip.name);
+            emoteEndTime = Time.time + (duration > 0f ? duration : clip.length) + (looping ? 9999f : 0f);
+        }
+
+        if (instance != null)
+            instance.StartCoroutine(PlayAudioFromUrlCoroutine(audioUrl));
+    }
+
+    private static IEnumerator PlayAudioFromUrlCoroutine(string url)
+    {
+        string dir = Path.Combine(Paths.GameRootPath, "Gemstone", "cache");
+        Directory.CreateDirectory(dir);
+
+        string filePath = Path.Combine(dir, "emote.wav");
+
+        using (UnityWebRequest download = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET))
+        {
+            download.downloadHandler = new DownloadHandlerFile(filePath);
+
+            yield return download.SendWebRequest();
+
+            if (download.result != UnityWebRequest.Result.Success)
+                yield break;
+        }
+
+        using (UnityWebRequest load =
+            UnityWebRequestMultimedia.GetAudioClip("file://" + filePath, AudioType.WAV))
+        {
+            ((DownloadHandlerAudioClip)load.downloadHandler).streamAudio = false;
+
+            yield return load.SendWebRequest();
+
+            if (load.result != UnityWebRequest.Result.Success)
+                yield break;
+
+            AudioClip sound = DownloadHandlerAudioClip.GetContent(load);
+
+            if (sound == null)
+                yield break;
+
+            yield return null;
+
+            var recorder = NetworkSystem.Instance.VoiceConnection.PrimaryRecorder;
+
+            recorder.StopRecording();
+
+            yield return null;
+
+            recorder.SourceType = Recorder.InputSourceType.AudioClip;
+            recorder.AudioClip = sound;
+
+            recorder.RestartRecording(true);
+            recorder.DebugEchoMode = true;
+
+            yield return new WaitForSeconds(sound.length + 0.4f);
+
+            recorder.DebugEchoMode = false;
+
+            recorder.StopRecording();
+
+            yield return null;
+
+            recorder.AudioClip = null;
+            recorder.SourceType = Recorder.InputSourceType.Microphone;
+
+            recorder.RestartRecording(true);
+
+            activeSoundCoroutine = null;
+        }
     }
 
     public static void EnableCosmetics()
