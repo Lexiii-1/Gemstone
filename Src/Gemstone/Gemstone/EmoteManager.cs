@@ -8,7 +8,7 @@ using GorillaLocomotion;
 using Photon.Voice.Unity;
 using GorillaNetworking;
 
-public class EmoteManager : MonoBehaviour
+public class EmoteManager : MonoBehaviour // Thanks to IIDK for most of the emote code AND the asset bundle
 {
     private static EmoteManager instance;
     private static AssetBundle assetBundle;
