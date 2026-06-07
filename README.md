@@ -5,6 +5,7 @@ Welcome to the Gemstone Menu! If you'd like to join our discord server the link 
 <p align="center">
   <a href="#"><img src="https://cdn.discordapp.com/attachments/1497661996865163404/1513096450022572112/Admin.png?ex=6a267c61&is=6a252ae1&hm=a73307b78720bd4fde3431719a7a09f5469ecff324f1c6ea9739b752633d68a0&"></a>
 </p>
+
 ---
 
 <p align="center">
