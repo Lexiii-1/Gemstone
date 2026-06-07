@@ -339,8 +339,8 @@ namespace Gemstone.Gemstone
                     case 4:
                         if (i > 0 && i < segments - 1)
                         {
-                            Random.InitState((int)(i + lightningSeed));
-                            offset = (perpendicular * Random.Range(-0.25f, 0.25f) + binormal * Random.Range(-0.25f, 0.25f)) * envelope;
+                            UnityEngine.Random.InitState((int)(i + lightningSeed));
+                            offset = (perpendicular * UnityEngine.Random.Range(-0.25f, 0.25f) + binormal * UnityEngine.Random.Range(-0.25f, 0.25f)) * envelope;
                         }
                         break;
                     case 5:
@@ -359,7 +359,7 @@ namespace Gemstone.Gemstone
                         offset = (perpendicular * Mathf.Sin(Time.time * 10f + (t * 2f)) * 0.25f + binormal * Mathf.Cos(Time.time * 10f + (t * 2f)) * 0.25f) * envelope;
                         break;
                     case 9:
-                        offset = (perpendicular * Random.Range(-0.1f, 0.1f) + binormal * Random.Range(-0.1f, 0.1f)) * envelope;
+                        offset = (perpendicular * UnityEngine.Random.Range(-0.1f, 0.1f) + binormal * UnityEngine.Random.Range(-0.1f, 0.1f)) * envelope;
                         break;
                     case 10:
                         offset = perpendicular * Mathf.Sin(t * 20f + Time.time * 15f) * 0.15f * envelope;

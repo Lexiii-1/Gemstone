@@ -113,7 +113,8 @@ namespace Gemstone.Gemstone
 
         private void OnGUI()
         {
-            if (!menuVisible) return;
+            if (!menuVisible)
+                return;
 
             InitializeStyles();
 
@@ -121,36 +122,21 @@ namespace Gemstone.Gemstone
             Color originalContentColor = GUI.contentColor;
             Color originalColor = GUI.color;
 
-            float wobbleSpeed = 2.5f;
-            float wobbleIntensity = 6.0f;
-
-            float wobbleX1 = Mathf.Sin(Time.time * wobbleSpeed) * wobbleIntensity;
-            float wobbleY1 = Mathf.Cos(Time.time * wobbleSpeed * 0.8f) * wobbleIntensity;
-
-            float wobbleX2 = Mathf.Cos(Time.time * (wobbleSpeed * 1.1f)) * wobbleIntensity;
-            float wobbleY2 = Mathf.Sin(Time.time * (wobbleSpeed * 0.9f)) * wobbleIntensity;
-
-            Rect wobbledConnectionRect = new Rect(
-                connectionWindowRect.x + wobbleX1,
-                connectionWindowRect.y + wobbleY1,
-                connectionWindowRect.width,
-                connectionWindowRect.height
+            connectionWindowRect = GUI.Window(
+                0,
+                connectionWindowRect,
+                DrawConnectionWindow,
+                "",
+                windowStyle
             );
 
-            Rect wobbledModsRect = new Rect(
-                modsWindowRect.x + wobbleX2,
-                modsWindowRect.y + wobbleY2,
-                modsWindowRect.width,
-                modsWindowRect.height
+            modsWindowRect = GUI.Window(
+                1,
+                modsWindowRect,
+                DrawModsWindow,
+                "",
+                windowStyle
             );
-
-            Rect updatedConnection = GUI.Window(0, wobbledConnectionRect, DrawConnectionWindow, "", windowStyle);
-            Rect updatedMods = GUI.Window(1, wobbledModsRect, DrawModsWindow, "", windowStyle);
-
-            connectionWindowRect.x = updatedConnection.x - wobbleX1;
-            connectionWindowRect.y = updatedConnection.y - wobbleY1;
-            modsWindowRect.x = updatedMods.x - wobbleX2;
-            modsWindowRect.y = updatedMods.y - wobbleY2;
 
             GUI.backgroundColor = originalBackgroundColor;
             GUI.contentColor = originalContentColor;
@@ -199,14 +185,14 @@ namespace Gemstone.Gemstone
             bool tab2 = GUILayout.Toggle(currentGuiTab == 2, "Sounds", buttonStyle, GUILayout.Height(26));
             if (tab2 && currentGuiTab != 2) currentGuiTab = 2;
 
+            bool tab4 = GUILayout.Toggle(currentGuiTab == 4, "Emotes", buttonStyle, GUILayout.Height(26));
+            if (tab4 && currentGuiTab != 4) currentGuiTab = 4;
+
             if (Main.instance != null && Main.instance.IsAdmin)
             {
                 bool tab3 = GUILayout.Toggle(currentGuiTab == 3, "Admin", buttonStyle, GUILayout.Height(26));
                 if (tab3 && currentGuiTab != 3) currentGuiTab = 3;
             }
-
-            bool tab4 = GUILayout.Toggle(currentGuiTab == 4, "Emotes", buttonStyle, GUILayout.Height(26));
-            if (tab4 && currentGuiTab != 4) currentGuiTab = 4;
 
             GUILayout.EndHorizontal();
             GUILayout.Space(8);
@@ -222,6 +208,9 @@ namespace Gemstone.Gemstone
                 case 2:
                     DrawSoundboardMenu();
                     break;
+                case 4:
+                    DrawEmotes();
+                    break;
                 case 3:
                     if (Main.instance != null && Main.instance.IsAdmin)
                     {
@@ -232,9 +221,6 @@ namespace Gemstone.Gemstone
                         currentGuiTab = 0;
                     }
                     break;
-                    case 4:
-                        DrawEmotes();
-                        break;
             }
         }
 
@@ -612,52 +598,93 @@ namespace Gemstone.Gemstone
         private int emotePage = 0;
         private const int maxEmotePages = 15;
 
-        private void DrawEmotes()
-        {
-            emotesScrollPosition = GUILayout.BeginScrollView(emotesScrollPosition, GUILayout.Width(300), GUILayout.Height(380));
+private void DrawEmotes()
+{
+    emotesScrollPosition = GUILayout.BeginScrollView(emotesScrollPosition, GUILayout.Width(300), GUILayout.Height(380));
 
-            GUILayout.Space(5);
-            DrawModButton("Dance Moves", () => EmoteManager.PlayEmote("Dance Moves", "default", -1f, true));
-            DrawModButton("Take The L", () => EmoteManager.PlayEmote("TakeTheL", "takethel", -1f, true));
-            DrawModButton("Reanimated", () => EmoteManager.PlayEmote("Reanimated", "reanimated", -1f, true));
-            DrawModButton("Electro Shuffle", () => EmoteManager.PlayEmote("ElectroShuffle", "electroshuffle", -1f, true));
-            DrawModButton("Floss", () => EmoteManager.PlayEmote("Emote_FlossDance_CMM", "floss", -1f, true));
-            DrawModButton("Disco Fever", () => EmoteManager.PlayEmote("DiscoFever", "discofever", -1f, true));
-            DrawModButton("Boogie Down", () => EmoteManager.PlayEmote("BoogieDownLoop", "boogiedown", -1f, true));
-            DrawModButton("The Robot", () => EmoteManager.PlayEmote("Emote_RobotDance", "therobot", -1f, true));
+    GUILayout.Space(5);
 
-            GUILayout.Space(10);
-            DrawModButton("Orange Justice", () => EmoteManager.PlayEmote("OrangeJustice", "oj", -1f, true));
-            DrawModButton("Ride The Pony", () => EmoteManager.PlayEmote("RideThePony", "ridethepony", -1f, true));
-            DrawModButton("Fresh", () => EmoteManager.PlayEmote("Emote_Fresh", "fresh", -1f, true));
-            DrawModButton("Electro Swing", () => EmoteManager.PlayEmote("ElectroSwing", "swing", -1f, true));
-            DrawModButton("Best Mates", () => EmoteManager.PlayEmote("BestMates", "bestmates", -1f, true));
-            DrawModButton("Get Griddy", () => EmoteManager.PlayEmote("Get Griddy", "Emote_Griddles_Music_Loop_01", -1f, true));
-            DrawModButton("Pull Up", () => EmoteManager.PlayEmote("Pull Up", "Gas_Station_Loop", -1f, true));
+    DrawModButton(Localization.Get("Dance Moves"), () => EmoteManager.PlayEmote("Dance Moves", "default", -1f, true));
+    DrawModButton(Localization.Get("Take The L"), () => EmoteManager.PlayEmote("TakeTheL", "takethel", -1f, true));
+    DrawModButton(Localization.Get("Reanimated"), () => EmoteManager.PlayEmote("Reanimated", "reanimated", -1f, true));
+    DrawModButton(Localization.Get("Electro Shuffle"), () => EmoteManager.PlayEmote("ElectroShuffle", "electroshuffle", -1f, true));
 
-            GUILayout.Space(10);;
-            DrawModButton("Snoop Walk", () => EmoteManager.PlayEmote("SnoopWalk", "snoopwalk", -1f, true));
-            DrawModButton("Scenario", () => EmoteManager.PlayEmote("Scenario", "scenario", -1f, true));
-            DrawModButton("Laugh It Up", () => EmoteManager.PlayEmote("LaughItUp", "Emote_Laugh_01", -1f, true));
-            DrawModButton("Hype", () => EmoteManager.PlayEmote("Hype", "hype", -1f, true));
-            DrawModButton("Zany", () => EmoteManager.PlayEmote("Zany", "zany", -1f, true));
+    DrawModButton(Localization.Get("Orange Justice"), () => EmoteManager.PlayEmote("OrangeJustice", "oj", -1f, true));
+    DrawModButton(Localization.Get("Ride The Pony"), () => EmoteManager.PlayEmote("RideThePony", "ridethepony", -1f, true));
+    DrawModButton(Localization.Get("Fresh"), () => EmoteManager.PlayEmote("Emote_Fresh", "fresh", -1f, true));
+    DrawModButton(Localization.Get("Electro Swing"), () => EmoteManager.PlayEmote("ElectroSwing", "swing", -1f, true));
 
-            GUILayout.Space(10);
-            DrawModButton("Say So", () => EmoteManager.PlayEmote("Say So", "Emote_HotPink_Loop_258", -1f, true));
-            DrawModButton("Never Gonna", () => EmoteManager.PlayEmote("Never Gonna Loop", "Emote_NeverGonna_Loop_01", -1f, true));
-            DrawModButton("Macarena", () => EmoteManager.PlayEmote("Macarena", "Emote_Macaroon_Music_Loop_01", -1f, true));
-            DrawModButton("Gangnam Style", () => EmoteManager.PlayEmote("gangnam", "gangnam", -1f, true));
-            DrawModButton("Jumpstyle", () => EmoteManager.PlayEmoteFromUrl("Hype", "https://github.com/objectgt/stuff/raw/refs/heads/main/jumping.wav", -1f, true));
+    DrawModButton(Localization.Get("Floss"), () => EmoteManager.PlayEmote("Emote_FlossDance_CMM", "floss", -1f, true));
+    DrawModButton(Localization.Get("Disco Fever"), () => EmoteManager.PlayEmote("DiscoFever", "discofever", -1f, true));
+    DrawModButton(Localization.Get("Boogie Down"), () => EmoteManager.PlayEmote("BoogieDownLoop", "boogiedown", -1f, true));
+    DrawModButton(Localization.Get("The Robot"), () => EmoteManager.PlayEmote("Emote_RobotDance", "therobot", -1f, true));
 
-            GUILayout.Space(10);
-            DrawModButton("Stop All Emotes", () => EmoteManager.StopEmote());
+    DrawModButton(Localization.Get("Best Mates"), () => EmoteManager.PlayEmote("BestMates", "bestmates", -1f, true));
+    DrawModButton(Localization.Get("Paws & Claws"), () => EmoteManager.PlayEmote("Paws&Claws", "pawsclaws", -1f, true));
+    DrawModButton(Localization.Get("Get Griddy"), () => EmoteManager.PlayEmote("Get Griddy", "Emote_Griddles_Music_Loop_01", -1f, true));
+    DrawModButton(Localization.Get("Pull Up"), () => EmoteManager.PlayEmote("Pull Up", "Gas_Station_Loop", -1f, true));
 
-            GUILayout.Space(5);
+    DrawModButton(Localization.Get("Popular Vibe"), () => EmoteManager.PlayEmote("Popular Vibe", "Emote_SpeedDial_Loop", -1f, true));
+    DrawModButton(Localization.Get("Lucid Dreams"), () => EmoteManager.PlayEmote("Lucid DreamsLoop", "Emote_KelpLinen_Music_Loop", -1f, true));
+    DrawModButton(Localization.Get("Empty Pockets"), () => EmoteManager.PlayEmote("Empty Out Your PocketsLoop", "eoyp", -1f, true));
+    DrawModButton(Localization.Get("What You Want"), () => EmoteManager.PlayEmote("WhatYouWant", "whatyouwant", -1f, true));
 
-            GUILayout.Label("these are not all the emotes cuz im lazy", buttonStyle);
+    DrawModButton(Localization.Get("The Renegade"), () => EmoteManager.PlayEmote("The Renegade", "Emote_Just_Home_Music_Loop", -1f, true));
+    DrawModButton(Localization.Get("Jabba Switchway"), () => EmoteManager.PlayEmote("Jabba Switchway Loop", "Emote_January_Bop_Loop", -1f, true));
+    DrawModButton(Localization.Get("Infinite Dab"), () => EmoteManager.PlayEmote("InfinidabLoop", "infinitedab", -1f, true));
+    DrawModButton(Localization.Get("Celebrate Me"), () => EmoteManager.PlayEmote("Celebrate Me", "IP_Emote_Cottontail_Loop", -1f, true));
 
-            GUILayout.EndScrollView();
-        }
+    DrawModButton(Localization.Get("Billy Bounce"), () => EmoteManager.PlayEmote("BillyBounce", "billybounce", -1f, true));
+    DrawModButton(Localization.Get("Windmill Floss"), () => EmoteManager.PlayEmote("WindmillFloss", "whirlfloss", -1f, true));
+    DrawModButton(Localization.Get("Hype"), () => EmoteManager.PlayEmote("Hype", "hype", -1f, true));
+    DrawModButton(Localization.Get("Entranced"), () => EmoteManager.PlayEmote("Entranced", "entranced", -1f, true));
+
+    DrawModButton(Localization.Get("Laugh It Up"), () => EmoteManager.PlayEmote("LaughItUp", "Emote_Laugh_01", -1f, true));
+    DrawModButton(Localization.Get("Snoop Walk"), () => EmoteManager.PlayEmote("SnoopWalk", "snoopwalk", -1f, true));
+    DrawModButton(Localization.Get("Scenario"), () => EmoteManager.PlayEmote("Scenario", "scenario", -1f, true));
+    DrawModButton(Localization.Get("Night Out"), () => EmoteManager.PlayEmote("Night Out", "nightout", -1f, true));
+
+    DrawModButton(Localization.Get("Point And Strut"), () => EmoteManager.PlayEmote("pointandstrut", "pointandstrut", -1f, true));
+    DrawModButton(Localization.Get("Moongazer"), () => EmoteManager.PlayEmote("moongazer", "moongazer", -1f, true));
+    DrawModButton(Localization.Get("Rollie"), () => EmoteManager.PlayEmote("Rollie", "Emote_Twist_Daytona_Music_Loop_01", -1f, true));
+    DrawModButton(Localization.Get("Heel Click"), () => EmoteManager.PlayEmote("HEEL", "heelclickbreakdown", -1f, true));
+
+    DrawModButton(Localization.Get("Switchstep"), () => EmoteManager.PlayEmote("SwitchStep", "switchstep", -1f, true));
+    DrawModButton(Localization.Get("Freestylin'"), () => EmoteManager.PlayEmote("Freestylin'", "freestylin", -1f, true));
+    DrawModButton(Localization.Get("Go Mufasa"), () => EmoteManager.PlayEmote("Go Mufasa", "Emote_Sandwich_Bop_Loop", -1f, true));
+    DrawModButton(Localization.Get("Jubi Slide"), () => EmoteManager.PlayEmote("jubislide", "Emote_GoodbyeUpbeat_Loop", -1f, true));
+
+    DrawModButton(Localization.Get("Running Man"), () => EmoteManager.PlayEmote("RunningMan", "Athena_Emote_Music_RunningMan", -1f, true));
+    DrawModButton(Localization.Get("Zany"), () => EmoteManager.PlayEmote("Zany", "zany", -1f, true));
+    DrawModButton(Localization.Get("Pumpernickel"), () => EmoteManager.PlayEmote("pumpernickel2", "Athena_Emotes_Music_PumpDance", -1f, true));
+    DrawModButton(Localization.Get("Pony Up"), () => EmoteManager.PlayEmote("RideThePony", "ponyup", -1f, true));
+
+    DrawModButton(Localization.Get("Hula"), () => EmoteManager.PlayEmote("HULA", "emote_hula_01", -1f, true));
+    DrawModButton(Localization.Get("Never Gonna"), () => EmoteManager.PlayEmote("Never Gonna Loop", "Emote_NeverGonna_Loop_01", -1f, true));
+    DrawModButton(Localization.Get("Say So"), () => EmoteManager.PlayEmote("Say So", "Emote_HotPink_Loop_258", -1f, true));
+    DrawModButton(Localization.Get("Take It Slow"), () => EmoteManager.PlayEmote("Takeitslow", "takeitslow", -1f, true));
+
+    DrawModButton(Localization.Get("Macarena"), () => EmoteManager.PlayEmote("Macarena", "Emote_Macaroon_Music_Loop_01", -1f, true));
+    DrawModButton(Localization.Get("Cupid's Arrow"), () => EmoteManager.PlayEmote("cupid", "cupid", -1f, true));
+    DrawModButton(Localization.Get("Gangnam Style"), () => EmoteManager.PlayEmote("gangnam", "gangnam", -1f, true));
+    DrawModButton(Localization.Get("Slim Shady"), () => EmoteManager.PlayEmote("realslimshady", "slim", -1f, true));
+
+    DrawModButton(Localization.Get("Party Hips"), () => EmoteManager.PlayEmote("partyhips", "partyhips", -1f, true));
+    DrawModButton(Localization.Get("Out West"), () => EmoteManager.PlayEmote("outwest", "outwest", -1f, true));
+    DrawModButton(Localization.Get("My World"), () => EmoteManager.PlayEmote("myworld", "Myworld", -1f, true));
+    DrawModButton(Localization.Get("Jake Bug"), () => EmoteManager.PlayEmote("Jake", "jake", -1f, true));
+
+    DrawModButton(Localization.Get("Miku Beam"), () => EmoteManager.PlayEmote("miku", "miku", -1f, true));
+    DrawModButton(Localization.Get("Jumpstyle"), () => EmoteManager.PlayEmoteFromUrl("Hype", "https://github.com/objectgt/stuff/raw/refs/heads/main/jumping.wav", -1f, true));
+
+    GUILayout.Space(10);
+    DrawModButton(Localization.Get("Stop All Emotes"), () => EmoteManager.StopEmote());
+
+    GUILayout.Space(5);
+    GUILayout.Label(Localization.Get("all emotes added"), buttonStyle);
+
+    GUILayout.EndScrollView();
+}
 
         private void DrawAdminMenu()
         {

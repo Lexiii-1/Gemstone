@@ -642,18 +642,18 @@ namespace Gemstone.Gemstone
             if (menuObj != null)
 
                 if (menuObj != null)
-                    if (menuObj != null)
-                    {
-                        Vector3 parentScale = GTPlayer.Instance.LeftHand.controllerTransform.lossyScale;
+                if (menuObj != null)
+            {
+                Vector3 parentScale = GTPlayer.Instance.LeftHand.controllerTransform.lossyScale;
 
-                        Vector3 desired = new Vector3(1.24208f, 13.04792f, 15.86129f);
+                Vector3 desired = new Vector3(1.24208f, 13.04792f, 15.86129f);
 
-                        menuObj.transform.localScale = new Vector3(
-                            desired.x / parentScale.x,
-                            desired.y / parentScale.y,
-                            desired.z / parentScale.z
-                        );
-                    }
+                menuObj.transform.localScale = new Vector3(
+                    desired.x / parentScale.x,
+                    desired.y / parentScale.y,
+                    desired.z / parentScale.z
+                );
+            }
         }
         private Player selectedPlayer;
         private bool inPlayerSubmenu;
@@ -945,7 +945,7 @@ namespace Gemstone.Gemstone
                         {
                             AddToggleButton(ref zOffset, step, Localization.Get("Hand Turn (RG)"), ModConfig.instance.HandTurn);
                         }
-                        break;
+                            break;
 
                     case 1:
                         Pages = 2;
@@ -1002,7 +1002,7 @@ namespace Gemstone.Gemstone
                             AddToggleButton(ref zOffset, step, Localization.Get("Bean"), ModConfig.instance.Bean, () => Mods.Mods.FixRig());
                             AddToggleButton(ref zOffset, step, Localization.Get("Joystick Torso Rotation"), ModConfig.instance.JoystickRotation, () => Mods.Mods.FixRig());
                         }
-                        break;
+                            break;
 
                     case 3:
                         Pages = 9;
@@ -1097,7 +1097,7 @@ namespace Gemstone.Gemstone
                             AddToggleButton(ref zOffset, step, Localization.Get("Joystick Navigation"), ModConfig.instance.IsJoystickNavigation);
                             AddButton(zOffset, 0f, 0.2f, Localization.Get("Default Colors"), () => { ModConfig.instance.R.Value = 5; ModConfig.instance.G.Value = 8; ModConfig.instance.B.Value = 10; }); zOffset -= step;
                         }
-                        break;
+                            break;
                     case 4:
                         Pages = 1;
                         AddButton(zOffset, 0f, 0.2f, Localization.Get("Reauthenticate"), () => MothershipAuthenticator.Instance.BeginLoginFlow()); zOffset -= step;

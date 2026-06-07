@@ -7,7 +7,6 @@ using BepInEx;
 using GorillaLocomotion;
 using Photon.Voice.Unity;
 using GorillaNetworking;
-using UnityEngine.Networking;
 
 public class EmoteManager : MonoBehaviour
 {
@@ -72,7 +71,14 @@ public class EmoteManager : MonoBehaviour
 
     public static void PlayEmoteFromUrl(string animationName, string audioUrl, float duration = -1f, bool looping = false)
     {
+        if (activeKyle != null && currentAnimationName == animationName)
+        {
+            StopEmote();
+            return;
+        }
+
         StopEmote();
+        currentAnimationName = animationName;
 
         if (assetBundle == null)
             assetBundle = AssetBundle.LoadFromFile(GetBundlePath());
@@ -109,69 +115,45 @@ public class EmoteManager : MonoBehaviour
         }
 
         if (instance != null)
-            instance.StartCoroutine(PlayAudioFromUrlCoroutine(audioUrl));
+            activeSoundCoroutine = instance.StartCoroutine(PlayAudioFromUrlCoroutine(audioUrl, animationName));
     }
 
-    private static IEnumerator PlayAudioFromUrlCoroutine(string url)
+    private static IEnumerator PlayAudioFromUrlCoroutine(string url, string animationName)
     {
         string dir = Path.Combine(Paths.GameRootPath, "Gemstone", "cache");
         Directory.CreateDirectory(dir);
 
-        string filePath = Path.Combine(dir, "emote.wav");
+        string filePath = Path.Combine(dir, animationName + ".wav");
 
-        using (UnityWebRequest download = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET))
+        if (!File.Exists(filePath))
         {
-            download.downloadHandler = new DownloadHandlerFile(filePath);
-
-            yield return download.SendWebRequest();
-
-            if (download.result != UnityWebRequest.Result.Success)
-                yield break;
+            using (UnityWebRequest download = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET))
+            {
+                download.downloadHandler = new DownloadHandlerFile(filePath);
+                yield return download.SendWebRequest();
+                if (download.result != UnityWebRequest.Result.Success) yield break;
+            }
         }
 
-        using (UnityWebRequest load =
-            UnityWebRequestMultimedia.GetAudioClip("file://" + filePath, AudioType.WAV))
+        using (UnityWebRequest load = UnityWebRequestMultimedia.GetAudioClip("file://" + filePath, AudioType.WAV))
         {
             ((DownloadHandlerAudioClip)load.downloadHandler).streamAudio = false;
-
             yield return load.SendWebRequest();
-
-            if (load.result != UnityWebRequest.Result.Success)
-                yield break;
+            if (load.result != UnityWebRequest.Result.Success) yield break;
 
             AudioClip sound = DownloadHandlerAudioClip.GetContent(load);
-
-            if (sound == null)
-                yield break;
-
-            yield return null;
+            if (sound == null) yield break;
 
             var recorder = NetworkSystem.Instance.VoiceConnection.PrimaryRecorder;
-
             recorder.StopRecording();
-
-            yield return null;
-
             recorder.SourceType = Recorder.InputSourceType.AudioClip;
             recorder.AudioClip = sound;
-
             recorder.RestartRecording(true);
             recorder.DebugEchoMode = true;
 
-            yield return new WaitForSeconds(sound.length + 0.4f);
+            yield return new WaitForSeconds(sound.length);
 
-            recorder.DebugEchoMode = false;
-
-            recorder.StopRecording();
-
-            yield return null;
-
-            recorder.AudioClip = null;
-            recorder.SourceType = Recorder.InputSourceType.Microphone;
-
-            recorder.RestartRecording(true);
-
-            activeSoundCoroutine = null;
+            StopEmote();
         }
     }
 
@@ -244,12 +226,7 @@ public class EmoteManager : MonoBehaviour
 
         yield return new WaitForSeconds(sound.length);
 
-        var resetRecorder = NetworkSystem.Instance.VoiceConnection.PrimaryRecorder;
-        resetRecorder.SourceType = Recorder.InputSourceType.Microphone;
-        resetRecorder.AudioClip = null;
-        resetRecorder.RestartRecording(true);
-        resetRecorder.DebugEchoMode = false;
-        activeSoundCoroutine = null;
+        StopEmote();
     }
 
     public static void StopEmote()
@@ -261,19 +238,22 @@ public class EmoteManager : MonoBehaviour
         }
 
         var recorder = NetworkSystem.Instance.VoiceConnection.PrimaryRecorder;
-        recorder.SourceType = Recorder.InputSourceType.Microphone;
-        recorder.AudioClip = null;
-        recorder.RestartRecording(true);
-        recorder.DebugEchoMode = false;
+        if (recorder != null)
+        {
+            recorder.SourceType = Recorder.InputSourceType.Microphone;
+            recorder.AudioClip = null;
+            recorder.RestartRecording(true);
+            recorder.DebugEchoMode = false;
+        }
 
         if (activeKyle != null)
         {
             Destroy(activeKyle);
+            activeKyle = null;
             EnableCosmetics();
         }
-        activeKyle = null;
-        currentAnimationName = "";
 
+        currentAnimationName = "";
         VRRig.LocalRig.enabled = true;
         emoteEndTime = -1f;
     }
@@ -295,7 +275,7 @@ public class EmoteManager : MonoBehaviour
 
             Transform spine = activeKyle.transform.Find("KyleRobot/ROOT/Hips/Spine1/Spine2");
             VRRig.LocalRig.transform.position = spine.position - (spine.right / 2.5f);
-            VRRig.LocalRig.transform.rotation = Quaternion.Euler(0f, spine.rotation.eulerAngles.y, 0f);
+            VRRig.LocalRig.transform.rotation = Quaternion.Euler(spine.rotation.eulerAngles.x, spine.rotation.eulerAngles.y, 0f);
 
             Transform lHand = activeKyle.transform.Find("KyleRobot/ROOT/Hips/Spine1/Spine2/LeftShoulder/LeftUpperArm/LeftArm/LeftHand");
             Transform rHand = activeKyle.transform.Find("KyleRobot/ROOT/Hips/Spine1/Spine2/RightShoulder/RightUpperArm/RightArm/RightHand");

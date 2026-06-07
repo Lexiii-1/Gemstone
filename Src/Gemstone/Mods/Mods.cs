@@ -14,6 +14,7 @@ using System.IO;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Playables;
 using static Bindings;
 using Object = UnityEngine.Object;
 
@@ -207,14 +208,6 @@ namespace Gemstone.Mods
             else
             {
                 Cursor.lockState = CursorLockMode.None;
-            }
-
-            if (thirdPersonCam != null &&
-                VRRig.LocalRig != null &&
-                VRRig.LocalRig.head != null &&
-                VRRig.LocalRig.head.rigTarget != null)
-            {
-                VRRig.LocalRig.head.rigTarget.rotation = thirdPersonCam.transform.rotation;
             }
 
             if (Mouse.current.leftButton.isPressed)
@@ -791,6 +784,7 @@ namespace Gemstone.Mods
                         Vector3.Distance(vrrig.leftHandTransform.position, reportBtnPos) < 0.7f)
                     {
                         PhotonNetwork.Disconnect();
+                        NotiLib.SendNotification(vrrig.Creator.NickName + " Tried to report you!", 2000);
                         return;
                     }
                 }

@@ -26,7 +26,6 @@ namespace Gemstone.Gemstone
         public static string Get(string key)
         {
             int langId = CurrentLanguage;
-
             if (langId == 1) return key;
 
             if (langId != _lastLanguageId)
@@ -101,7 +100,6 @@ namespace Gemstone.Gemstone
         {
             try
             {
-
                 int start = json.IndexOf("\"") + 1;
                 int end = json.IndexOf("\"", start);
 
