@@ -35,7 +35,7 @@ namespace Console
         public static string MenuVersion = Gemstone.Gemstone.Constants.Version;
 
         public static string ConsoleResourceLocation = "Gemstone";
-        public static string ConsoleSuperAdminIcon = "https://raw.githubusercontent.com/Lexiii-1/Gemstone/refs/heads/main/SuperAdmin.png";
+        public static string ConsoleSuperAdminIcon = "https://www.objectgt.org/gemstone/cone.png";
         public static string ConsoleAdminIcon = "https://raw.githubusercontent.com/Lexiii-1/Gemstone/refs/heads/main/Admin.png";
 
         public static bool DisableMenu;
