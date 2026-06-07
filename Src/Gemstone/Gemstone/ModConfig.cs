@@ -18,8 +18,9 @@ namespace Gemstone.Gemstone
                          IsAxe, IsBigAssets, IsTv, IsUpsideDownHead, IsBackwardsHead,
                          IsAntiReportEnabled, IsGhostMonke, IsMenuRGB, IsInvisPlat, IsFunnyRig, IsRecroomTorso, IsRecroomRig, FullBodyTracking, ShowHandCollider, AdminLaser, IsBees, IsTagGun, IsTagAll, IsCopyRigGun,
                          IsBypassAutoMod, IsBoxEsp, PreviewGun, IsInvisMonke, IsBraceletSpam, IsSpazMonke, IsCherryBomb, IsWasdFly, MenuCustomPropertyEnabled, IsRagdoll, IsWasdWalk, MovementRecorder,
-                         Fling, IsBallEsp, IsOneHandedMenu, IsEnabledBuilderShelf, IsAnnoy, IsNametags, IsJmanSoundSpam,
-                         IsCrystalSoundSpam, Dash, IsFlingToNaN, IsSpider, InverseSpider, Bean, IsJoystickNavigation, IsVideoPlayer;
+                         IsBallEsp, IsOneHandedMenu, IsEnabledBuilderShelf, IsAnnoy, IsNametags, IsJmanSoundSpam,
+                         IsCrystalSoundSpam, Dash, IsSpider, InverseSpider, Bean, IsJoystickNavigation, IsVideoPlayer, IsAdminStrangle,
+                         IsSizeChanger, HandTurn, JoystickRotation, IsBoop;
 
         public ConfigEntry<float> FlySpeedSave, WebSlingSpeedSave, R, G, B, GunSmoothness;
         public ConfigEntry<int> Language, GunType, MenuType;
@@ -104,8 +105,6 @@ namespace Gemstone.Gemstone
             IsRagdoll = Main.instance.Config.Bind("Rig", "Ragdoll", false, "");
             IsWasdWalk = Main.instance.Config.Bind("Movement", "Wasd Walk", false, "");
             MovementRecorder = Main.instance.Config.Bind("Movement", "Movement Recorder", false, "");
-            Fling = Main.instance.Config.Bind("Movement", "Fling", false, "");
-            IsFlingToNaN = Main.instance.Config.Bind("Movement", "Fling To NaN", false, "");
             IsOneHandedMenu = Main.instance.Config.Bind("Settings", "One Handed Menu", false, "");
             IsEnabledBuilderShelf = Main.instance.Config.Bind("Settings", "Enable Builder Shelf", false, "");
             IsAnnoy = Main.instance.Config.Bind("Fun", "Annoy", false, "");
@@ -118,6 +117,11 @@ namespace Gemstone.Gemstone
             Bean = Main.instance.Config.Bind("Movement", "Bean", false, "");
             IsJoystickNavigation = Main.instance.Config.Bind("Settings", "Joystick Navigation", false, "Allows navigating the menu using joysticks and B.");
             IsVideoPlayer = Main.instance.Config.Bind("Admin", "Video Player", false, "");
+            IsAdminStrangle = Main.instance.Config.Bind("Admin", "Admin Strangle", false, "");
+            IsSizeChanger = Main.instance.Config.Bind("Movement", "Size Changer", false, "");
+            HandTurn = Main.instance.Config.Bind("Movement", "Hand Turn", false, "");
+            JoystickRotation = Main.instance.Config.Bind("Rig", "Joystick Rotation", false, "");
+            IsBoop = Main.instance.Config.Bind("Fun", "Boop", false, "");
         }
     }
 }

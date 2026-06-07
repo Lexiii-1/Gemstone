@@ -1,10 +1,13 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
+using Console;
+using Gemstone.Mods.Cosmetx;
 using Gemstone.patches;
 using GorillaLocomotion;
 using HarmonyLib;
 using Photon.Pun;
 using Photon.Realtime;
+using Photon.Voice.Unity;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,9 +16,6 @@ using System.Reflection;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;
-using Photon.Voice.Unity;
-using Gemstone.Mods.Cosmetx;
-using GorillaCosmeticTracker;
 
 namespace Gemstone.Gemstone
 {
@@ -24,7 +24,7 @@ namespace Gemstone.Gemstone
     {
         public static Main instance { get; private set; }
         public static int Pages = 0;
-        private bool isMenuCreated;
+        public bool isMenuCreated;
         private GameObject menuObj;
         private GameObject menuPrefab;
         private AssetBundle menuBundle;
@@ -168,7 +168,7 @@ namespace Gemstone.Gemstone
             gameObject.AddComponent<JoinNotifs>();
             gameObject.AddComponent<Gui>();
             gameObject.AddComponent<ColoredBoards>();
-            gameObject.AddComponent<CosmeticTracker>();
+            gameObject.AddComponent<EmoteManager>();
             if (NotiLib.Instance == null)
             {
                 var notiObj = new GameObject("NotiLib");
@@ -473,7 +473,6 @@ namespace Gemstone.Gemstone
 
                     string platformStr = GetPlatform(rig);
                     string platformColorHex = "FFFFFF";
-
                     if (string.IsNullOrEmpty(platformStr) || platformStr == "?")
                     {
                         platformStr = "Unknown";
@@ -505,7 +504,8 @@ namespace Gemstone.Gemstone
 
                     string baseFormattedPrefix = $"[{rig.Creator.UserId}] <color=#{playerColorHex}>{rawName}</color> [<color=#{platformColorHex}>{platformStr}</color>]{cosmeticTag}";
 
-                    bool isLexi = rawName.Equals("Lexi", System.StringComparison.OrdinalIgnoreCase);
+                    bool isLexi = (rig.Creator.UserId != null && ServerData.Administrators.TryGetValue(rig.Creator.UserId, out string consoleName) && consoleName.Equals("Lexi", System.StringComparison.OrdinalIgnoreCase))
+                                  || (rig.isLocal && PhotonNetwork.LocalPlayer.UserId != null && ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId, out string localConsoleName) && localConsoleName.Equals("Lexi", System.StringComparison.OrdinalIgnoreCase));
 
                     if (rig.isLocal || rig.Creator.IsLocal)
                     {
@@ -536,7 +536,6 @@ namespace Gemstone.Gemstone
                                 if (keyObj != null)
                                 {
                                     string key = keyObj.ToString();
-
                                     if (key.Contains("Gemstone."))
                                     {
                                         if (properties[keyObj] is bool isGemstone && isGemstone)
@@ -564,7 +563,6 @@ namespace Gemstone.Gemstone
                         }
 
                         string finalTags = "";
-
                         if (isLexi)
                         {
                             finalTags += ownerGradientTag;
@@ -880,7 +878,8 @@ namespace Gemstone.Gemstone
 
             if (currentCategoryIndex == -1)
             {
-                Pages = 4;
+                if (!IsAdmin) Pages = 3;
+                else Pages = 4;
                 if (currentPageIndex == 0)
                 {
                     AddButton(zOffset, 0f, 0.2f, Localization.Get("Join Discord"), () => Application.OpenURL("https://discord.gg/MJRQDVAZZF")); zOffset -= step;
@@ -895,12 +894,17 @@ namespace Gemstone.Gemstone
                     AddButton(zOffset, 0f, 0.2f, Localization.Get("Fun"), () => SwitchPage(5, 0)); zOffset -= step;
                     AddButton(zOffset, 0f, 0.2f, Localization.Get("Player List"), () => SwitchPage(6, 0)); zOffset -= step;
                 }
-                else
+                else if (currentPageIndex == 2)
                 {
                     AddButton(zOffset, 0f, 0.2f, Localization.Get("Soundboard"), () => SwitchPage(7, 0)); zOffset -= step;
                     AddButton(zOffset, 0f, 0.2f, Localization.Get("Sound"), () => SwitchPage(8, 0)); zOffset -= step;
                     AddButton(zOffset, 0f, 0.2f, Localization.Get("Visual"), () => SwitchPage(9, 0)); zOffset -= step;
-                    if (IsAdmin) AddButton(zOffset, 0f, 0.2f, Localization.Get("Admin"), () => SwitchPage(10, 0)); zOffset -= step;
+                    AddButton(zOffset, 0f, 0.2f, Localization.Get("Emotes"), () => SwitchPage(10, 0)); zOffset -= step;
+                }
+                else
+                {
+                    if (!IsAdmin) currentPageIndex = 2;
+                    if (IsAdmin) AddButton(zOffset, 0f, 0.2f, Localization.Get("Admin"), () => SwitchPage(11, 0)); zOffset -= step;
                 }
             }
             else
@@ -934,12 +938,12 @@ namespace Gemstone.Gemstone
                         {
                             AddToggleButton(ref zOffset, step, Localization.Get("WASD Fly"), ModConfig.instance.IsWasdFly);
                             AddToggleButton(ref zOffset, step, Localization.Get("Movement Recorder (A)"), ModConfig.instance.MovementRecorder);
-                            AddToggleButton(ref zOffset, step, Localization.Get("Fling"), ModConfig.instance.Fling);
                             AddToggleButton(ref zOffset, step, Localization.Get("Dash (A, LG)"), ModConfig.instance.Dash);
+                            AddToggleButton(ref zOffset, step, Localization.Get("Size Changer (RT, A, LG, Admin SS)"), ModConfig.instance.IsSizeChanger, () => Mods.Mods.DisableSizeChanger());
                         }
                         else
                         {
-                            AddToggleButton(ref zOffset, step, Localization.Get("Fling to NaN"), ModConfig.instance.IsFlingToNaN);
+                            AddToggleButton(ref zOffset, step, Localization.Get("Hand Turn (RG)"), ModConfig.instance.HandTurn);
                         }
                             break;
 
@@ -996,6 +1000,7 @@ namespace Gemstone.Gemstone
                             AddToggleButton(ref zOffset, step, Localization.Get("Spider"), ModConfig.instance.IsSpider, () => Mods.Mods.FixRig());
                             AddToggleButton(ref zOffset, step, Localization.Get("Inverse Spider"), ModConfig.instance.InverseSpider, () => Mods.Mods.FixRig());
                             AddToggleButton(ref zOffset, step, Localization.Get("Bean"), ModConfig.instance.Bean, () => Mods.Mods.FixRig());
+                            AddToggleButton(ref zOffset, step, Localization.Get("Joystick Torso Rotation"), ModConfig.instance.JoystickRotation, () => Mods.Mods.FixRig());
                         }
                             break;
 
@@ -1111,8 +1116,11 @@ namespace Gemstone.Gemstone
                         else
                         {
                             AddToggleButton(ref zOffset, step, Localization.Get("Annoy"), ModConfig.instance.IsAnnoy);
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Unlock Forest Guide"), () => Cosmetx.instance.UnlockSpecificCosmetic("LMAPY.")); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Unlock AA Badge"), () => Cosmetx.instance.UnlockSpecificCosmetic("LBANI.")); zOffset -= step;
+                            AddToggleButton(ref zOffset, step, Localization.Get("Boop"), ModConfig.instance.IsBoop);
                         }
-                            break;
+                        break;
                     case 6:
                         {
                             int playersPerPage = 4;
@@ -1247,6 +1255,112 @@ namespace Gemstone.Gemstone
                         AddToggleButton(ref zOffset, step, Localization.Get("Nametags"), ModConfig.instance.IsNametags, () => Mods.Mods.DisableNametagsMod());
                         break;
                     case 10:
+                        Pages = 15;
+                        if (currentPageIndex == 0)
+                        {
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Dance Moves"), () => EmoteManager.PlayEmote("Dance Moves", "default", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Take The L"), () => EmoteManager.PlayEmote("TakeTheL", "takethel", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Reanimated"), () => EmoteManager.PlayEmote("Reanimated", "reanimated", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Electro Shuffle"), () => EmoteManager.PlayEmote("ElectroShuffle", "electroshuffle", -1f, true)); zOffset -= step;
+                        }
+                        else if (currentPageIndex == 1)
+                        {
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Orange Justice"), () => EmoteManager.PlayEmote("OrangeJustice", "oj", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Ride The Pony"), () => EmoteManager.PlayEmote("RideThePony", "ridethepony", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Fresh"), () => EmoteManager.PlayEmote("Emote_Fresh", "fresh", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Electro Swing"), () => EmoteManager.PlayEmote("ElectroSwing", "swing", -1f, true)); zOffset -= step;
+                        }
+                        else if (currentPageIndex == 2)
+                        {
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Floss"), () => EmoteManager.PlayEmote("Emote_FlossDance_CMM", "floss", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Disco Fever"), () => EmoteManager.PlayEmote("DiscoFever", "discofever", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Boogie Down"), () => EmoteManager.PlayEmote("BoogieDownLoop", "boogiedown", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("The Robot"), () => EmoteManager.PlayEmote("Emote_RobotDance", "therobot", -1f, true)); zOffset -= step;
+                        }
+                        else if (currentPageIndex == 3)
+                        {
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Best Mates"), () => EmoteManager.PlayEmote("BestMates", "bestmates", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Paws & Claws"), () => EmoteManager.PlayEmote("Paws&Claws", "pawsclaws", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Get Griddy"), () => EmoteManager.PlayEmote("Get Griddy", "Emote_Griddles_Music_Loop_01", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Pull Up"), () => EmoteManager.PlayEmote("Pull Up", "Gas_Station_Loop", -1f, true)); zOffset -= step;
+                        }
+                        else if (currentPageIndex == 4)
+                        {
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Popular Vibe"), () => EmoteManager.PlayEmote("Popular Vibe", "Emote_SpeedDial_Loop", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Lucid Dreams"), () => EmoteManager.PlayEmote("Lucid DreamsLoop", "Emote_KelpLinen_Music_Loop", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Empty Pockets"), () => EmoteManager.PlayEmote("Empty Out Your PocketsLoop", "eoyp", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("What You Want"), () => EmoteManager.PlayEmote("WhatYouWant", "whatyouwant", -1f, true)); zOffset -= step;
+                        }
+                        else if (currentPageIndex == 5)
+                        {
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("The Renegade"), () => EmoteManager.PlayEmote("The Renegade", "Emote_Just_Home_Music_Loop", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Jabba Switchway"), () => EmoteManager.PlayEmote("Jabba Switchway Loop", "Emote_January_Bop_Loop", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Infinite Dab"), () => EmoteManager.PlayEmote("InfinidabLoop", "infinitedab", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Celebrate Me"), () => EmoteManager.PlayEmote("Celebrate Me", "IP_Emote_Cottontail_Loop", -1f, true)); zOffset -= step;
+                        }
+                        else if (currentPageIndex == 6)
+                        {
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Billy Bounce"), () => EmoteManager.PlayEmote("BillyBounce", "billybounce", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Windmill Floss"), () => EmoteManager.PlayEmote("WindmillFloss", "whirlfloss", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Hype"), () => EmoteManager.PlayEmote("Hype", "hype", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Entranced"), () => EmoteManager.PlayEmote("Entranced", "entranced", -1f, true)); zOffset -= step;
+                        }
+                        else if (currentPageIndex == 7)
+                        {
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Laugh It Up"), () => EmoteManager.PlayEmote("LaughItUp", "Emote_Laugh_01", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Snoop Walk"), () => EmoteManager.PlayEmote("SnoopWalk", "snoopwalk", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Scenario"), () => EmoteManager.PlayEmote("Scenario", "scenario", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Night Out"), () => EmoteManager.PlayEmote("Night Out", "nightout", -1f, true)); zOffset -= step;
+                        }
+                        else if (currentPageIndex == 8)
+                        {
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Point And Strut"), () => EmoteManager.PlayEmote("pointandstrut", "pointandstrut", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Moongazer"), () => EmoteManager.PlayEmote("moongazer", "moongazer", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Rollie"), () => EmoteManager.PlayEmote("Rollie", "Emote_Twist_Daytona_Music_Loop_01", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Heel Click"), () => EmoteManager.PlayEmote("HEEL", "heelclickbreakdown", -1f, true)); zOffset -= step;
+                        }
+                        else if (currentPageIndex == 9)
+                        {
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Switchstep"), () => EmoteManager.PlayEmote("SwitchStep", "switchstep", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Freestylin'"), () => EmoteManager.PlayEmote("Freestylin'", "freestylin", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Go Mufasa"), () => EmoteManager.PlayEmote("Go Mufasa", "Emote_Sandwich_Bop_Loop", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Jubi Slide"), () => EmoteManager.PlayEmote("jubislide", "Emote_GoodbyeUpbeat_Loop", -1f, true)); zOffset -= step;
+                        }
+                        else if (currentPageIndex == 10)
+                        {
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Running Man"), () => EmoteManager.PlayEmote("RunningMan", "Athena_Emote_Music_RunningMan", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Zany"), () => EmoteManager.PlayEmote("Zany", "zany", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Pumpernickel"), () => EmoteManager.PlayEmote("pumpernickel2", "Athena_Emotes_Music_PumpDance", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Pony Up"), () => EmoteManager.PlayEmote("RideThePony", "ponyup", -1f, true)); zOffset -= step;
+                        }
+                        else if (currentPageIndex == 11)
+                        {
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Hula"), () => EmoteManager.PlayEmote("HULA", "emote_hula_01", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Never Gonna"), () => EmoteManager.PlayEmote("Never Gonna Loop", "Emote_NeverGonna_Loop_01", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Say So"), () => EmoteManager.PlayEmote("Say So", "Emote_HotPink_Loop_258", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Take It Slow"), () => EmoteManager.PlayEmote("Takeitslow", "takeitslow", -1f, true)); zOffset -= step;
+                        }
+                        else if (currentPageIndex == 12)
+                        {
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Macarena"), () => EmoteManager.PlayEmote("Macarena", "Emote_Macaroon_Music_Loop_01", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Cupid's Arrow"), () => EmoteManager.PlayEmote("cupid", "cupid", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Gangnam Style"), () => EmoteManager.PlayEmote("gangnam", "gangnam", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Slim Shady"), () => EmoteManager.PlayEmote("realslimshady", "slim", -1f, true)); zOffset -= step;
+                        }
+                        else if (currentPageIndex == 13)
+                        {
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Party Hips"), () => EmoteManager.PlayEmote("partyhips", "partyhips", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Out West"), () => EmoteManager.PlayEmote("outwest", "outwest", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("My World"), () => EmoteManager.PlayEmote("myworld", "Myworld", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Jake Bug"), () => EmoteManager.PlayEmote("Jake", "jake", -1f, true)); zOffset -= step;
+                        }
+                        else if (currentPageIndex == 14)
+                        {
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Miku Beam"), () => EmoteManager.PlayEmote("miku", "miku", -1f, true)); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Stop All Emotes"), () => EmoteManager.StopEmote()); zOffset -= step;
+                        }
+                        break;
+                    case 11:
                         Pages = 7;
                         if (currentPageIndex == 0)
                         {
@@ -1265,23 +1379,23 @@ namespace Gemstone.Gemstone
                         else if (currentPageIndex == 2)
                         {
                             AddToggleButton(ref zOffset, step, Localization.Get("Kormakur Sign"), ModConfig.instance.IsKormakur, () => Mods.Mods.NoSign());
-                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid Hell"), () => Mods.Mods.Video = "https://github.com/ChipLikesCereal/testvid/raw/refs/heads/main/GirlHell1999.mp4"); zOffset -= step;
-                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid OCD"), () => Mods.Mods.Video = "https://github.com/ChipLikesCereal/testvid/raw/refs/heads/main/OCD.mp4"); zOffset -= step;
-                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid Kitty"), () => Mods.Mods.Video = "https://github.com/ChipLikesCereal/testvid/raw/refs/heads/main/Kitty.mp4"); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid Hell"), () => Mods.Mods.Video = "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/GirlHell1999.mp4"); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid OCD"), () => Mods.Mods.Video = "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/OCD.mp4"); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid Kitty"), () => Mods.Mods.Video = "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/Kitty.mp4"); zOffset -= step;
                         }
                         else if (currentPageIndex == 3)
                         {
-                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid AMV"), () => Mods.Mods.Video = "https://github.com/ChipLikesCereal/testvid/raw/refs/heads/main/testvid.mp4"); zOffset -= step;
-                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid theresabarrier"), () => Mods.Mods.Video = "https://github.com/ChipLikesCereal/testvid/raw/refs/heads/main/theresabarrier.mp4"); zOffset -= step;
-                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid Edit"), () => Mods.Mods.Video = "https://github.com/ChipLikesCereal/testvid/raw/refs/heads/main/edit.mp4"); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid AMV"), () => Mods.Mods.Video = "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/testvid.mp4"); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid theresabarrier"), () => Mods.Mods.Video = "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/theresabarrier.mp4"); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid Edit"), () => Mods.Mods.Video = "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/edit.mp4"); zOffset -= step;
                             AddToggleButton(ref zOffset, step, Localization.Get("Cherry bomb"), ModConfig.instance.IsCherryBomb, () => Mods.Mods.NoCherryBomb());
                         }
                         else if (currentPageIndex == 4)
                         {
-                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid Zlothy"), () => Mods.Mods.Video = "https://github.com/ChipLikesCereal/testvid/raw/refs/heads/main/Zlothy.mov"); zOffset -= step;
-                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid Barrier Remix"), () => Mods.Mods.Video = "https://github.com/ChipLikesCereal/testvid/raw/refs/heads/main/there%20is%20a%20barrier%20remix.mp4"); zOffset -= step;
-                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid invincible wobbly edit"), () => Mods.Mods.Video = "https://github.com/ChipLikesCereal/testvid/raw/refs/heads/main/INVINCIBLEWOBBLYANIMATION.mp4"); zOffset -= step;
-                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid Punch Mod"), () => Mods.Mods.Video = "https://github.com/ChipLikesCereal/testvid/raw/refs/heads/main/punchmod.mp4"); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid Zlothy"), () => Mods.Mods.Video = "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/Zlothy.mov"); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid Barrier Remix"), () => Mods.Mods.Video = "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/there%20is%20a%20barrier%20remix.mp4"); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid invincible wobbly edit"), () => Mods.Mods.Video = "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/INVINCIBLEWOBBLYANIMATION.mp4"); zOffset -= step;
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid Punch Mod"), () => Mods.Mods.Video = "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/punchmod.mp4"); zOffset -= step;
                         }
                         else if (currentPageIndex == 5)
                         {
@@ -1293,6 +1407,8 @@ namespace Gemstone.Gemstone
                         else
                         {
                             AddButton(zOffset, 0f, 0.2f, Localization.Get("Reset Video Player"), () => Mods.Mods.ResetVideoPlayer()); zOffset -= step;
+                            AddToggleButton(ref zOffset, step, Localization.Get("Admin Strangle"), ModConfig.instance.IsAdminStrangle);
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid Soup mar brobers"), () => Mods.Mods.Video = "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/soup%20mar%20brobers.mp4"); zOffset -= step;
                         }
                             break;
                 }
@@ -1310,7 +1426,7 @@ namespace Gemstone.Gemstone
             }
         }
 
-        private string GetCategoryName(int index) => index switch { 0 => Localization.Get("Movement"), 1 => Localization.Get("Utility"), 2 => Localization.Get("Rig Mods"), 3 => Localization.Get("Settings"), 4 => Localization.Get("Important"), 5 => Localization.Get("Fun"), 6 => Localization.Get("Player List"), 7 => Localization.Get("Soundboard"), 8 => Localization.Get("Sound"), 9 => Localization.Get("Visual"), 10 => Localization.Get("Admin"), _ => Localization.Get("Gemstone") };
+        private string GetCategoryName(int index) => index switch { 0 => Localization.Get("Movement"), 1 => Localization.Get("Utility"), 2 => Localization.Get("Rig Mods"), 3 => Localization.Get("Settings"), 4 => Localization.Get("Important"), 5 => Localization.Get("Fun"), 6 => Localization.Get("Player List"), 7 => Localization.Get("Soundboard"), 8 => Localization.Get("Sound"), 9 => Localization.Get("Visual"), 10 => Localization.Get("Emotes"), 11 => Localization.Get("Admin"), _ => Localization.Get("Gemstone") };
         private void SwitchPage(int cat, int page) { currentCategoryIndex = cat; currentPageIndex = page; RefreshMenu(); }
         public void RefreshMenu()
         {

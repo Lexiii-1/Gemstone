@@ -22,7 +22,7 @@ public class EmoteManager : MonoBehaviour // Creds to IIDK for the asset bundle 
         instance = this;
     }
 
-    private static string GetBundlePath() => Path.Combine(Paths.GameRootPath, "Gemstone", "fn"); // Change this to the location of the asset bundle. It is next to the games exe and the asset bundle should be titled 'fn'
+    private static string GetBundlePath() => Path.Combine(Paths.GameRootPath, "Gemstone", "fn");
 
     public static void DisableCosmetics()
     {

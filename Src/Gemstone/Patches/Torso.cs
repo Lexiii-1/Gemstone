@@ -16,6 +16,7 @@ namespace Gemstone.patches
         public static int mode = 0;
         private static float storedTorsoYaw;
         private static bool hasStoredYaw = false;
+        private static Quaternion? storedJoystickRotation = null;
 
         public static void Postfix(VRRig __instance)
         {
@@ -194,11 +195,60 @@ namespace Gemstone.patches
                             Quaternion headRotation = GorillaTagger.Instance.headCollider.transform.rotation;
                             rotation = headRotation * Quaternion.Euler(90f, 0f, 0f);
                             break;
-                    case 8:
+                        case 8:
                             Quaternion headRotation2 = GorillaTagger.Instance.headCollider.transform.rotation;
                             rotation = headRotation2 * Quaternion.Euler(-90f, 0f, 0f);
                             break;
+                        case 9:
+                            {
+                                Vector2 joyl = ControllerInputPoller.instance.leftControllerPrimary2DAxis;
+                                Vector2 joyr = ControllerInputPoller.instance.rightControllerPrimary2DAxis;
+
+                                float yawInput = 0f;
+                                float pitchInput = 0f;
+                                bool hasInput = false;
+
+                                if (Mathf.Abs(joyl.x) > 0.5f)
+                                {
+                                    yawInput = joyl.x;
+                                    hasInput = true;
+                                }
+
+                                if (Mathf.Abs(joyr.y) > 0.5f)
+                                {
+                                    pitchInput = joyr.y;
+                                    hasInput = true;
+                                }
+
+                                if (hasInput)
+                                {
+                                    if (!storedJoystickRotation.HasValue)
+                                    {
+                                        storedJoystickRotation = GorillaTagger.Instance.headCollider.transform.rotation;
+                                    }
+
+                                    float yaw = yawInput * 200f * Time.deltaTime;
+                                    float pitch = -pitchInput * 200f * Time.deltaTime;
+
+                                    Quaternion currentRot = storedJoystickRotation.Value;
+
+                                    currentRot = Quaternion.AngleAxis(yaw, Vector3.up) * currentRot;
+                                    Vector3 localRight = currentRot * Vector3.right;
+                                    currentRot = Quaternion.AngleAxis(pitch, localRight) * currentRot;
+
+                                    currentRot.Normalize();
+                                    storedJoystickRotation = currentRot;
+                                }
+                                else if (!storedJoystickRotation.HasValue)
+                                {
+                                    storedJoystickRotation = GorillaTagger.Instance.headCollider.transform.rotation;
+                                }
+
+                                rotation = storedJoystickRotation.Value;
+                                break;
+                            }
                     }
+
 
                     if (mode != 4)
                     {
@@ -207,6 +257,10 @@ namespace Gemstone.patches
                     if (mode != 6)
                     {
                         hasStoredYaw = false;
+                    }
+                    if (mode != 9)
+                    {
+                        storedJoystickRotation = null;
                     }
 
                     __instance.transform.rotation = rotation;

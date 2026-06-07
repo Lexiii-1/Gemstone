@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.InputSystem;
 using GorillaLocomotion;
 using System.Collections;
 
@@ -31,6 +32,8 @@ namespace Gemstone.Gemstone
         private static Vector3 smoothedEndPoint;
         private static Vector3 smoothedVelocity;
 
+        private static bool isRightHandActive = true;
+
         public static readonly string[] ignoreLayers =
         {
             "Gorilla Trigger",
@@ -58,6 +61,14 @@ namespace Gemstone.Gemstone
                 ? lockedRig.Creator.NickName
                 : null;
 
+        public static bool Triggering =>
+            (Mouse.current != null && Mouse.current.leftButton.isPressed) ||
+            (Mouse.current != null && Mouse.current.rightButton.isPressed && Mouse.current.leftButton.isPressed) ||
+            (ControllerInputPoller.instance != null &&
+            (isRightHandActive
+                ? ControllerInputPoller.instance.rightControllerTriggerButton
+                : ControllerInputPoller.instance.leftControllerTriggerButton));
+
         public static void LetGun()
         {
             allowThisFrame = true;
@@ -82,40 +93,102 @@ namespace Gemstone.Gemstone
             if (GTPlayer.Instance == null || ControllerInputPoller.instance == null)
                 return;
 
-            bool holding = ControllerInputPoller.instance.rightGrab;
-            Transform hand = GTPlayer.Instance.RightHand.controllerTransform;
+            bool rightGrab = ControllerInputPoller.instance.rightGrab;
+            bool leftGrab = ControllerInputPoller.instance.leftGrab;
+
+            bool isMouseRightPressed = Mouse.current != null && Mouse.current.rightButton.isPressed;
+            bool holding = rightGrab || leftGrab || isMouseRightPressed;
 
             if (lockedRig == VRRig.LocalRig)
                 lockedRig = null;
 
             if (holding && !isHolding)
             {
+                isRightHandActive = isMouseRightPressed ? true : rightGrab;
+
+                Transform hand = isRightHandActive
+                    ? GTPlayer.Instance.RightHand.controllerTransform
+                    : GTPlayer.Instance.LeftHand.controllerTransform;
+
                 SpawnGun();
                 isHolding = true;
-                lastGunPosition = hand.position;
-                smoothedEndPoint = hand.position;
+
+                if (isMouseRightPressed)
+                {
+                    GameObject cameraObj = GameObject.Find("Player Objects/Third Person Camera/Shoulder Camera");
+                    Vector3 spawnPos = cameraObj != null ? cameraObj.transform.position : hand.position;
+                    lastGunPosition = spawnPos;
+                    smoothedEndPoint = spawnPos;
+                }
+                else
+                {
+                    lastGunPosition = hand.position;
+                    smoothedEndPoint = hand.position;
+                }
+
                 smoothedVelocity = Vector3.zero;
 
                 GorillaTagger.Instance.StartVibration(
-                    false,
+                    !isRightHandActive,
                     GorillaTagger.Instance.tagHapticStrength / 1.2f,
                     0.02f
                 );
             }
 
+            if (isHolding && !isMouseRightPressed)
+            {
+                if (isRightHandActive && !rightGrab && leftGrab)
+                {
+                    isRightHandActive = false;
+                }
+                else if (!isRightHandActive && !leftGrab && rightGrab)
+                {
+                    isRightHandActive = true;
+                }
+            }
+
             if (holding && GunObject != null)
             {
-                if (ControllerInputPoller.instance.rightControllerTriggerButton)
+                Transform hand = isRightHandActive
+                    ? GTPlayer.Instance.RightHand.controllerTransform
+                    : GTPlayer.Instance.LeftHand.controllerTransform;
+
+                if (Triggering)
                 {
                     GorillaTagger.Instance.StartVibration(
-    false,
-    GorillaTagger.Instance.tagHapticStrength / 1.2f,
-    0.02f
-);
+                        !isRightHandActive,
+                        GorillaTagger.Instance.tagHapticStrength / 1.2f,
+                        0.02f
+                    );
                 }
-                float downwardAngle = 50f;
-                Vector3 direction = Quaternion.AngleAxis(downwardAngle, hand.right) * hand.forward;
-                Ray ray = new Ray(hand.position, direction);
+
+                Ray ray;
+                Vector3 originPoint;
+
+                if (isMouseRightPressed)
+                {
+                    GameObject cameraObj = GameObject.Find("Player Objects/Third Person Camera/Shoulder Camera");
+                    if (cameraObj != null)
+                    {
+                        ray = new Ray(cameraObj.transform.position, cameraObj.transform.forward);
+                        originPoint = cameraObj.transform.position;
+                    }
+                    else
+                    {
+                        float downwardAngle = 50f;
+                        Vector3 direction = Quaternion.AngleAxis(downwardAngle, hand.right) * hand.forward;
+                        ray = new Ray(hand.position, direction);
+                        originPoint = hand.position;
+                    }
+                }
+                else
+                {
+                    float downwardAngle = 50f;
+                    Vector3 direction = Quaternion.AngleAxis(downwardAngle, hand.right) * hand.forward;
+                    ray = new Ray(hand.position, direction);
+                    originPoint = hand.position;
+                }
+
                 int mask = ~LayerMask.GetMask(ignoreLayers);
 
                 bool hitSomething = Physics.Raycast(
@@ -172,7 +245,7 @@ namespace Gemstone.Gemstone
 
                 if (hitSomething)
                 {
-                    Vector3 normalDirection = (smoothedEndPoint - hand.position).normalized;
+                    Vector3 normalDirection = (smoothedEndPoint - originPoint).normalized;
                     if (normalDirection != Vector3.zero)
                     {
                         GunObject.transform.rotation = Quaternion.LookRotation(normalDirection);
@@ -180,13 +253,21 @@ namespace Gemstone.Gemstone
                 }
                 else
                 {
-                    GunObject.transform.rotation = hand.rotation;
+                    if (isMouseRightPressed)
+                    {
+                        GameObject cameraObj = GameObject.Find("Player Objects/Third Person Camera/Shoulder Camera");
+                        GunObject.transform.rotation = cameraObj != null ? cameraObj.transform.rotation : hand.rotation;
+                    }
+                    else
+                    {
+                        GunObject.transform.rotation = hand.rotation;
+                    }
                 }
 
                 gunVelocity = (GunObject.transform.position - lastGunPosition) / Time.deltaTime;
                 lastGunPosition = GunObject.transform.position;
 
-                DrawLine(hand.position, smoothedEndPoint);
+                DrawLine(originPoint, smoothedEndPoint);
                 GunPos = GunObject.transform;
             }
 

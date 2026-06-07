@@ -3,7 +3,7 @@ using Photon.Realtime;
 
 namespace Gemstone.Gemstone
 {
-    public class JoinNotifs : MonoBehaviourPunCallbacks
+    public class JoinNotifs : MonoBehaviourPunCallbacks // Deez, this doesnt show your own local player. - Lexi (@_.lex1._)
     {
         public override void OnPlayerEnteredRoom(Player newPlayer)
         {
@@ -12,7 +12,7 @@ namespace Gemstone.Gemstone
 
         public override void OnPlayerLeftRoom(Player otherPlayer)
         {
-            NotiLib.SendNotification("<color=red>[LEAVE] </color>" + otherPlayer.NickName, 2000);
+            NotiLib.SendNotification("<color=red>[LEAVE] </color>" + otherPlayer.NickName, 2000); // this is an ai comment i id skider
         }
     }
 }

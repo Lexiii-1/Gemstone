@@ -236,19 +236,12 @@ namespace Gemstone.Gemstone
 
         private void BuildInitialHierarchyCache()
         {
-            GameObject[] trackingUniverse = Resources.FindObjectsOfTypeAll<GameObject>();
-            foreach (GameObject identity in trackingUniverse)
+            sceneHierarchyCache.Clear();
+            foreach (GameObject obj in Resources.FindObjectsOfTypeAll<GameObject>())
             {
-                if (identity.hideFlags == HideFlags.NotEditable || identity.hideFlags == HideFlags.HideAndDontSave || identity.scene.name == null)
-                {
-                    continue;
-                }
-
-                string keyPath = GenerateKeySignature(identity);
-                if (!string.IsNullOrEmpty(keyPath) && !sceneHierarchyCache.ContainsKey(keyPath))
-                {
-                    sceneHierarchyCache[keyPath] = identity;
-                }
+                if (obj.hideFlags != HideFlags.None && obj.hideFlags != HideFlags.DontSaveInBuild) continue;
+                string keyPath = GenerateKeySignature(obj);
+                if (!string.IsNullOrEmpty(keyPath)) sceneHierarchyCache[keyPath] = obj;
             }
         }
 

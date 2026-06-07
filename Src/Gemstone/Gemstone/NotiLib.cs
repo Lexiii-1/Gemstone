@@ -98,7 +98,7 @@ namespace Gemstone.Gemstone
             }
         }
 
-        private IEnumerator DestroyAfterTime(GameObject vrObj, GameObject pcObj, float time)
+        private IEnumerator DestroyAfterTime(GameObject vrObj, GameObject pcObj, float time) // Deez, I like changing the fucking time on this - Lexi ()
         {
             yield return new WaitForSeconds(time / 1000.0f);
 

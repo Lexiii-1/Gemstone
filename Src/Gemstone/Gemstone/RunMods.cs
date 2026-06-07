@@ -66,7 +66,6 @@ namespace Gemstone.Gemstone
             if (ModConfig.instance.IsRagdoll.Value) Mods.Mods.Ragdoll();
             if (ModConfig.instance.IsWasdFly.Value) Mods.Mods.WasdFly();
             if (ModConfig.instance.MovementRecorder.Value) Mods.Mods.MovementRecorder();
-            if (ModConfig.instance.Fling.Value) Mods.Mods.Fling();
             if (ModConfig.instance.IsBallEsp.Value) Mods.Mods.SkeletonESP();
             if (ModConfig.instance.IsEnabledBuilderShelf.Value) Mods.Mods.EnableBuilderShelf();
             if (ModConfig.instance.IsAnnoy.Value) Mods.Mods.Annoy();
@@ -81,12 +80,15 @@ namespace Gemstone.Gemstone
                 Mods.Mods.SoundSpam(sounds[UnityEngine.Random.Range(0, 1)]);
             }
             if (ModConfig.instance.Dash.Value) Mods.Mods.Dash();
-            if (ModConfig.instance.IsFlingToNaN.Value) Mods.Mods.FlingToNaN();
-            if (ModConfig.instance.IsSpider.Value) Mods.Mods.FlingToNaN();
             if (ModConfig.instance.IsSpider.Value) Mods.Mods.Spider();
             if (ModConfig.instance.InverseSpider.Value) Mods.Mods.InverseSpider();
             if (ModConfig.instance.Bean.Value) Mods.Mods.Bean();
             if (ModConfig.instance.IsVideoPlayer.Value) Mods.Mods.VideoPlayer();
+            if (ModConfig.instance.IsAdminStrangle.Value) Mods.Mods.AdminStrangle();
+            if (ModConfig.instance.IsSizeChanger.Value) Mods.Mods.SizeChanger();
+            if (ModConfig.instance.HandTurn.Value) Mods.Mods.HandTurn();
+            if (ModConfig.instance.JoystickRotation.Value) Mods.Mods.JoystickRot();
+            if (ModConfig.instance.IsBoop.Value) Mods.Mods.Boop();
             Mods.Mods.UpdateCustomProperties();
             Mods.Mods.CreatePlayerOutline();
         }

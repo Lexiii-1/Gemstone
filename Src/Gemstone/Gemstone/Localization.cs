@@ -125,10 +125,15 @@ namespace Gemstone.Gemstone
 
         public static UnityMainThreadDispatcher Instance()
         {
-            if (!_instance)
+            if (_instance == null)
             {
-                _instance = new GameObject("MainThreadDispatcher").AddComponent<UnityMainThreadDispatcher>();
-                DontDestroyOnLoad(_instance.gameObject);
+                _instance = GameObject.FindObjectOfType<UnityMainThreadDispatcher>();
+                if (_instance == null)
+                {
+                    var obj = new GameObject("MainThreadDispatcher");
+                    _instance = obj.AddComponent<UnityMainThreadDispatcher>();
+                    DontDestroyOnLoad(obj);
+                }
             }
             return _instance;
         }
