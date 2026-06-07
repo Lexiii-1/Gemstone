@@ -232,6 +232,9 @@ namespace Gemstone.Gemstone
                         currentGuiTab = 0;
                     }
                     break;
+                    case 4:
+                        DrawEmotes();
+                        break;
             }
         }
 
