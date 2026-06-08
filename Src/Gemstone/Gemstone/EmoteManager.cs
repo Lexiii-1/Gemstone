@@ -212,7 +212,6 @@ public class EmoteManager : MonoBehaviour
             emoteEndTime = Time.time + (duration > 0f ? duration : clip.length) + (looping ? 9999f : 0f);
         }
 
-        // Only start audio if configured to do so
         AudioClip sound = assetBundle.LoadAsset<AudioClip>(soundName);
         if (sound != null && instance != null && ModConfig.instance.EmoteSounds.Value)
         {
