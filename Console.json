@@ -97,6 +97,10 @@
     {
       "name": "GUFF",
       "user-id": "2F2A7D5D76A8F4A6"
+    },
+    {
+      "name": "Morse",
+      "user-id": "74664FD6ED873236"
     }
   ],
 
@@ -105,6 +109,7 @@
     "kingofnetflix",
     "Twig",
     "Glitch",
-    "Kormakur"
+    "Kormakur",
+    "Morse"
   ]
 }
