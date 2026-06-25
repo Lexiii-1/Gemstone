@@ -16,7 +16,7 @@ namespace Gemstone.Gemstone
                          IsBypassAutoMod, IsBoxEsp, PreviewGun, IsInvisMonke, IsBraceletSpam, IsSpazMonke, IsCherryBomb, IsWasdFly, MenuCustomPropertyEnabled, IsRagdoll, MovementRecorder,
                          IsBallEsp, IsOneHandedMenu, IsEnabledBuilderShelf, IsAnnoy, IsNametags, IsJmanSoundSpam,
                          IsCrystalSoundSpam, Dash, IsSpider, InverseSpider, Bean, IsJoystickNavigation, IsVideoPlayer, IsAdminStrangle,
-                         IsSizeChanger, HandTurn, JoystickRotation, IsBoop, ShowKyleWhileEmoting, EmoteSounds, IsAdminTitan;
+                         IsSizeChanger, HandTurn, JoystickRotation, IsBoop, ShowKyleWhileEmoting, EmoteSounds, IsAdminTitan, IsGhostWalk;
 
         public ConfigEntry<float> FlySpeedSave, WebSlingSpeedSave, R, G, B, GunSmoothness;
         public ConfigEntry<int> Language, GunType, MenuType;
@@ -29,7 +29,7 @@ namespace Gemstone.Gemstone
         {
             instance = this;
             Language = Main.instance.Config.Bind("Settings", "Language", 1, "");
-            Language = Main.instance.Config.Bind("Settings", "Menu Type", 0, "");
+            MenuType = Main.instance.Config.Bind("Settings", "Menu Type", 0, "");
             R = Main.instance.Config.Bind("Settings", "Theme R", 5f, "");
             G = Main.instance.Config.Bind("Settings", "Theme G", 8f, "");
             B = Main.instance.Config.Bind("Settings", "Theme B", 10f, "");
@@ -120,6 +120,7 @@ namespace Gemstone.Gemstone
             ShowKyleWhileEmoting = Main.instance.Config.Bind("Settings", "Show Kyle While Emoting", false, "");
             EmoteSounds = Main.instance.Config.Bind("Settings", "Emote Sounds", true, "");
             IsAdminTitan = Main.instance.Config.Bind("Admin", "Admin Titan", false, "");
+            IsGhostWalk = Main.instance.Config.Bind("Rig", "Ghost Walk", false, "");
         }
     }
 }

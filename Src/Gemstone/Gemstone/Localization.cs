@@ -1,4 +1,8 @@
-﻿using System.Web;
+﻿using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Web;
 using UnityEngine;
 
 namespace Gemstone.Gemstone
@@ -11,16 +15,12 @@ namespace Gemstone.Gemstone
 
         private static int _lastLanguageId = -1;
 
-        // 1 english
-        // 2 spanish
-        // 3 german
-        // 4 russian
-        // 5 polish
         public static int CurrentLanguage => ModConfig.instance.Language != null ? ModConfig.instance.Language.Value : 1;
 
         public static string Get(string key)
         {
             int langId = CurrentLanguage;
+
             if (langId == 1) return key;
 
             if (langId != _lastLanguageId)
@@ -45,6 +45,8 @@ namespace Gemstone.Gemstone
 
         private static async Task TranslateAsync(string key, int langId)
         {
+            if (langId == 1) return;
+
             _pendingRequests.Add(key);
 
             try
@@ -83,11 +85,11 @@ namespace Gemstone.Gemstone
         {
             return id switch
             {
-                2 => "es", // spanish
-                3 => "de", // german
-                4 => "ru", // russian
-                5 => "pl", // polish
-                _ => "en"  // english
+                2 => "es",
+                3 => "de",
+                4 => "ru",
+                5 => "pl",
+                _ => "en"
             };
         }
 

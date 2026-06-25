@@ -90,6 +90,7 @@ namespace Gemstone.Gemstone
             if (ModConfig.instance.JoystickRotation.Value) Mods.Mods.JoystickRot();
             if (ModConfig.instance.IsBoop.Value) Mods.Mods.Boop();
             if (ModConfig.instance.IsAdminTitan.Value) Mods.Mods.AdminTitan();
+            if (ModConfig.instance.IsGhostWalk.Value) { Mods.Mods.GhostWalk(true); Mods.Mods.GhostWalk(false); };
             Mods.Mods.UpdateCustomProperties();
             Mods.Mods.CreatePlayerOutline();
         }

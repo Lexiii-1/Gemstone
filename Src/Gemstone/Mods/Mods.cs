@@ -63,9 +63,8 @@ namespace Gemstone.Mods
 
         public static void SpeedBoost()
         {
-            var player = GTPlayer.Instance;
-            player.maxJumpSpeed = 8f;
-            player.jumpMultiplier = 5.3f;
+            GTPlayer.Instance.maxJumpSpeed = 8f;
+            GTPlayer.Instance.jumpMultiplier = 5.3f;
         }
 
         public static void CreatePlayerOutline()
@@ -179,6 +178,7 @@ namespace Gemstone.Mods
             leftHand.localRotation = Quaternion.Euler(40f, 0f, 0f);
             rightHand.localRotation = Quaternion.Euler(40f, 0f, 0f);
 
+
             if (UnityInput.Current.GetKey(KeyCode.Q))
             {
                 leftHand.localPosition += Vector3.forward * 0.2f;
@@ -267,6 +267,9 @@ namespace Gemstone.Mods
 
             rigidbody.velocity = Vector3.zero;
             rigidbody.angularVelocity = Vector3.zero;
+
+
+
 
             ResolveHandCollision(leftHand);
             ResolveHandCollision(rightHand);
@@ -405,6 +408,40 @@ namespace Gemstone.Mods
             }
 
             prevRightPrimary = current;
+        }
+        private static Dictionary<bool, bool> previousTouchingGround = new Dictionary<bool, bool>();
+
+        public static void GhostWalk(bool left)
+        {
+            var playerInstance = GTPlayer.Instance;
+            var vrrig = GorillaTagger.Instance.offlineVRRig;
+
+            if (vrrig == null) return;
+
+            bool touchingGround = playerInstance.IsHandTouching(left);
+
+            if (!previousTouchingGround.ContainsKey(left))
+            {
+                previousTouchingGround[left] = false;
+            }
+
+            bool wasTouchingGround = previousTouchingGround[left];
+
+            if (touchingGround && !wasTouchingGround)
+            {
+                GorillaTagger.Instance.StartCoroutine(GhostWalkh(vrrig));
+            }
+
+            previousTouchingGround[left] = touchingGround;
+        }
+
+        private static IEnumerator GhostWalkh(VRRig vrrig)
+        {
+            vrrig.enabled = true;
+
+            yield return new WaitForEndOfFrame();
+
+            vrrig.enabled = false;
         }
         public static void Platforms()
         {
@@ -710,7 +747,6 @@ namespace Gemstone.Mods
         public static void LockOntoRig()
         {
             GunLib.LetGun();
-            //bool isFiring = ControllerInputPoller.instance.rightControllerTriggerButton || ControllerInputPoller.instance.leftControllerTriggerButton && ControllerInputPoller.instance.rightGrab;
             if (GunLib.Triggering && GunLib.IsOverVrrig && GunLib.GunPos != null)
             {
                 VRRig.LocalRig.enabled = false;
@@ -920,6 +956,15 @@ namespace Gemstone.Mods
             {
                 HeldTriggerGetPID = false;
             }
+        }
+
+        public static void GetPIDSelf()
+        {
+                string dirPath = Path.Combine(BepInEx.Paths.GameRootPath, "Gemstone", "IDS");
+                Directory.CreateDirectory(dirPath);
+
+                File.WriteAllText(Path.Combine(dirPath, PhotonNetwork.LocalPlayer.NickName + ".txt"), "ID: " + VRRig.LocalRig.Creator.UserId);
+                NotiLib.SendNotification("ID: " + VRRig.LocalRig.Creator.UserId, 2000);
         }
 
         public static void UpsideDownNeck() => VRRig.LocalRig.head.trackingRotationOffset.z = 180f;
@@ -1334,6 +1379,7 @@ namespace Gemstone.Mods
             HasSignSigned = false;
             Console.Console.ExecuteCommand("asset-destroy", ReceiverGroup.All, KormakurId);
         }
+
 
         private static int Axeid;
         public static bool HasAxeAxed = false;
@@ -2782,50 +2828,21 @@ namespace Gemstone.Mods
         public static void TagGun()
         {
             GunLib.LetGun();
-
-            if (GunLib.Triggering)
+            bool isTagged = GameMode.LocalIsTagged(GunLib.LockedRig.Creator);
+            if (GunLib.IsOverVrrig && GunLib.Triggering && !isTagged)
             {
-                if (GunLib.LockedRig != null && !GunLib.LockedRig.isLocal)
+                float distance = Vector3.Distance(VRRig.LocalRig.transform.position, GunLib.LockedRig.transform.position);
+                if (distance <= 5f)
                 {
-                    if (!GameMode.LocalIsTagged(GunLib.LockedRigOwner))
-                    {
-                        VRRig.LocalRig.enabled = false;
-
-                        Vector3 position = GunLib.LockedRig.transform.position + new Vector3(UnityEngine.Random.Range(-0.1f, 0.1f), UnityEngine.Random.Range(-0.1f, 0.1f), UnityEngine.Random.Range(-0.1f, 0.1f));
-                        VRRig.LocalRig.transform.position = position;
-
-                        VRRig.LocalRig.head.rigTarget.transform.rotation = UnityEngine.Random.rotation;
-                        VRRig.LocalRig.leftHand.rigTarget.transform.position = GunLib.LockedRig.transform.position + new Vector3(UnityEngine.Random.Range(-0.1f, 0.1f), UnityEngine.Random.Range(-0.1f, 0.1f), UnityEngine.Random.Range(-0.1f, 0.1f));
-                        VRRig.LocalRig.rightHand.rigTarget.transform.position = GunLib.LockedRig.transform.position + new Vector3(UnityEngine.Random.Range(-0.1f, 0.1f), UnityEngine.Random.Range(-0.1f, 0.1f), UnityEngine.Random.Range(-0.1f, 0.1f));
-
-                        VRRig.LocalRig.leftHand.rigTarget.transform.rotation = UnityEngine.Random.rotation;
-                        VRRig.LocalRig.rightHand.rigTarget.transform.rotation = UnityEngine.Random.rotation;
-
-                        VRRig.LocalRig.leftIndex.calcT = 0f;
-                        VRRig.LocalRig.leftMiddle.calcT = 0f;
-                        VRRig.LocalRig.leftThumb.calcT = 0f;
-
-                        VRRig.LocalRig.leftIndex.LerpFinger(1f, false);
-                        VRRig.LocalRig.leftMiddle.LerpFinger(1f, false);
-                        VRRig.LocalRig.leftThumb.LerpFinger(1f, false);
-
-                        VRRig.LocalRig.rightIndex.calcT = 0f;
-                        VRRig.LocalRig.rightMiddle.calcT = 0f;
-                        VRRig.LocalRig.rightThumb.calcT = 0f;
-
-                        VRRig.LocalRig.rightIndex.LerpFinger(1f, false);
-                        VRRig.LocalRig.rightMiddle.LerpFinger(1f, false);
-                        VRRig.LocalRig.rightThumb.LerpFinger(1f, false);
-
-                        if (ValidateTag(GunLib.LockedRig))
-                            ReportTag(GunLib.LockedRig);
-                    }
+                    VRRig.LocalRig.enabled = false;
+                    VRRig.LocalRig.transform.position = GunLib.LockedRig.syncPos;
+                    VRRig.LocalRig.leftHand.rigTarget.position = GunLib.LockedRig.syncPos;
+                    VRRig.LocalRig.rightHand.rigTarget.position = GunLib.LockedRig.syncPos;
+                    GameMode.ReportTag(GunLib.LockedRig.Creator);
                 }
+                else VRRig.LocalRig.enabled = true;
             }
-            else
-            {
-                VRRig.LocalRig.enabled = true;
-            }
+            else VRRig.LocalRig.enabled = true;
         }
 
         private static float reportTagDelay;
@@ -3509,6 +3526,7 @@ namespace Gemstone.Mods
                 }
 
                 data.TextComponent.text = $"<color={hexColor}>{photonNick}</color>\n<size=75%>FPS: {playerFps}</size>";
+                data.TextComponent.font = VRRig.LocalRig.playerText1.font; // Im too lazy to just cache the font so fuck you.
             }
         }
         public static void DisableNametagsMod()

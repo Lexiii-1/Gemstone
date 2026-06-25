@@ -31,6 +31,7 @@ namespace Gemstone.Gemstone
 
             var text = textNotifacation.AddComponent<TextMeshPro>();
             text.text = message;
+            text.font = VRRig.LocalRig.playerText1.font;
             text.fontSize = 15f;
             text.alignment = TextAlignmentOptions.Center;
             text.color = Color.white;
@@ -39,7 +40,6 @@ namespace Gemstone.Gemstone
             text.transform.localScale = new Vector3(0.0025f, 0.0025f, 0.0025f);
 
             EnsureCanvasExists();
-
             var pcNotification = new GameObject("PCNotificationLabel");
             pcNotification.transform.SetParent(pcCanvas.transform, false);
             pcNotifications.Add(pcNotification);
@@ -53,6 +53,7 @@ namespace Gemstone.Gemstone
             }
 
             pcText.text = message;
+            pcText.font = VRRig.LocalRig.playerText1.font;
             pcText.fontSize = 18f;
             pcText.alignment = TextAlignmentOptions.Center;
             pcText.color = Color.white;
@@ -97,7 +98,7 @@ namespace Gemstone.Gemstone
             }
         }
 
-        private IEnumerator DestroyAfterTime(GameObject vrObj, GameObject pcObj, float time) // Deez, I like changing the fucking time on this - Lexi ()
+        private IEnumerator DestroyAfterTime(GameObject vrObj, GameObject pcObj, float time) // Deez, I like changing the fucking time on this - Lexi
         {
             yield return new WaitForSeconds(time / 1000.0f);
 

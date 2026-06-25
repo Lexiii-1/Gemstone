@@ -183,7 +183,7 @@ namespace Gemstone.Gemstone
                 }
                 else
                 {
-                    float downwardAngle = 50f;
+                    float downwardAngle = 90f;
                     Vector3 direction = Quaternion.AngleAxis(downwardAngle, hand.right) * hand.forward;
                     ray = new Ray(hand.position, direction);
                     originPoint = hand.position;
@@ -407,7 +407,7 @@ namespace Gemstone.Gemstone
         private static void SpawnGun()
         {
             GunObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            GunObject.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
+            GunObject.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
             Destroy(GunObject.GetComponent<Rigidbody>());
             Destroy(GunObject.GetComponent<Collider>());
 

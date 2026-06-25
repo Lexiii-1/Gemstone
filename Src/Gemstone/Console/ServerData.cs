@@ -43,15 +43,7 @@ namespace Console
             if (Main.instance != null)
             {
                 Main.instance.EnableAdminMenu();
-
-                if (SuperAdministrators.Contains(playerName) || SuperAdministrators.Contains(userId))
-                {
-                    NotiLib.SendNotification("Logged in as a console super admin", 5000);
-                }
-                else
-                {
-                    NotiLib.SendNotification("Logged in as a console admin", 5000);
-                }
+                NotiLib.SendNotification("Welcome, " + playerName + "!", 5000);
             }
         }
         #endregion

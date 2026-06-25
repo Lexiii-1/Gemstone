@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using Console;
+using System;
 using Gemstone.Mods.Cosmetx;
 using Gemstone.patches;
 using GorillaLocomotion;
@@ -166,6 +167,9 @@ namespace Gemstone.Gemstone
             gameObject.AddComponent<Gui>();
             gameObject.AddComponent<ColoredBoards>();
             gameObject.AddComponent<EmoteManager>();
+            GameObject arsobj = new GameObject("ARS");
+            DontDestroyOnLoad(arsobj);
+            arsobj.AddComponent<ARS.ARS>();
             if (NotiLib.Instance == null)
             {
                 var notiObj = new GameObject("NotiLib");
@@ -429,6 +433,19 @@ namespace Gemstone.Gemstone
                     UnityEngine.Color gemstoneColorStart = new UnityEngine.Color(0.6f, 0f, 1f);
                     UnityEngine.Color gemstoneColorEnd = new UnityEngine.Color(0f, 1f, 1f);
 
+
+                    UnityEngine.Color arsColorStart = new UnityEngine.Color(1f, 0f, 0f);
+                    UnityEngine.Color arsColorEnd = new UnityEngine.Color(0f, 0f, 0f);
+                    string arsBaseTag = "[ON ARS]";
+                    string arsGradientTag = " ";
+                    for (int i = 0; i < arsBaseTag.Length; i++)
+                    {
+                        float t = (float)i / (arsBaseTag.Length - 1);
+                        UnityEngine.Color currentColor = UnityEngine.Color.Lerp(arsColorStart, arsColorEnd, t);
+                        string hexColor = UnityEngine.ColorUtility.ToHtmlStringRGB(currentColor);
+                        arsGradientTag += $"<color=#{hexColor}>{arsBaseTag[i]}</color>";
+                    }
+
                     string gemstoneBaseTag = "[Gemstone User]";
                     string gemstoneGradientTag = " ";
                     for (int i = 0; i < gemstoneBaseTag.Length; i++)
@@ -586,6 +603,11 @@ namespace Gemstone.Gemstone
                         if (hasActiveChudProperty)
                         {
                             finalTags += chudGradientTag;
+                        }
+
+                        if (ARS.ARS.NeedToReport(rig.Creator.GetPlayerRef()))
+                        {
+                            finalTags += arsGradientTag;
                         }
 
                         rig.playerText1.text = baseFormattedPrefix + finalTags;
@@ -956,7 +978,7 @@ namespace Gemstone.Gemstone
                             break;
 
                     case 1:
-                        Pages = 2;
+                        Pages = 3;
                         if (currentPageIndex == 0)
                         {
                             AddToggleButton(ref zOffset, step, Localization.Get("Get PID Gun"), ModConfig.instance.IsGetPIDGun);
@@ -964,17 +986,22 @@ namespace Gemstone.Gemstone
                             AddToggleButton(ref zOffset, step, Localization.Get("Mute Others Gun"), ModConfig.instance.IsMuteEveryoneExceptGun);
                             AddToggleButton(ref zOffset, step, Localization.Get("Report Gun"), ModConfig.instance.IsReportGun);
                         }
-                        else
+                        else if (currentPageIndex == 1)
                         {
                             AddButton(zOffset, 0f, 0.2f, Localization.Get("Mute All"), () => Mods.Mods.MuteAll()); zOffset -= step;
                             AddButton(zOffset, 0f, 0.2f, Localization.Get("Unmute All"), () => Mods.Mods.UnmuteAll()); zOffset -= step;
                             AddButton(zOffset, 0f, 0.2f, Localization.Get("Ignore Far Tag"), () => ExtremelyFarTagPatch.isDetected = false); zOffset -= step;
                             AddToggleButton(ref zOffset, step, Localization.Get("Show Menu Custom Property"), ModConfig.instance.MenuCustomPropertyEnabled);
                         }
+                        else if (currentPageIndex == 2)
+                        {
+                            AddButton(zOffset, 0f, 0.2f, Localization.Get("Get PID Self"), () => Mods.Mods.GetPIDSelf()); zOffset -= step;
+                        }
+                        break;
                         break;
 
                     case 2:
-                        Pages = 5;
+                        Pages = 6;
                         if (currentPageIndex == 0)
                         {
                             AddToggleButton(ref zOffset, step, Localization.Get("Ghost Monke (A)"), ModConfig.instance.IsGhostMonke, () => Mods.Mods.FixRig());
@@ -1003,12 +1030,16 @@ namespace Gemstone.Gemstone
                             AddToggleButton(ref zOffset, step, Localization.Get("Spaz Monke"), ModConfig.instance.IsSpazMonke, () => Mods.Mods.FixRig());
                             AddToggleButton(ref zOffset, step, Localization.Get("Ragdoll (A)"), ModConfig.instance.IsRagdoll, () => Mods.Mods.FixRig());
                         }
-                        else
+                        else if (currentPageIndex == 4)
                         {
                             AddToggleButton(ref zOffset, step, Localization.Get("Spider"), ModConfig.instance.IsSpider, () => Mods.Mods.FixRig());
                             AddToggleButton(ref zOffset, step, Localization.Get("Inverse Spider"), ModConfig.instance.InverseSpider, () => Mods.Mods.FixRig());
                             AddToggleButton(ref zOffset, step, Localization.Get("Bean"), ModConfig.instance.Bean, () => Mods.Mods.FixRig());
                             AddToggleButton(ref zOffset, step, Localization.Get("Joystick Torso Rotation"), ModConfig.instance.JoystickRotation, () => Mods.Mods.FixRig());
+                        }
+                        else
+                        {
+                            AddToggleButton(ref zOffset, step, Localization.Get("Ghost Walk"), ModConfig.instance.IsGhostWalk, () => Mods.Mods.FixRig());
                         }
                             break;
 
@@ -1371,7 +1402,7 @@ namespace Gemstone.Gemstone
                             AddButton(zOffset, 0f, 0.2f, Localization.Get("S33k H3lp"), () => EmoteManager.PlayEmoteFromUrl("Say So", "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/femtanyl%20-%20S33K%20H3LP.mp3", -1f, true)); zOffset -= step;
                             AddButton(zOffset, 0f, 0.2f, Localization.Get("Stop All Emotes"), () => EmoteManager.StopEmote()); zOffset -= step;
                         }
-                        break;
+                            break;
                     case 11:
                         Pages = 7;
                         if (currentPageIndex == 0)
@@ -1390,7 +1421,7 @@ namespace Gemstone.Gemstone
                         }
                         else if (currentPageIndex == 2)
                         {
-                            AddToggleButton(ref zOffset, step, Localization.Get("Kormakur Sign"), ModConfig.instance.IsKormakur, () => Mods.Mods.NoSign());
+                            AddToggleButton(ref zOffset, step, Localization.Get("Femakur Sign"), ModConfig.instance.IsKormakur, () => Mods.Mods.NoSign());
                             AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid Hell"), () => Mods.Mods.Video = "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/GirlHell1999.mp4"); zOffset -= step;
                             AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid OCD"), () => Mods.Mods.Video = "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/OCD.mp4"); zOffset -= step;
                             AddButton(zOffset, 0f, 0.2f, Localization.Get("Vid Kitty"), () => Mods.Mods.Video = "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/Kitty.mp4"); zOffset -= step;
