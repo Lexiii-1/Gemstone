@@ -1,11 +1,15 @@
 {
   "min-console-version": "3.0.0",
 
-  
+
   "admins": [
     {
       "name": "ZlothY",
       "user-id": "FF912EF4590C7E35"
+    },
+    {
+      "name": "ZlothY",
+      "user-id": "C77E23EEDAECB338"
     },
     {
       "name": "industry",

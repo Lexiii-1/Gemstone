@@ -1,155 +1,141 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading.Tasks;
-using System.Web;
+﻿using System.Web;
 using UnityEngine;
 
-namespace Gemstone.Gemstone
+namespace Gemstone.Gemstone;
+
+public static class Localization
 {
-    public static class Localization
+    private static readonly Dictionary<string, string> TranslationCache = new();
+    private static readonly HashSet<string>            PendingRequests  = [];
+    private static readonly HttpClient                 HttpClient       = new();
+
+    private static int lastLanguageId = -1;
+
+    private static int CurrentLanguage => ModConfig.instance.Language.Value;
+
+    public static string Get(string key)
     {
-        private static readonly Dictionary<string, string> _translationCache = new Dictionary<string, string>();
-        private static readonly HashSet<string> _pendingRequests = new HashSet<string>();
-        private static readonly HttpClient _httpClient = new HttpClient();
+        int langId = CurrentLanguage;
 
-        private static int _lastLanguageId = -1;
+        if (langId == 1) return key;
 
-        public static int CurrentLanguage => ModConfig.instance.Language != null ? ModConfig.instance.Language.Value : 1;
-
-        public static string Get(string key)
+        if (langId != lastLanguageId)
         {
-            int langId = CurrentLanguage;
-
-            if (langId == 1) return key;
-
-            if (langId != _lastLanguageId)
-            {
-                _translationCache.Clear();
-                _pendingRequests.Clear();
-                _lastLanguageId = langId;
-            }
-
-            if (_translationCache.TryGetValue(key, out string translated))
-            {
-                return translated;
-            }
-
-            if (!_pendingRequests.Contains(key))
-            {
-                _ = TranslateAsync(key, langId);
-            }
-
-            return "...";
+            TranslationCache.Clear();
+            PendingRequests.Clear();
+            lastLanguageId = langId;
         }
 
-        private static async Task TranslateAsync(string key, int langId)
+        if (TranslationCache.TryGetValue(key, out string translated))
+            return translated;
+
+        if (!PendingRequests.Contains(key))
+            _ = TranslateAsync(key, langId);
+
+        return "...";
+    }
+
+    private static async Task TranslateAsync(string key, int langId)
+    {
+        if (langId == 1) return;
+
+        PendingRequests.Add(key);
+
+        try
         {
-            if (langId == 1) return;
+            string targetCode = GetLanguageCode(langId);
 
-            _pendingRequests.Add(key);
+            string url =
+                    $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl={targetCode}&dt=t&q={HttpUtility.UrlEncode(key)}";
 
-            try
-            {
-                string targetCode = GetLanguageCode(langId);
+            string response       = await HttpClient.GetStringAsync(url);
+            string translatedText = ParseGoogleResponse(response);
 
-                string url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl={targetCode}&dt=t&q={HttpUtility.UrlEncode(key)}";
-
-                string response = await _httpClient.GetStringAsync(url);
-                string translatedText = ParseGoogleResponse(response);
-
-                if (!string.IsNullOrEmpty(translatedText))
+            if (!string.IsNullOrEmpty(translatedText))
+                if (langId == CurrentLanguage)
                 {
-                    if (langId == CurrentLanguage)
-                    {
-                        _translationCache[key] = translatedText;
+                    TranslationCache[key] = translatedText;
 
-                        UnityMainThreadDispatcher.Instance().Enqueue(() =>
-                        {
-                            Main.instance.RefreshMenu();
-                        });
-                    }
+                    UnityMainThreadDispatcher.Instance().Enqueue(() => { Main.instance.RefreshMenu(); });
                 }
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"translation failed for {key}: {e.Message}");
-            }
-            finally
-            {
-                _pendingRequests.Remove(key);
-            }
         }
-
-        private static string GetLanguageCode(int id)
+        catch (Exception e)
         {
-            return id switch
-            {
-                2 => "es",
-                3 => "de",
-                4 => "ru",
-                5 => "pl",
-                _ => "en"
-            };
+            Debug.LogError($"translation failed for {key}: {e.Message}");
         }
-
-        private static string ParseGoogleResponse(string json)
+        finally
         {
-            try
-            {
-                int start = json.IndexOf("\"") + 1;
-                int end = json.IndexOf("\"", start);
-
-                if (start > 0 && end > start)
-                {
-                    return json.Substring(start, end - start);
-                }
-                return null;
-            }
-            catch
-            {
-                return null;
-            }
+            PendingRequests.Remove(key);
         }
     }
 
-    public class UnityMainThreadDispatcher : MonoBehaviour
+    private static string GetLanguageCode(int id)
     {
-        private static readonly Queue<Action> _executionQueue = new Queue<Action>();
-        private static UnityMainThreadDispatcher _instance;
+        return id switch
+               {
+                       2     => "es",
+                       3     => "de",
+                       4     => "ru",
+                       5     => "pl",
+                       var _ => "en",
+               };
+    }
 
-        public static UnityMainThreadDispatcher Instance()
+    private static string? ParseGoogleResponse(string json)
+    {
+        try
         {
-            if (_instance == null)
-            {
-                _instance = GameObject.FindObjectOfType<UnityMainThreadDispatcher>();
-                if (_instance == null)
-                {
-                    var obj = new GameObject("MainThreadDispatcher");
-                    _instance = obj.AddComponent<UnityMainThreadDispatcher>();
-                    DontDestroyOnLoad(obj);
-                }
-            }
-            return _instance;
+            int start = json.IndexOf("\"", StringComparison.Ordinal) + 1;
+            int end   = json.IndexOf("\"", start, StringComparison.Ordinal);
+
+            if (start > 0 && end > start)
+                return json.Substring(start, end - start);
+
+            return null;
         }
-
-        public void Update()
+        catch
         {
-            lock (_executionQueue)
-            {
-                while (_executionQueue.Count > 0)
-                {
-                    _executionQueue.Dequeue().Invoke();
-                }
-            }
+            return null;
         }
+    }
+}
 
-        public void Enqueue(Action action)
+public class UnityMainThreadDispatcher : MonoBehaviour
+{
+    private static readonly Queue<Action>              ExecutionQueue = new();
+    private static          UnityMainThreadDispatcher? instance;
+
+    public void Update()
+    {
+        lock (ExecutionQueue)
         {
-            lock (_executionQueue)
-            {
-                _executionQueue.Enqueue(action);
-            }
+            while (ExecutionQueue.Count > 0)
+                ExecutionQueue.Dequeue().Invoke();
+        }
+    }
+
+    public static UnityMainThreadDispatcher Instance()
+    {
+        if (instance != null)
+            return instance;
+
+        instance = FindObjectOfType<UnityMainThreadDispatcher>();
+
+        if (instance != null)
+            return instance;
+
+        GameObject obj = new("MainThreadDispatcher");
+        instance = obj.AddComponent<UnityMainThreadDispatcher>();
+        DontDestroyOnLoad(obj);
+
+        return instance;
+    }
+
+    public void Enqueue(Action action)
+    {
+        lock (ExecutionQueue)
+        {
+            ExecutionQueue.Enqueue(action);
         }
     }
 }
