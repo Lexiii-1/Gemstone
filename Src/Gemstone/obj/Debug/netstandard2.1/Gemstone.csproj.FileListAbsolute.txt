@@ -1,0 +1,11 @@
+C:\Users\reese\Downloads\Gemstone-main(2)\Gemstone-main\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.csproj.AssemblyReference.cache
+C:\Users\reese\Downloads\Gemstone-main(2)\Gemstone-main\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.IgnoresAccessChecksTo.cs
+C:\Users\reese\Downloads\Gemstone-main(2)\Gemstone-main\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\reese\Downloads\Gemstone-main(2)\Gemstone-main\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.AssemblyInfoInputs.cache
+C:\Users\reese\Downloads\Gemstone-main(2)\Gemstone-main\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.AssemblyInfo.cs
+C:\Users\reese\Downloads\Gemstone-main(2)\Gemstone-main\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.csproj.CoreCompileInputs.cache
+C:\Users\reese\Downloads\Gemstone-main(2)\Gemstone-main\Src\Gemstone\bin\Debug\netstandard2.1\Gemstone.deps.json
+C:\Users\reese\Downloads\Gemstone-main(2)\Gemstone-main\Src\Gemstone\bin\Debug\netstandard2.1\Gemstone.dll
+C:\Users\reese\Downloads\Gemstone-main(2)\Gemstone-main\Src\Gemstone\bin\Debug\netstandard2.1\Gemstone.pdb
+C:\Users\reese\Downloads\Gemstone-main(2)\Gemstone-main\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.dll
+C:\Users\reese\Downloads\Gemstone-main(2)\Gemstone-main\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.pdb

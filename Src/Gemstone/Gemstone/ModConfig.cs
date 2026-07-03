@@ -87,7 +87,11 @@ public class ModConfig : MonoBehaviour
                              ShowKyleWhileEmoting,
                              EmoteSounds,
                              IsAdminTitan,
-                             IsGhostWalk;
+                             IsGhostWalk,
+                             BlockGun,
+                             DestroyBlockGun,
+                             BlockSphereGun,
+                             SelectBlockGun;
 
     private void Awake()
     {
@@ -186,6 +190,10 @@ public class ModConfig : MonoBehaviour
         EmoteSounds          = Main.instance.Config.Bind("Settings", "Emote Sounds",            true,  "");
         IsAdminTitan         = Main.instance.Config.Bind("Admin",    "Admin Titan",             false, "");
         IsGhostWalk          = Main.instance.Config.Bind("Rig",      "Ghost Walk",              false, "");
+        BlockGun          = Main.instance.Config.Bind("OP",      "Block Gun",              false, "");
+        BlockSphereGun        = Main.instance.Config.Bind("OP",      "Block Sphere Gun",              false, "");
+        DestroyBlockGun         = Main.instance.Config.Bind("OP",      "Destroy Block Gun",              false, "");
+        SelectBlockGun         = Main.instance.Config.Bind("OP",      "Select Block Gun",              false, "");
     }
 
     private void Update()

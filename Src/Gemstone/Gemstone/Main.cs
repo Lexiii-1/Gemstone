@@ -76,11 +76,12 @@ public class Main : BaseUnityPlugin
 
     private void Start()
     {
+        Mods.Mods.FetchRemoteMOTD("https://raw.githubusercontent.com/Lexiii-1/Gemstone/refs/heads/main/LiveMSG");
         gameObject.AddComponent<GunLib>();
         gameObject.AddComponent<ModConfig>();
         gameObject.AddComponent<ModBackend>();
         gameObject.AddComponent<Cosmetx>();
-        gameObject.AddComponent<JoinNotifs>();
+        gameObject.AddComponent<InfoNotifs>();
         gameObject.AddComponent<Gui>();
         gameObject.AddComponent<ColoredBoards>();
         gameObject.AddComponent<EmoteManager>();
@@ -350,9 +351,10 @@ public class Main : BaseUnityPlugin
                                      : "0";
 
         Mods.Mods.UpdateMOTDText(
-                $"Welcome To Gemstone Version: {Constants.Version}!" +
-                (Constants.Debug ? "\n\n\n\n\n\n\n\nDEBUG BUILD" : ""),
-                $"Welcome to gemstone! This Menu Mas A Few Fun Mods Made Just For You!\n\n\nIf You Get Banned It Is Not I, The Developers Responsibility. \n\n\nCurrent Room: {roomName}\nPlayers: {playerCount}");
+
+$"Welcome To Gemstone Version: {Constants.Version}!" + (Constants.Debug ? "\n\n\n\n\n\n\n\nDEBUG BUILD" : ""),
+
+$"Welcome to gemstone! This Menu Mas A Few Fun Mods Made Just For You!\n\n\nIf You Get Banned It Is Not I, The Developers Responsibility. \n\n\nCurrent Room: {roomName}\nPlayers: {playerCount}\n\nLive Message: {Mods.Mods.remoteText}");
 
         if (globalClickCooldown > 0) globalClickCooldown -= Time.deltaTime;
         bool isButtonPressed                             = ControllerInputPoller.instance.leftControllerSecondaryButton;

@@ -102,7 +102,7 @@ public class NotiLib : MonoBehaviour
 
     private IEnumerator
             DestroyAfterTime(GameObject vrObj, GameObject pcObj,
-                             float      time) // Deez, I like changing the fucking time on this - Lexi
+                             float      time)
     {
         yield return new WaitForSeconds(time / 1000.0f);
 

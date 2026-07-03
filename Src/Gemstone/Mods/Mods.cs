@@ -1,14 +1,15 @@
-﻿using System.Collections;
-using System.Reflection;
-using BepInEx;
+﻿using BepInEx;
 using Gemstone.Gemstone;
 using Gemstone.patches;
 using GorillaGameModes;
 using GorillaLocomotion;
 using GorillaNetworking;
+using GorillaTagScripts;
 using Photon.Pun;
 using Photon.Realtime;
 using Photon.Voice.Unity;
+using System.Collections;
+using System.Reflection;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -177,7 +178,6 @@ public class Mods : MonoBehaviour
     private static bool wasButtonHeldLastFrame;
 
     private static Transform currentGrabbingHand;
-    // I hate this. I hate how this is split into multiple voids but it has to be.. For simplicity, of course! (I'm ass at programming.)
 
     public static readonly int  TransparentFX    = LayerMask.NameToLayer("TransparentFX");
     public static readonly int  IgnoreRaycast    = LayerMask.NameToLayer("Ignore Raycast");
@@ -3591,10 +3591,286 @@ public class Mods : MonoBehaviour
 
             data.TextComponent.text = $"<color={hexColor}>{photonNick}</color>\n<size=75%>FPS: {playerFps}</size>";
             data.TextComponent.font =
-                    VRRig.LocalRig.playerText1.font; // Im too lazy to just cache the font so fuck you.
+                    VRRig.LocalRig.playerText1.font;
         }
     }
 
+    // This is where my code is, and not what ZlothY fixed so yeah
+    public static float blockDelay;
+    public static float blockDebounce = 0.2f;
+    public static Vector3 ServerLeftHandPos;
+    public static Vector3 ServerSyncLeftHandPos;
+    public static void CreatePiece(
+        int pieceType,
+        Vector3 position,
+        Quaternion rotation,
+        int materialType,
+        bool zeroGravity,
+        object target = null,
+        bool overrideFreeze = false,
+        bool forceGravity = false,
+        Vector3? velocity = null,
+        Vector3? angVelocity = null,
+        bool ignoreCooldown = false,
+        int amount = 1)
+    {
+        ServerLeftHandPos = ServerLeftHandPos == Vector3.zero
+            ? ServerSyncLeftHandPos
+            : Vector3.Lerp(ServerLeftHandPos, VRRig.LocalRig.SanitizeVector3(ServerSyncLeftHandPos), VRRig.LocalRig.lerpValueBody);
+
+        BuilderTable.TryGetBuilderTableForZone(VRRig.LocalRig.zoneEntity.currentZone, out BuilderTable table);
+        if (table == null) return;
+
+        var networking = table.builderNetworking;
+        var localPlayer = PhotonNetwork.LocalPlayer;
+
+        for (int i = 0; i < amount; i++)
+        {
+            if (PhotonNetwork.IsMasterClient)
+            {
+                if (ignoreCooldown || Time.time > blockDelay)
+                {
+                    int pieceId = table.CreatePieceId();
+                    object[] args = { pieceType, pieceId, BitPackUtils.PackWorldPosForNetwork(position), BitPackUtils.PackQuaternionForNetwork(rotation), materialType, (byte)4, 1, localPlayer };
+
+                    if (target is RpcTarget rpcTarget) networking.photonView.RPC("PieceCreatedByShelfRPC", rpcTarget, args);
+                    else if (target is Player player) networking.photonView.RPC("PieceCreatedByShelfRPC", player, args);
+                    else networking.photonView.RPC("PieceCreatedByShelfRPC", RpcTarget.All, args);
+
+                    if ((!overrideFreeze && !zeroGravity) || forceGravity)
+                    {
+                        blockDelay = Time.time + 0.02f;
+
+                        object[] grabArgs = { networking.CreateLocalCommandId(), pieceId, true, BitPackUtils.PackHandPosRotForNetwork(Vector3.zero, Quaternion.identity), localPlayer };
+                        if (target is RpcTarget rpcG) networking.photonView.RPC("PieceGrabbedRPC", rpcG, grabArgs);
+                        else if (target is Player pG) networking.photonView.RPC("PieceGrabbedRPC", pG, grabArgs);
+                        else networking.photonView.RPC("PieceGrabbedRPC", RpcTarget.All, grabArgs);
+
+                        object[] dropArgs = { networking.CreateLocalCommandId(), pieceId, position, rotation, velocity ?? Vector3.zero, angVelocity ?? Vector3.zero, localPlayer };
+                        if (target is RpcTarget rpcD) networking.photonView.RPC("PieceDroppedRPC", rpcD, dropArgs);
+                        else if (target is Player pD) networking.photonView.RPC("PieceDroppedRPC", pD, dropArgs);
+                        else networking.photonView.RPC("PieceDroppedRPC", RpcTarget.All, dropArgs);
+                    }
+                }
+            }
+            else
+            {
+                if (ignoreCooldown || Time.time > blockDelay)
+                {
+                    blockDelay = Time.time + blockDebounce;
+
+                    var piece = UnityEngine.Object.FindObjectsOfType<BuilderPiece>()
+                        .Where(p => p.gameObject.activeInHierarchy && !p.isBuiltIntoTable && p.CanPlayerGrabPiece(localPlayer.ActorNumber, p.transform.position) && Vector3.Distance(p.transform.position, ServerLeftHandPos) < 2.5f)
+                        .OrderBy(p => p.pieceType == pieceType ? 0 : 1)
+                        .ThenBy(p => Vector3.Distance(p.transform.position, ServerLeftHandPos))
+                        .FirstOrDefault();
+
+                    if (piece != null)
+                    {
+                        if (Vector3.Distance(ServerLeftHandPos, position) > 2.5f)
+                            position = ServerLeftHandPos + (position - ServerLeftHandPos).normalized * 2.5f;
+
+                        networking.RequestGrabPiece(piece, true, Vector3.zero, Quaternion.identity);
+                        networking.RequestDropPiece(piece, position, rotation, velocity ?? Vector3.zero, angVelocity ?? Vector3.zero);
+                    }
+                }
+            }
+        }
+    }
+    private static BuilderTable GetBuilderTable()
+    {
+        BuilderTable.TryGetBuilderTableForZone(VRRig.LocalRig.zoneEntity.currentZone, out BuilderTable table);
+        return table;
+    }
+
+    public static void GrabPiece(BuilderPiece piece, bool isLefHand, Vector3 localPosition, Quaternion localRotation)
+    {
+        BuilderTableNetworking Networking = GetBuilderTable().builderNetworking;
+        if (NetworkSystem.Instance.IsMasterClient)
+        {
+            Networking.photonView.RPC("PieceGrabbedRPC", RpcTarget.All, Networking.CreateLocalCommandId(), piece.pieceId, isLefHand, BitPackUtils.PackHandPosRotForNetwork(localPosition, localRotation), PhotonNetwork.LocalPlayer);
+        }
+        else
+            Networking.RequestGrabPiece(piece, isLefHand, localPosition, localRotation);
+    }
+    public static void DropPiece(BuilderPiece piece, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angVelocity)
+    {
+        BuilderTableNetworking Networking = GetBuilderTable().builderNetworking;
+        if (NetworkSystem.Instance.IsMasterClient)
+        {
+            Networking.photonView.RPC("PieceDroppedRPC", RpcTarget.All, Networking.CreateLocalCommandId(), piece.pieceId, position, rotation, velocity, angVelocity, PhotonNetwork.LocalPlayer);
+        }
+        else
+            Networking.RequestDropPiece(piece, position, rotation, velocity, angVelocity);
+    }
+    public static void RequestRecyclePiece(BuilderPiece piece, bool playFX, int recyclerID)
+    {
+        if (piece.isBuiltIntoTable)
+            return;
+
+        BuilderTable table = GetBuilderTable();
+        BuilderTableNetworking Networking = table.builderNetworking;
+
+        if (NetworkSystem.Instance.IsMasterClient)
+        {
+            Networking.photonView.RPC("PieceDestroyedRPC", RpcTarget.All, piece.pieceId, BitPackUtils.PackWorldPosForNetwork(piece.transform.position), BitPackUtils.PackQuaternionForNetwork(piece.transform.rotation), playFX, (short)recyclerID);
+        }
+        else
+        {
+            if (Time.time > blockDelay)
+            {
+                blockDelay = Time.time + blockDebounce;
+                if (piece.CanPlayerGrabPiece(PhotonNetwork.LocalPlayer.ActorNumber, piece.transform.position) && Vector3.Distance(piece.transform.position, ServerLeftHandPos) < 2.5f)
+                {
+                    BuilderDropZone dropZone = table.dropZones
+                        .Where(zone => (int)zone.dropType >= 1)
+                        .Where(zone => Vector3.Distance(zone.transform.position, ServerLeftHandPos) < 2.5f)
+                        .OrderBy(zone => Vector3.Distance(zone.transform.position, ServerLeftHandPos))
+                        .FirstOrDefault() ?? null;
+
+                    Vector3 dropPosition = dropZone != null ? dropZone.transform.position : ServerLeftHandPos + Vector3.down * 2f;
+
+                    GrabPiece(piece, true, Vector3.zero, Quaternion.identity);
+                    DropPiece(piece, dropPosition, UnityEngine.Random.rotation, Vector3.down * 20f, Vector3.zero);
+                }
+            }
+        }
+    }
+
+    private static float _lastDestroyTime;
+
+    public static void DestroyBlockGun()
+    {
+        GunLib.LetGun();
+
+        if (GunLib.GunObject == null) return;
+
+        if (Time.time - _lastDestroyTime < 0.08f) return;
+
+        if (GunLib.Triggering)
+        {
+            Collider[] hits = Physics.OverlapSphere(GunLib.GunPos.position, 0.05f);
+
+            foreach (Collider hit in hits)
+            {
+                BuilderPiece piece = hit.GetComponentInParent<BuilderPiece>();
+
+                if (piece != null)
+                {
+                    _lastDestroyTime = Time.time;
+
+                    RequestRecyclePiece(piece, true, 2);
+                    RPCProtection();
+
+                    break;
+                }
+            }
+        }
+    }
+    public static void SelectBlockGun()
+    {
+        GunLib.LetGun();
+
+        if (GunLib.GunObject == null) return;
+
+        if (GunLib.Triggering)
+        {
+            Collider[] hits = Physics.OverlapSphere(GunLib.GunPos.position, 0.05f);
+
+            foreach (Collider hit in hits)
+            {
+                BuilderPiece piece = hit.GetComponentInParent<BuilderPiece>();
+
+                if (piece != null)
+                {
+                    pieceIdSet = piece.pieceType;
+
+                    break;
+                }
+            }
+        }
+    }
+    private static int pieceIdSet = -566818631;
+    public static void BlockGun()
+    {
+        GunLib.LetGun();
+        if (GunLib.Triggering)
+        {
+            CreatePiece(pieceIdSet, GunLib.GunObject.transform.position + Vector3.up * 0.2f, GunLib.GunObject.transform.rotation, 0, true);
+            RPCProtection();
+        }
+    }
+    private static int activeSpheres = 0;
+    private static bool hasTriggered = false;
+
+    public static void BlockSphereGun()
+    {
+        GunLib.LetGun();
+
+        if (GunLib.Triggering && !hasTriggered && activeSpheres < 5)
+        {
+            hasTriggered = true;
+            Main.instance.StartCoroutine(BuildSphereRoutine(GunLib.GunObject.transform.position));
+        }
+        else if (!GunLib.Triggering)
+        {
+            hasTriggered = false;
+        }
+    }
+
+    private static System.Collections.IEnumerator BuildSphereRoutine(Vector3 center)
+    {
+        activeSpheres++;
+
+        float duration = 30f;
+        float interval = 0.05f;
+        int totalBlocks = Mathf.FloorToInt(duration / interval);
+
+        Vector3 sphereCenter = center + Vector3.up * 1f;
+        float radius = 0.5f;
+
+        for (int i = 0; i < totalBlocks; i++)
+        {
+            float progress = (float)i / totalBlocks;
+            float phi = Mathf.Acos(1f - 2f * progress);
+            float theta = Mathf.PI * (1f + Mathf.Sqrt(5f)) * i;
+
+            Vector3 offset = new Vector3(
+                radius * Mathf.Sin(phi) * Mathf.Cos(theta),
+                radius * Mathf.Cos(phi),
+                radius * Mathf.Sin(phi) * Mathf.Sin(theta)
+            );
+
+            Vector3 spawnPosition = sphereCenter + offset;
+
+            Quaternion rotation = Quaternion.LookRotation(spawnPosition - sphereCenter);
+
+            CreatePiece(pieceIdSet, spawnPosition, rotation, 0, true);
+            RPCProtection();
+
+            yield return new WaitForSeconds(interval);
+        }
+
+        activeSpheres--;
+    }
+
+    public static string remoteText;
+    public static async Task FetchRemoteMOTD(string url)
+    {
+        try
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                remoteText = await client.GetStringAsync(url);
+            }
+        }
+        catch (Exception ex)
+        {
+            remoteText = "Could not load remote message.";
+            Debug.Log($"Error fetching MOTD: {ex.Message}");
+        }
+    }
+    //
     public static void DisableNametagsMod()
     {
         foreach (NametagData data in ActiveNametags.Values)

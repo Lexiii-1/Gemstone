@@ -276,9 +276,17 @@ public static class GemstoneMenuBackend
                                 -1f, true)),
                 Button("Stop All Emotes", EmoteManager.StopEmote)
         );
-
         AddCategory(
                 11,
+                "OP",
+                false,
+                Toggle(config.BlockGun, Mods.Mods.BlockGun, nameKey: "Block Gun"),
+                Toggle(config.BlockSphereGun, Mods.Mods.BlockSphereGun, nameKey: "Block Sphere Gun"),
+                Toggle(config.DestroyBlockGun, Mods.Mods.DestroyBlockGun, nameKey: "Destroy Block Gun"),
+                Toggle(config.SelectBlockGun, Mods.Mods.SelectBlockGun, nameKey: "Select Block Gun")
+        );
+        AddCategory(
+                12,
                 "Admin",
                 true,
                 Toggle(config.IsSilKick,       Mods.Mods.silkickgun, nameKey: "Silent Kick Gun"),

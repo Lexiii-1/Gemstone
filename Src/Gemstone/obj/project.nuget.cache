@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "6NW7JVKjUu0=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\reese\\Downloads\\Gemstone-main(2)\\Gemstone-main\\Src\\Gemstone\\Gemstone.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\reese\\.nuget\\packages\\bepinex.assemblypublicizer.msbuild\\0.4.2\\bepinex.assemblypublicizer.msbuild.0.4.2.nupkg.sha512"
+  ],
+  "logs": []
+}
