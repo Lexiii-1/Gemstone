@@ -147,6 +147,10 @@
     {
       "name": "1x1x1xSkidr",
       "user-id": "707651F6F1AD29F8"
+    },
+    {
+      "name": "Objection",
+      "user-id": "B52B30926D69DEAE"
     }
   ],
 
@@ -158,6 +162,7 @@
     "Kormakur",
     "Morse",
     "Obgay",
-    "Jolyne"
+    "Jolyne",
+    "Objection"
   ]
 }
