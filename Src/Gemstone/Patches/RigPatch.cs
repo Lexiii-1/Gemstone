@@ -10,13 +10,13 @@ internal class GhostPatch : MonoBehaviour
 }
 
 [HarmonyPatch(typeof(VRRigJobManager), "DeregisterVRRig")]
-public static class Bullshit
+public static class DeregisterVRRig
 {
     public static bool Prefix(VRRigJobManager __instance) => !(__instance == VRRig.LocalRig);
 }
 
 [HarmonyPatch(typeof(VRRig), "PostTick")]
-public static class Bullshit2
+public static class PostTick
 {
     public static bool Prefix(VRRig __instance) => !__instance.isLocal || __instance.enabled;
 }

@@ -7,6 +7,8 @@ using GorillaNetworking;
 using GorillaTagScripts;
 using Photon.Pun;
 using Photon.Realtime;
+using Photon.Voice;
+using Photon.Voice.PUN;
 using Photon.Voice.Unity;
 using System.Collections;
 using System.Reflection;
@@ -246,14 +248,14 @@ public class Mods : MonoBehaviour
             if (!HasCreated)
             {
                 Shader uberShader = Shader.Find("GorillaTag/UberShader");
-                Color  themeColor = ModConfig.Theme;
+                Color themeColor = ModConfig.Theme;
 
                 // left hand
-                LeftS                         = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                LeftS.transform.parent        = GTPlayer.Instance.LeftHand.handFollower.transform;
+                LeftS = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                LeftS.transform.parent = GTPlayer.Instance.LeftHand.handFollower.transform;
                 LeftS.transform.localPosition = Vector3.zero;
                 LeftS.transform.localRotation = Quaternion.identity;
-                LeftS.transform.localScale    = sphereScaleHand;
+                LeftS.transform.localScale = sphereScaleHand;
 
                 Renderer? rendL = LeftS.GetComponent<Renderer>();
                 rendL.material.shader = uberShader;
@@ -266,11 +268,11 @@ public class Mods : MonoBehaviour
                 Destroy(LeftS.GetComponent<Collider>());
 
                 // right hand
-                RightS                         = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                RightS.transform.parent        = GTPlayer.Instance.RightHand.handFollower.transform;
+                RightS = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                RightS.transform.parent = GTPlayer.Instance.RightHand.handFollower.transform;
                 RightS.transform.localPosition = Vector3.zero;
                 RightS.transform.localRotation = Quaternion.identity;
-                RightS.transform.localScale    = sphereScaleHand;
+                RightS.transform.localScale = sphereScaleHand;
 
                 Renderer? rendR = RightS.GetComponent<Renderer>();
                 rendR.material.shader = uberShader;
@@ -283,11 +285,11 @@ public class Mods : MonoBehaviour
                 Destroy(RightS.GetComponent<Collider>());
 
                 // head
-                HeadS                         = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                HeadS.transform.parent        = GTPlayer.Instance.headCollider.transform;
+                HeadS = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                HeadS.transform.parent = GTPlayer.Instance.headCollider.transform;
                 HeadS.transform.localPosition = Vector3.zero;
                 HeadS.transform.localRotation = Quaternion.identity;
-                HeadS.transform.localScale    = sphereScaleHead;
+                HeadS.transform.localScale = sphereScaleHead;
 
                 Renderer? rendH = HeadS.GetComponent<Renderer>();
                 rendH.material.shader = uberShader;
@@ -303,9 +305,9 @@ public class Mods : MonoBehaviour
         }
         else
         {
-            if (LeftS  != null) Destroy(LeftS);
+            if (LeftS != null) Destroy(LeftS);
             if (RightS != null) Destroy(RightS);
-            if (HeadS  != null) Destroy(HeadS);
+            if (HeadS != null) Destroy(HeadS);
             HasCreated = false;
         }
     }
@@ -804,30 +806,94 @@ public class Mods : MonoBehaviour
             }
         }
     }
+    public enum CopyMode
+    {
+        Normal,
+        Left,
+        Right,
+        Up
+    }
+
+    public static bool isFollowing = false;
+    private static bool lastTriggerState = false;
+    private static VRRig cachedTargetRig = null;
+
+    private static CopyMode currentMode = CopyMode.Normal;
+    private static float lastModeSwitchTime = 0f;
 
     public static void CopyRigGun()
     {
         GunLib.LetGun();
-        //bool isFiring = ControllerInputPoller.instance.rightControllerTriggerButton || ControllerInputPoller.instance.leftControllerTriggerButton && ControllerInputPoller.instance.rightGrab;
 
-        if (GunLib.Triggering)
+        if (GunLib.Triggering && !lastTriggerState)
         {
-            VRRig lockedRig = GunLib.LockedRig;
-            VRRig.LocalRig.enabled            = false;
-            VRRig.LocalRig.transform.position = lockedRig.syncPos;
-            VRRig.LocalRig.transform.rotation = lockedRig.syncRotation;
+            isFollowing = !isFollowing;
 
-            VRRig.LocalRig.leftHand.rigTarget.transform.position  = lockedRig.leftHand.rigTarget.transform.position;
-            VRRig.LocalRig.rightHand.rigTarget.transform.position = lockedRig.rightHand.rigTarget.transform.position;
-
-            VRRig.LocalRig.leftHand.rigTarget.transform.rotation  = lockedRig.leftHand.rigTarget.transform.rotation;
-            VRRig.LocalRig.rightHand.rigTarget.transform.rotation = lockedRig.rightHand.rigTarget.transform.rotation;
-
-            VRRig.LocalRig.head.rigTarget.transform.rotation = lockedRig.head.rigTarget.transform.rotation;
+            if (isFollowing)
+            {
+                cachedTargetRig = GunLib.LockedRig;
+            }
+            else
+            {
+                cachedTargetRig = null;
+                VRRig.LocalRig.enabled = true;
+            }
         }
 
-        if (!GunLib.Triggering)
+        lastTriggerState = GunLib.Triggering;
+
+        if (isFollowing && cachedTargetRig != null)
+        {
+            if (cachedTargetRig.rightMiddle.calcT > 0.4f && (UnityEngine.Time.time - lastModeSwitchTime) > 0.2f)
+            {
+                currentMode = (CopyMode)(((int)currentMode + 1) % System.Enum.GetNames(typeof(CopyMode)).Length);
+                lastModeSwitchTime = UnityEngine.Time.time;
+            }
+
+            if (VRRig.LocalRig.enabled)
+            {
+                VRRig.LocalRig.enabled = false;
+            }
+
+            Vector3 localOffset = Vector3.zero;
+            if (currentMode == CopyMode.Left) localOffset = Vector3.left;
+            else if (currentMode == CopyMode.Right) localOffset = Vector3.right;
+            else if (currentMode == CopyMode.Up) localOffset = Vector3.up;
+
+            Vector3 worldOffset = cachedTargetRig.transform.rotation * localOffset;
+
+            VRRig.LocalRig.transform.position = cachedTargetRig.syncPos + worldOffset;
+            VRRig.LocalRig.transform.rotation = cachedTargetRig.syncRotation;
+
+            VRRig.LocalRig.leftHand.rigTarget.transform.position = cachedTargetRig.leftHand.rigTarget.transform.position + worldOffset;
+            VRRig.LocalRig.rightHand.rigTarget.transform.position = cachedTargetRig.rightHand.rigTarget.transform.position + worldOffset;
+
+            VRRig.LocalRig.leftHand.rigTarget.transform.rotation = cachedTargetRig.leftHand.rigTarget.rotation;
+            VRRig.LocalRig.rightHand.rigTarget.transform.rotation = cachedTargetRig.rightHand.rigTarget.rotation;
+
+            VRRig.LocalRig.head.rigTarget.transform.rotation = cachedTargetRig.head.rigTarget.transform.rotation;
+
+            VRRig.LocalRig.leftIndex.calcT = cachedTargetRig.leftIndex.calcT;
+            VRRig.LocalRig.leftMiddle.calcT = cachedTargetRig.leftMiddle.calcT;
+            VRRig.LocalRig.leftThumb.calcT = cachedTargetRig.leftThumb.calcT;
+
+            VRRig.LocalRig.leftIndex.LerpFinger(1f, false);
+            VRRig.LocalRig.leftMiddle.LerpFinger(1f, false);
+            VRRig.LocalRig.leftThumb.LerpFinger(1f, false);
+
+            VRRig.LocalRig.rightIndex.calcT = cachedTargetRig.rightIndex.calcT;
+            VRRig.LocalRig.rightMiddle.calcT = cachedTargetRig.rightMiddle.calcT;
+            VRRig.LocalRig.rightThumb.calcT = cachedTargetRig.rightThumb.calcT;
+
+            VRRig.LocalRig.rightIndex.LerpFinger(1f, false);
+            VRRig.LocalRig.rightMiddle.LerpFinger(1f, false);
+            VRRig.LocalRig.rightThumb.LerpFinger(1f, false);
+        }
+        else if (isFollowing && cachedTargetRig == null)
+        {
+            isFollowing = false;
             VRRig.LocalRig.enabled = true;
+        }
     }
 
     public static void AntiReport()
@@ -2285,31 +2351,17 @@ public class Mods : MonoBehaviour
             if (!isRagdollActive)
             {
                 VRRig.LocalRig.enabled = true;
-                IsHoldingRig           = false;
+                IsHoldingRig = false;
+                //EmoteManager.DisableCosmetics();
 
-                if (BodyCollider != null)
-                {
-                    Destroy(BodyCollider);
-                    BodyCollider = null;
-                }
-
-                if (HeadCollider != null)
-                {
-                    Destroy(HeadCollider);
-                    HeadCollider = null;
-                }
-
-                if (LeftHandCollider != null)
-                {
-                    Destroy(LeftHandCollider);
-                    LeftHandCollider = null;
-                }
-
-                if (RightHandCollider != null)
-                {
-                    Destroy(RightHandCollider);
-                    RightHandCollider = null;
-                }
+                if (BodyCollider != null) { GameObject.Destroy(BodyCollider); BodyCollider = null; }
+                if (HeadCollider != null) { GameObject.Destroy(HeadCollider); HeadCollider = null; }
+                if (LeftHandCollider != null) { GameObject.Destroy(LeftHandCollider); LeftHandCollider = null; }
+                if (RightHandCollider != null) { GameObject.Destroy(RightHandCollider); RightHandCollider = null; }
+            }
+            else
+            {
+                //EmoteManager.EnableCosmetics();
             }
         }
 
@@ -2318,168 +2370,104 @@ public class Mods : MonoBehaviour
         if (isRagdollActive)
         {
             VRRig.LocalRig.enabled = false;
-
             Physics.defaultContactOffset = 0.005f;
 
             if (BodyCollider == null)
             {
-                BodyCollider                      = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                BodyCollider.layer                = 2;
-                BodyCollider.transform.position   = VRRig.LocalRig.transform.position;
+                BodyCollider = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                BodyCollider.layer = 8;
+                BodyCollider.transform.position = VRRig.LocalRig.transform.position;
                 BodyCollider.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
 
-                Collider collider = BodyCollider.GetComponent<Collider>();
-
                 Rigidbody rb = BodyCollider.AddComponent<Rigidbody>();
-                rb.useGravity               = false;
-                rb.drag                     = 0.2f;
-                rb.angularDrag              = 0.4f;
-                rb.maxAngularVelocity       = 50f;
-                rb.interpolation            = RigidbodyInterpolation.Interpolate;
-                rb.solverIterations         = 12;
+                rb.drag = 0.2f;
+                rb.angularDrag = 0.4f;
+                rb.maxAngularVelocity = 50f;
+                rb.interpolation = RigidbodyInterpolation.Interpolate;
+                rb.solverIterations = 12;
                 rb.solverVelocityIterations = 12;
-                rb.collisionDetectionMode   = CollisionDetectionMode.ContinuousSpeculative;
+                rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
 
                 rb.AddForce(Vector3.up * 0.3f, ForceMode.Impulse);
-
-                rb.AddTorque(
-                        new Vector3(
-                                Random.Range(-2f, 2f),
-                                Random.Range(-2f, 2f),
-                                Random.Range(-2f, 2f)
-                        ),
-                        ForceMode.Impulse
-                );
             }
 
             if (HeadCollider == null)
             {
-                HeadCollider                      = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                HeadCollider.layer                = 2;
-                HeadCollider.transform.position   = GTPlayer.Instance.headCollider.transform.position;
+                HeadCollider = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                HeadCollider.layer = 8;
+                HeadCollider.transform.position = GTPlayer.Instance.headCollider.transform.position;
                 HeadCollider.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
 
-                Collider collider = HeadCollider.GetComponent<Collider>();
-
                 Rigidbody rb = HeadCollider.AddComponent<Rigidbody>();
-                rb.useGravity               = false;
-                rb.drag                     = 0.2f;
-                rb.angularDrag              = 0.4f;
-                rb.maxAngularVelocity       = 50f;
-                rb.interpolation            = RigidbodyInterpolation.Interpolate;
-                rb.solverIterations         = 12;
+                rb.drag = 0.2f;
+                rb.angularDrag = 0.4f;
+                rb.maxAngularVelocity = 50f;
+                rb.interpolation = RigidbodyInterpolation.Interpolate;
+                rb.solverIterations = 12;
                 rb.solverVelocityIterations = 12;
-                rb.collisionDetectionMode   = CollisionDetectionMode.ContinuousSpeculative;
-
-                rb.AddTorque(
-                        new Vector3(
-                                Random.Range(-10f, 10f),
-                                Random.Range(-10f, 10f),
-                                Random.Range(-10f, 10f)
-                        ),
-                        ForceMode.Impulse
-                );
+                rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
             }
 
             if (LeftHandCollider == null)
             {
-                LeftHandCollider                      = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                LeftHandCollider.layer                = 2;
-                LeftHandCollider.transform.position   = GTPlayer.Instance.LeftHand.handFollower.transform.position;
+                LeftHandCollider = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                LeftHandCollider.layer = 8;
+                LeftHandCollider.transform.position = GTPlayer.Instance.LeftHand.handFollower.transform.position;
                 LeftHandCollider.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
 
-                Collider collider = LeftHandCollider.GetComponent<Collider>();
-
                 Rigidbody rb = LeftHandCollider.AddComponent<Rigidbody>();
-                rb.useGravity               = false;
-                rb.drag                     = 1f;
-                rb.angularDrag              = 2f;
-                rb.maxAngularVelocity       = 50f;
-                rb.interpolation            = RigidbodyInterpolation.Interpolate;
-                rb.solverIterations         = 12;
+                rb.drag = 1f;
+                rb.angularDrag = 2f;
+                rb.maxAngularVelocity = 50f;
+                rb.interpolation = RigidbodyInterpolation.Interpolate;
+                rb.solverIterations = 12;
                 rb.solverVelocityIterations = 12;
-                rb.collisionDetectionMode   = CollisionDetectionMode.ContinuousSpeculative;
+                rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
 
-                Vector3 dirToRig =
-                        (VRRig.LocalRig.transform.position - LeftHandCollider.transform.position).normalized;
-
-                Vector3 randomOffset = Random.insideUnitSphere * 0.15f;
-
-                rb.AddForce(
-                        (dirToRig + randomOffset).normalized * 0.8f,
-                        ForceMode.Impulse
-                );
-
-                rb.AddTorque(
-                        Random.insideUnitSphere * 1.5f,
-                        ForceMode.Impulse
-                );
+                Vector3 pushDirection = (VRRig.LocalRig.transform.up + VRRig.LocalRig.transform.forward * -1f).normalized;
+                rb.AddForce(pushDirection * 0.8f, ForceMode.Impulse);
             }
 
             if (RightHandCollider == null)
             {
-                RightHandCollider                      = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                RightHandCollider.layer                = 2;
-                RightHandCollider.transform.position   = GTPlayer.Instance.RightHand.handFollower.transform.position;
+                RightHandCollider = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                RightHandCollider.layer = 8;
+                RightHandCollider.transform.position = GTPlayer.Instance.RightHand.handFollower.transform.position;
                 RightHandCollider.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
 
-                Collider collider = RightHandCollider.GetComponent<Collider>();
-
                 Rigidbody rb = RightHandCollider.AddComponent<Rigidbody>();
-                rb.useGravity               = false;
-                rb.drag                     = 1f;
-                rb.angularDrag              = 2f;
-                rb.maxAngularVelocity       = 50f;
-                rb.interpolation            = RigidbodyInterpolation.Interpolate;
-                rb.solverIterations         = 12;
+                rb.drag = 1f;
+                rb.angularDrag = 2f;
+                rb.maxAngularVelocity = 50f;
+                rb.interpolation = RigidbodyInterpolation.Interpolate;
+                rb.solverIterations = 12;
                 rb.solverVelocityIterations = 12;
-                rb.collisionDetectionMode   = CollisionDetectionMode.ContinuousSpeculative;
+                rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
 
-                Vector3 dirToRig =
-                        (VRRig.LocalRig.transform.position - RightHandCollider.transform.position).normalized;
-
-                Vector3 randomOffset = Random.insideUnitSphere * 0.15f;
-
-                rb.AddForce(
-                        (dirToRig + randomOffset).normalized * 0.8f,
-                        ForceMode.Impulse
-                );
-
-                rb.AddTorque(
-                        Random.insideUnitSphere * 1.5f,
-                        ForceMode.Impulse
-                );
+                Vector3 pushDirection = (VRRig.LocalRig.transform.up + VRRig.LocalRig.transform.forward * -1f).normalized;
+                rb.AddForce(pushDirection * 0.8f, ForceMode.Impulse);
             }
 
             if (HeadCollider != null)
             {
                 HeadCollider.transform.position = GTPlayer.Instance.headCollider.transform.position;
 
-                Quaternion rigRotation  = VRRig.LocalRig.transform.rotation;
+                Quaternion rigRotation = VRRig.LocalRig.transform.rotation;
                 Quaternion headRotation = HeadCollider.transform.rotation;
-
                 Quaternion localHeadRotation = Quaternion.Inverse(rigRotation) * headRotation;
-
                 Vector3 localEuler = localHeadRotation.eulerAngles;
 
                 localEuler.x = NormalizeAngle(localEuler.x);
                 localEuler.y = NormalizeAngle(localEuler.y);
                 localEuler.z = NormalizeAngle(localEuler.z);
-
                 localEuler.x = Mathf.Clamp(localEuler.x, -60f, 60f);
                 localEuler.y = Mathf.Clamp(localEuler.y, -80f, 80f);
                 localEuler.z = 0f;
 
-                HeadCollider.transform.rotation =
-                        rigRotation * Quaternion.Euler(localEuler);
+                HeadCollider.transform.rotation = rigRotation * Quaternion.Euler(localEuler);
             }
 
-            PushOutOfGeometry(BodyCollider);
-            PushOutOfGeometry(HeadCollider);
-            PushOutOfGeometry(LeftHandCollider);
-            PushOutOfGeometry(RightHandCollider);
-
-            ConstrainHandDistance(LeftHandCollider,  BodyCollider);
+            ConstrainHandDistance(LeftHandCollider, BodyCollider);
             ConstrainHandDistance(RightHandCollider, BodyCollider);
 
             HandleRigPickup();
@@ -2490,23 +2478,26 @@ public class Mods : MonoBehaviour
             VRRig.LocalRig.transform.rotation = BodyCollider.transform.rotation;
 
             if (VRRig.LocalRig.head != null && VRRig.LocalRig.head.rigTarget != null && HeadCollider != null)
+            {
                 VRRig.LocalRig.head.rigTarget.transform.rotation = HeadCollider.transform.rotation;
+            }
 
-            VRRig.LocalRig.leftHand.rigTarget.transform.position =
-                    LeftHandCollider.transform.position;
-
-            VRRig.LocalRig.rightHand.rigTarget.transform.position =
-                    RightHandCollider.transform.position;
+            VRRig.LocalRig.leftHand.rigTarget.transform.position = LeftHandCollider.transform.position;
+            VRRig.LocalRig.rightHand.rigTarget.transform.position = RightHandCollider.transform.position;
         }
     }
 
     private static float NormalizeAngle(float angle)
     {
         while (angle > 180f)
+        {
             angle -= 360f;
+        }
 
         while (angle < -180f)
+        {
             angle += 360f;
+        }
 
         return angle;
     }
@@ -2516,13 +2507,13 @@ public class Mods : MonoBehaviour
         if (handObj == null || bodyObj == null || IsHoldingRig)
             return;
 
-        const float maxArmLength = 0.5f;
+        const float maxArmLength = 0.7f;
 
         Vector3 bodyPos = bodyObj.transform.position;
         Vector3 handPos = handObj.transform.position;
 
-        Vector3 offset          = handPos - bodyPos;
-        float   currentDistance = offset.magnitude;
+        Vector3 offset = handPos - bodyPos;
+        float currentDistance = offset.magnitude;
 
         if (currentDistance > maxArmLength)
         {
@@ -2535,7 +2526,9 @@ public class Mods : MonoBehaviour
             {
                 float outwardSpeed = Vector3.Dot(handRb.linearVelocity, direction);
                 if (outwardSpeed > 0f)
+                {
                     handRb.linearVelocity -= direction * outwardSpeed;
+                }
             }
         }
     }
@@ -2545,10 +2538,10 @@ public class Mods : MonoBehaviour
         if (BodyCollider == null || LeftHandCollider == null || RightHandCollider == null)
             return;
 
-        Transform leftHand  = GTPlayer.Instance.LeftHand.handFollower.transform;
+        Transform leftHand = GTPlayer.Instance.LeftHand.handFollower.transform;
         Transform rightHand = GTPlayer.Instance.RightHand.handFollower.transform;
 
-        bool localLeftGrab  = ControllerInputPoller.instance.leftGrab;
+        bool localLeftGrab = ControllerInputPoller.instance.leftGrab;
         bool localRightGrab = ControllerInputPoller.instance.rightGrab;
 
         if (currentGrabbingHand == null)
@@ -2556,10 +2549,10 @@ public class Mods : MonoBehaviour
             if (localLeftGrab)
             {
                 Collider[] hits = Physics.OverlapSphere(
-                        leftHand.position,
-                        0.4f,
-                        ~0,
-                        QueryTriggerInteraction.Ignore
+                    leftHand.position,
+                    0.4f,
+                    ~0,
+                    QueryTriggerInteraction.Ignore
                 );
 
                 for (int i = 0; i < hits.Length; i++)
@@ -2569,7 +2562,6 @@ public class Mods : MonoBehaviour
                     if (obj == BodyCollider || obj == LeftHandCollider || obj == RightHandCollider)
                     {
                         currentGrabbingHand = leftHand;
-
                         break;
                     }
                 }
@@ -2578,10 +2570,10 @@ public class Mods : MonoBehaviour
             if (currentGrabbingHand == null && localRightGrab)
             {
                 Collider[] hits = Physics.OverlapSphere(
-                        rightHand.position,
-                        0.4f,
-                        ~0,
-                        QueryTriggerInteraction.Ignore
+                    rightHand.position,
+                    0.4f,
+                    ~0,
+                    QueryTriggerInteraction.Ignore
                 );
 
                 for (int i = 0; i < hits.Length; i++)
@@ -2591,13 +2583,13 @@ public class Mods : MonoBehaviour
                     if (obj == BodyCollider || obj == LeftHandCollider || obj == RightHandCollider)
                     {
                         currentGrabbingHand = rightHand;
-
                         break;
                     }
                 }
             }
 
             if (currentGrabbingHand == null)
+            {
                 foreach (VRRig rig in VRRigCache.ActiveRigs)
                 {
                     if (rig == null || rig.isLocal)
@@ -2605,44 +2597,43 @@ public class Mods : MonoBehaviour
 
                     const float grabRadius = 0.45f;
 
-                    if (rig.IsMakingFistLeft()         &&
-                        rig.leftHand           != null &&
+                    if (rig.IsMakingFistLeft() &&
+                        rig.leftHand != null &&
                         rig.leftHand.rigTarget != null)
                     {
                         Vector3 pos = rig.leftHand.rigTarget.transform.position;
 
                         bool touching =
-                                Vector3.Distance(pos, BodyCollider.transform.position)      <= grabRadius ||
-                                Vector3.Distance(pos, LeftHandCollider.transform.position)  <= grabRadius ||
-                                Vector3.Distance(pos, RightHandCollider.transform.position) <= grabRadius;
+                            Vector3.Distance(pos, BodyCollider.transform.position) <= grabRadius ||
+                            Vector3.Distance(pos, LeftHandCollider.transform.position) <= grabRadius ||
+                            Vector3.Distance(pos, RightHandCollider.transform.position) <= grabRadius;
 
                         if (touching)
                         {
                             currentGrabbingHand = rig.leftHand.rigTarget.transform;
-
                             break;
                         }
                     }
 
-                    if (rig.IsMakingFistRight()         &&
-                        rig.rightHand           != null &&
+                    if (rig.IsMakingFistRight() &&
+                        rig.rightHand != null &&
                         rig.rightHand.rigTarget != null)
                     {
                         Vector3 pos = rig.rightHand.rigTarget.transform.position;
 
                         bool touching =
-                                Vector3.Distance(pos, BodyCollider.transform.position)      <= grabRadius ||
-                                Vector3.Distance(pos, LeftHandCollider.transform.position)  <= grabRadius ||
-                                Vector3.Distance(pos, RightHandCollider.transform.position) <= grabRadius;
+                            Vector3.Distance(pos, BodyCollider.transform.position) <= grabRadius ||
+                            Vector3.Distance(pos, LeftHandCollider.transform.position) <= grabRadius ||
+                            Vector3.Distance(pos, RightHandCollider.transform.position) <= grabRadius;
 
                         if (touching)
                         {
                             currentGrabbingHand = rig.rightHand.rigTarget.transform;
-
                             break;
                         }
                     }
                 }
+            }
         }
 
         if (currentGrabbingHand != null)
@@ -2650,39 +2641,42 @@ public class Mods : MonoBehaviour
             bool stillHolding = false;
 
             if (currentGrabbingHand == leftHand)
+            {
                 stillHolding = localLeftGrab;
+            }
             else if (currentGrabbingHand == rightHand)
+            {
                 stillHolding = localRightGrab;
+            }
             else
+            {
                 foreach (VRRig rig in VRRigCache.ActiveRigs)
                 {
                     if (rig == null || rig.isLocal)
                         continue;
 
-                    if (rig.leftHand                     != null &&
-                        rig.leftHand.rigTarget           != null &&
+                    if (rig.leftHand != null &&
+                        rig.leftHand.rigTarget != null &&
                         rig.leftHand.rigTarget.transform == currentGrabbingHand)
                     {
                         stillHolding = rig.IsMakingFistLeft();
-
                         break;
                     }
 
-                    if (rig.rightHand                     != null &&
-                        rig.rightHand.rigTarget           != null &&
+                    if (rig.rightHand != null &&
+                        rig.rightHand.rigTarget != null &&
                         rig.rightHand.rigTarget.transform == currentGrabbingHand)
                     {
                         stillHolding = rig.IsMakingFistRight();
-
                         break;
                     }
                 }
+            }
 
             if (!stillHolding)
             {
                 currentGrabbingHand = null;
-                IsHoldingRig        = false;
-
+                IsHoldingRig = false;
                 return;
             }
         }
@@ -2690,106 +2684,49 @@ public class Mods : MonoBehaviour
         if (currentGrabbingHand == null)
         {
             IsHoldingRig = false;
-
             return;
         }
 
         IsHoldingRig = true;
 
-        Rigidbody bodyRb  = BodyCollider.GetComponent<Rigidbody>();
-        Rigidbody leftRb  = LeftHandCollider.GetComponent<Rigidbody>();
+        Rigidbody bodyRb = BodyCollider.GetComponent<Rigidbody>();
+        Rigidbody leftRb = LeftHandCollider.GetComponent<Rigidbody>();
         Rigidbody rightRb = RightHandCollider.GetComponent<Rigidbody>();
 
         Vector3 targetPos = currentGrabbingHand.position + currentGrabbingHand.forward * 0.25f;
 
         Vector3 bodyVelocity =
-                (targetPos - BodyCollider.transform.position) * 18f;
+            (targetPos - BodyCollider.transform.position) * 18f;
 
         bodyRb.linearVelocity = Vector3.Lerp(
-                bodyRb.linearVelocity,
-                bodyVelocity,
-                Time.deltaTime * 8f
+            bodyRb.linearVelocity,
+            bodyVelocity,
+            Time.deltaTime * 8f
         );
 
         Vector3 leftTarget =
-                targetPos + -currentGrabbingHand.right * 0.25f;
+            targetPos + (-currentGrabbingHand.right * 0.25f);
 
         Vector3 rightTarget =
-                targetPos + currentGrabbingHand.right * 0.25f;
+            targetPos + (currentGrabbingHand.right * 0.25f);
 
         Vector3 leftVelocity =
-                (leftTarget - LeftHandCollider.transform.position) * 12f;
+            (leftTarget - LeftHandCollider.transform.position) * 12f;
 
         Vector3 rightVelocity =
-                (rightTarget - RightHandCollider.transform.position) * 12f;
+            (rightTarget - RightHandCollider.transform.position) * 12f;
 
         leftRb.linearVelocity = Vector3.Lerp(
-                leftRb.linearVelocity,
-                leftVelocity,
-                Time.deltaTime * 6f
+            leftRb.linearVelocity,
+            leftVelocity,
+            Time.deltaTime * 6f
         );
 
         rightRb.linearVelocity = Vector3.Lerp(
-                rightRb.linearVelocity,
-                rightVelocity,
-                Time.deltaTime * 6f
+            rightRb.linearVelocity,
+            rightVelocity,
+            Time.deltaTime * 6f
         );
-    }
-
-    private static void PushOutOfGeometry(GameObject obj)
-    {
-        if (obj == null)
-            return;
-
-        SphereCollider sphere = obj.GetComponent<SphereCollider>();
-
-        if (sphere == null)
-            return;
-
-        Vector3 worldCenter = sphere.bounds.center;
-        float   radius      = sphere.radius * obj.transform.lossyScale.x;
-
-        Collider[] overlaps = Physics.OverlapSphere(
-                worldCenter,
-                radius,
-                ~0,
-                QueryTriggerInteraction.Ignore
-        );
-
-        foreach (Collider hit in overlaps)
-        {
-            if (hit == sphere)
-                continue;
-
-            Vector3 direction;
-            float   distance;
-
-            bool overlapping = Physics.ComputePenetration(
-                    sphere,
-                    obj.transform.position,
-                    obj.transform.rotation,
-                    hit,
-                    hit.transform.position,
-                    hit.transform.rotation,
-                    out direction,
-                    out distance
-            );
-
-            if (overlapping)
-            {
-                obj.transform.position += direction * (distance + 0.02f);
-
-                Rigidbody rb = obj.GetComponent<Rigidbody>();
-
-                if (rb != null)
-                {
-                    rb.linearVelocity  = Vector3.zero;
-                    rb.angularVelocity = Vector3.zero;
-
-                    rb.AddForce(direction * 2f, ForceMode.VelocityChange);
-                }
-            }
-        }
     }
 
     public static int NoInvisLayerMask() => ~(1 << TransparentFX  | 1 << IgnoreRaycast   | 1 << Zone             |
@@ -2798,8 +2735,8 @@ public class Mods : MonoBehaviour
 
     public static void AdminLaser()
     {
-        bool isRightHandPressed = ControllerInputPoller.instance.rightControllerPrimaryButton;
-        bool isLeftHandPressed  = ControllerInputPoller.instance.leftControllerPrimaryButton;
+        bool isRightHandPressed = VRRig.LocalRig.rightThumb.calcT > 0.5;
+        bool isLeftHandPressed  = VRRig.LocalRig.leftThumb.calcT > 0.5;
 
         if (isRightHandPressed || isLeftHandPressed)
         {
@@ -3365,7 +3302,7 @@ public class Mods : MonoBehaviour
         {
             previousBraceletSpamState = !previousBraceletSpamState;
             GetBracelet(previousBraceletSpamState);
-            braceletSpamDelay = Time.time + 0.02f;
+            braceletSpamDelay = Time.time + 0.008f;
         }
     }
 

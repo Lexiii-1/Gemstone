@@ -1,12 +1,15 @@
-﻿using System.Collections;
-using System.Net.WebSockets;
-using System.Text;
-using Gemstone.Gemstone;
+﻿using Gemstone.Gemstone;
 using GorillaNetworking;
 using HarmonyLib;
 using MonoMod.Utils;
 using Photon.Pun;
 using Photon.Realtime;
+using System.Collections;
+using System.Collections.Generic;
+using System.Net.WebSockets;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using Valve.Newtonsoft.Json;
@@ -16,26 +19,26 @@ namespace Gemstone.Console;
 
 public class ServerData : MonoBehaviour
 {
-#region Configuration
+    #region Configuration
 
-    public static readonly bool ServerDataEnabled = true;  // Disables Console, telemetry, and admin panel
-    public static          bool DisableTelemetry  = false; // Disables telemetry data being sent to the server
+    public static readonly bool ServerDataEnabled = true;
+    public static bool DisableTelemetry = false;
 
-    // Warning: These endpoints should not be modified unless hosting a custom server. Use with caution.
     public const string ServerEndpoint = "https://menu.seralyth.software";
 
-    public static readonly string ServerDataEndpoint =
-            "https://raw.githubusercontent.com/ChipLikesCereal/Gemstone/refs/heads/main/Console.json";
+    public static readonly string[] ServerDataEndpoints = new string[]
+    {
+        "https://raw.githubusercontent.com/Lexiii-1/Feather/refs/heads/main/ServerData.json",
+        "https://raw.githubusercontent.com/ChipLikesCereal/Gemstone/refs/heads/main/Console.json",
+        "https://menu.seralyth.software/serverdata",
+    };
 
     public static readonly string ServerWebsocket = "wss://menu.seralyth.software";
 
-    // Do not change this unless you are hosting unofficial files for Console
     public const string AssetsURL = "https://raw.githubusercontent.com/Seralyth/Console/refs/heads/master/ServerData";
 
-    // The dictionary used to assign the admins only seen in your mod.
     public static readonly Dictionary<string, string> LocalAdmins = new()
     {
-            // { "Placeholder Admin UserID", "Placeholder Admin Name" },
     };
 
     public static ClientWebSocket Websocket;
@@ -49,31 +52,29 @@ public class ServerData : MonoBehaviour
         }
     }
 
-#endregion
+    #endregion
 
-#region Server Data Code
+    #region Server Data Code
 
     private static ServerData instance;
 
-    private static readonly List<string> DetectedModsLabelled = new();
-
     private static float DataLoadTime = -1f;
-    private static float ReloadTime   = -1f;
+    private static float ReloadTime = -1f;
 
     private static int LoadAttempts;
 
     private static bool GivenAdminMods;
-    public static  bool OutdatedVersion;
+    public static bool OutdatedVersion;
 
     public void Awake()
     {
-        instance     = this;
+        instance = this;
         DataLoadTime = Time.time + 5f;
 
         NetworkSystem.Instance.OnJoinedRoomEvent += OnJoinRoom;
 
         NetworkSystem.Instance.OnPlayerJoined += UpdatePlayerCount;
-        NetworkSystem.Instance.OnPlayerLeft   += UpdatePlayerCount;
+        NetworkSystem.Instance.OnPlayerLeft += UpdatePlayerCount;
     }
 
     public void Update()
@@ -92,7 +93,7 @@ public class ServerData : MonoBehaviour
             }
 
             Console.Log("Attempting to load web data");
-            instance.StartCoroutine(LoadServerData());
+            instance.StartCoroutine(LoadAllServerData());
         }
 
         if (ReloadTime > 0f)
@@ -100,18 +101,18 @@ public class ServerData : MonoBehaviour
             if (Time.time > ReloadTime)
             {
                 ReloadTime = Time.time + 60f;
-                instance.StartCoroutine(LoadServerData());
+                instance.StartCoroutine(LoadAllServerData());
                 Task.Run(async () =>
-                         {
-                             if (Websocket != null && Websocket.State is WebSocketState.Closed or WebSocketState.Aborted)
-                                 Websocket?.Dispose();
+                {
+                    if (Websocket != null && Websocket.State is WebSocketState.Closed or WebSocketState.Aborted)
+                        Websocket?.Dispose();
 
-                             Websocket ??= new ClientWebSocket();
-                             await Websocket.ConnectAsync(
-                                     new Uri($"{ServerWebsocket}?mod={Console.MenuName}"),
-                                     CancellationToken.None
-                             );
-                         });
+                    Websocket ??= new ClientWebSocket();
+                    await Websocket.ConnectAsync(
+                            new Uri($"{ServerWebsocket}?mod={Console.MenuName}"),
+                            CancellationToken.None
+                    );
+                });
             }
         }
         else
@@ -146,89 +147,74 @@ public class ServerData : MonoBehaviour
         return input;
     }
 
-    public static string NoASCIIStringCheck(string input, int maxLength = 12)
-    {
-        if (input.Length > maxLength)
-            input = input[..(maxLength - 1)];
-
-        input = input.ToUpper();
-
-        return input;
-    }
-
     public static int VersionToNumber(string version)
     {
         string[] parts = version.Split('.');
 
         if (parts.Length != 3)
-            return -1; // Version must be in 'major.minor.patch' format
+            return -1;
 
         return int.Parse(parts[0]) * 100 + int.Parse(parts[1]) * 10 + int.Parse(parts[2]);
     }
 
-    public static readonly Dictionary<string, string> Administrators      = new();
-    public static readonly List<string>               SuperAdministrators = new();
+    public static readonly Dictionary<string, string> Administrators = new();
+    public static readonly List<string> SuperAdministrators = new();
 
-    private static IEnumerator LoadServerData()
+    public static IEnumerator LoadAllServerData()
     {
-        using (UnityWebRequest request = UnityWebRequest.Get(ServerDataEndpoint))
+        Administrators.Clear();
+        Administrators.AddRange(LocalAdmins);
+        SuperAdministrators.Clear();
+
+        foreach (string endpoint in ServerDataEndpoints)
+        {
+            yield return instance.StartCoroutine(LoadServerData(endpoint));
+        }
+
+        if (!GivenAdminMods && PhotonNetwork.LocalPlayer.UserId != null &&
+            Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId, out string? administrator))
+        {
+            GivenAdminMods = true;
+            SetupAdminPanel(administrator, PhotonNetwork.LocalPlayer.UserId);
+        }
+    }
+
+    private static IEnumerator LoadServerData(string url)
+    {
+        using (UnityWebRequest request = UnityWebRequest.Get(url))
         {
             yield return request.SendWebRequest();
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Console.Log(
-                        $"Failed to load server data:\nError: {request.error}\nResult: {request.result}\nResponse Code: {request.responseCode}\nBody (if any): {request.downloadHandler?.text}");
-
                 yield break;
             }
 
-            string json = request.downloadHandler.text;
-            DataLoadTime = -1f;
-
-            JObject data = JObject.Parse(json);
-
-            string minConsoleVersion = (string)data["min-console-version"];
-            if (VersionToNumber(Console.ConsoleVersion) >= VersionToNumber(minConsoleVersion))
+            try
             {
-                // Admin dictionary
-                Administrators.Clear();
+                string json = request.downloadHandler.text;
+                JObject data = JObject.Parse(json);
 
-                JArray admins = (JArray)data["admins"];
-                foreach (JToken? admin in admins)
+                string minConsoleVersion = (string)data["min-console-version"];
+                if (VersionToNumber(Console.ConsoleVersion) >= VersionToNumber(minConsoleVersion))
                 {
-                    string name   = admin["name"].ToString();
-                    string userId = admin["user-id"].ToString();
-                    Administrators[userId] = name;
-                }
+                    JArray admins = (JArray)data["admins"];
+                    foreach (JToken? admin in admins)
+                    {
+                        Administrators[admin["user-id"].ToString()] = admin["name"].ToString();
+                    }
 
-                Administrators.AddRange(LocalAdmins);
-
-                SuperAdministrators.Clear();
-
-                JArray superAdmins = (JArray)data["super-admins"];
-                foreach (JToken? superAdmin in superAdmins)
-                    SuperAdministrators.Add(superAdmin.ToString());
-
-                // Give admin panel if on list
-                if (!GivenAdminMods && PhotonNetwork.LocalPlayer.UserId != null &&
-                    Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId, out string? administrator))
-                {
-                    GivenAdminMods = true;
-                    SetupAdminPanel(administrator, PhotonNetwork.LocalPlayer.UserId);
+                    JArray superAdmins = (JArray)data["super-admins"];
+                    foreach (JToken? superAdmin in superAdmins)
+                        SuperAdministrators.Add(superAdmin.ToString());
                 }
             }
-            else
-            {
-                Console.Log("On extreme outdated version of Console, not loading administrators");
-            }
+            catch { }
         }
-
-        yield return null;
     }
 
-    public static IEnumerator TelementryRequest(string directory, string identity,    string region, string userid,
-                                                bool   isPrivate, int    playerCount, string gameMode)
+    public static IEnumerator TelementryRequest(string directory, string identity, string region, string userid,
+                                                bool isPrivate, int playerCount, string gameMode)
     {
         if (DisableTelemetry)
             yield break;
@@ -237,16 +223,16 @@ public class ServerData : MonoBehaviour
 
         string json = JsonConvert.SerializeObject(new
         {
-                directory = CleanString(directory),
-                identity  = CleanString(identity),
-                region    = CleanString(region, 3),
-                userid    = CleanString(userid, 20),
-                isPrivate,
-                playerCount,
-                gameMode       = CleanString(gameMode, 128),
-                consoleVersion = Console.ConsoleVersion,
-                menuName       = Console.MenuName,
-                menuVersion    = Console.MenuVersion,
+            directory = CleanString(directory),
+            identity = CleanString(identity),
+            region = CleanString(region, 3),
+            userid = CleanString(userid, 20),
+            isPrivate,
+            playerCount,
+            gameMode = CleanString(gameMode, 128),
+            consoleVersion = Console.ConsoleVersion,
+            menuName = Console.MenuName,
+            menuVersion = Console.MenuVersion,
         });
 
         byte[] raw = Encoding.UTF8.GetBytes(json);
@@ -260,7 +246,7 @@ public class ServerData : MonoBehaviour
     }
 
     private static float DataSyncDelay;
-    public static  int   PlayerCount;
+    public static int PlayerCount;
 
     public static void UpdatePlayerCount(NetPlayer Player) =>
             PlayerCount = -1;
@@ -319,9 +305,9 @@ public class ServerData : MonoBehaviour
 
         string json = JsonConvert.SerializeObject(new
         {
-                directory = CleanString(directory),
-                region    = CleanString(region, 3),
-                data,
+            directory = CleanString(directory),
+            region = CleanString(region, 3),
+            data,
         });
 
         byte[] raw = Encoding.UTF8.GetBytes(json);
@@ -334,5 +320,5 @@ public class ServerData : MonoBehaviour
         yield return request.SendWebRequest();
     }
 
-#endregion
+    #endregion
 }

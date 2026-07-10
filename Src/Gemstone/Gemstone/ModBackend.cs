@@ -1,6 +1,7 @@
 using BepInEx.Configuration;
 using Gemstone.Mods.Cosmetx;
 using Gemstone.patches;
+using GorillaNetworking;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -80,7 +81,9 @@ public static class GemstoneMenuBackend
                 Button("Unmute All",     Mods.Mods.UnmuteAll),
                 Button("Ignore Far Tag", () => ExtremelyFarTagPatch.isDetected = false),
                 Toggle(config.MenuCustomPropertyEnabled, nameKey: "Show Menu Custom Property"),
-                Button("Get PID Self", Mods.Mods.GetPIDSelf)
+                Button("Get PID Self", Mods.Mods.GetPIDSelf),
+                Button("Join Code MOD", () => { PhotonNetworkController.Instance.AttemptToJoinSpecificRoom("MOD", JoinType.Solo); }),
+                Button("Join Code MODS", () => { PhotonNetworkController.Instance.AttemptToJoinSpecificRoom("MODS", JoinType.Solo); })
         );
 
         AddCategory(
@@ -167,13 +170,13 @@ public static class GemstoneMenuBackend
                 "Fun",
                 false,
                 Button("Unlock all cosmetics (CS)", () => Cosmetx.instance.ActivateCosmetx()),
-                Button("Max Quest Score",           Mods.Mods.MaxQuestScore),
+                Button("Max Quest Score", Mods.Mods.MaxQuestScore),
                 Toggle(config.IsBraceletSpam, Mods.Mods.BraceletSpam, Mods.Mods.RemoveBracelet,
                         nameKey: "Bracelet Spam (LG, RG, D?)"),
                 Toggle(config.IsEnabledBuilderShelf, Mods.Mods.EnableBuilderShelf, Mods.Mods.DisableBuilderShelf),
-                Toggle(config.IsAnnoy,               Mods.Mods.Annoy),
+                Toggle(config.IsAnnoy, Mods.Mods.Annoy),
                 Button("Unlock Forest Guide", () => Cosmetx.instance.UnlockSpecificCosmetic("LMAPY.")),
-                Button("Unlock AA Badge",     () => Cosmetx.instance.UnlockSpecificCosmetic("LBANI.")),
+                Button("Unlock AA Badge", () => Cosmetx.instance.UnlockSpecificCosmetic("LBANI.")),
                 Toggle(config.IsBoop, () => Mods.Mods.Boop())
         );
 
