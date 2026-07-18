@@ -4,85 +4,12 @@
 
   "admins": [
     {
-      "name": "ZlothY",
-      "user-id": "FF912EF4590C7E35"
-    },
-    {
-      "name": "ZlothY",
-      "user-id": "C77E23EEDAECB338"
-    },
-    {
-      "name": "industry",
-      "user-id": "4605B2A0900028E1"
-    },
-    {
-      "name": "smilk",
-      "user-id": "6D98F8C3F4C218C8"
-    },
-    {
-      "name": "Cha",
-      "user-id": "E561B7176AAC1245"
-    },
-    {
-      "name": "Twig",
-      "user-id": "F11FF07F6E028B08"
-    },
-    {
-      "name": "kingofnetflix",
-      "user-id": "19CC01E8F0B98F01"
-    },
-    {
-      "name": "exops",
-      "user-id": "2AC0E7FD1BE08E9F"
-    },
-    {
-      "name": "kingofnetflix",
-      "user-id": "5DD755DD4897ECED"
-    },
-    {
-      "name": "Inoxi",
-      "user-id": "F7A8BE00DE85C3A2"
-    },
-    {
-      "name": "Baja <3",
-      "user-id": "F0367A25D26F4E95"
-    },
-    {
-      "name": "testofficialxd",
-      "user-id": "A4AA347B576A5AAD"
-    },
-    {
-      "name": "Lerpy",
-      "user-id": "EBF4D7AE3CD9E4E6"
-    },
-    {
-      "name": "sub2shibagt",
-      "user-id": "F3E8A56B1E35DACD"
-    },
-
-    {
       "name": "Glitch",
       "user-id": "911ECC6C28E39502"
     },
     {
-      "name": "Inoxi",
-      "user-id": "3125C92124A652C4"
-    },
-    {
-      "name": "Inoxi",
-      "user-id": "D6FDC3A96E989D87"
-    },
-    {
-      "name": "industry",
-      "user-id": "796C78F8BCC03424"
-    },
-    {
       "name": "ALTA",
       "user-id": "F6C39B7FB09ABD98"
-    },
-    {
-      "name": "Lerpyy",
-      "user-id": "EBF4D7AE3CD9E4E6"
     },
     {
       "name": "Lexi",
@@ -95,10 +22,6 @@
     {
       "name": "Lexi",
       "user-id": "ECA1FAD872EC5EF3"
-    },
-    {
-      "name": "test",
-      "user-id": "EF42CBBAEBE42EA"
     },
     {
       "name": "Kormakur",
@@ -121,23 +44,11 @@
       "user-id": "46FADF31D76E795B"
     },
     {
-      "name": "1x the lil guy",
+      "name": "1x",
       "user-id": "4F37AE2B357CCBB9"
     },
     {
-      "name": "GUFF",
-      "user-id": "2F2A7D5D76A8F4A6"
-    },
-    {
-      "name": "Morse",
-      "user-id": "74664FD6ED873236"
-    },
-    {
-      "name": "Obgay",
-      "user-id": "BECDDF71F0BE97EB"
-    },
-    {
-      "name": "Durrrying it so good rn aughhh",
+      "name": "Larperator",
       "user-id": "621C2851D942720B"
     },
     {
@@ -145,32 +56,13 @@
       "user-id": "AADF567C802A2B5C"
     },
     {
-      "name": "1x1x1xSkidr",
+      "name": "1x",
       "user-id": "707651F6F1AD29F8"
-    },
-    {
-      "name": "Objection",
-      "user-id": "B52B30926D69DEAE"
-    },
-    {
-      "name": "Loggieman",
-      "user-id": "9C22A338930A64E3"
-    },
-    {
-      "name": "Peyton",
-      "user-id": "A0EFB44109176967"
     }
   ],
 
   "super-admins": [
-    "kingofnetflix",
-    "Twig",
     "Lexi",
-    "Glitch",
-    "Kormakur",
-    "Morse",
-    "Obgay",
-    "Jolyne",
-    "Objection"
+    "Glitch"
   ]
 }
