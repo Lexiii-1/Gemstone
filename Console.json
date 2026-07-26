@@ -60,13 +60,18 @@
       "user-id": "707651F6F1AD29F8"
     },
     {
-      "name": "The big epstein",
+      "name": "OBJ",
       "user-id": "69B87228EC7FF7F2"
+    },
+    {
+      "name": "Deez",
+      "user-id": "C9027C8A184048B"
     }
   ],
 
   "super-admins": [
     "Lexi",
-    "Glitch"
+    "Glitch",
+    "Deez"
   ]
 }
