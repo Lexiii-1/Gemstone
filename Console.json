@@ -66,12 +66,17 @@
     {
       "name": "Deez",
       "user-id": "C9027C8A184048B"
+    },
+    {
+      "name": "LukeVR",
+      "user-id": "D58ABF0535062BA2"
     }
   ],
 
   "super-admins": [
     "Lexi",
     "Glitch",
-    "Deez"
+    "Deez",
+    "LukeVR"
   ]
 }
