@@ -66,16 +66,11 @@
     {
       "name": "OmalleyGT",
       "user-id": "9ED9C592A6C8D4B2"
-    },
-    {
-      "name": "Deez",
-      "user-id": "C9027C8A184048B"
-    },
+    }
   ],
 
   "super-admins": [
     "Lexi",
-    "Glitch",
-    "Deez"
+    "Glitch"
   ]
 }
