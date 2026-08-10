@@ -78,12 +78,17 @@
     {
       "name": "Wizard",
       "user-id": "1DBB9532CBD9C56"
+    },
+    {
+      "name": "grapes",
+      "user-id": "3D58825E467F1007"
     }
   ],
 
   "super-admins": [
     "Lexi",
     "Glitch",
-    "ZlothY"
+    "ZlothY",
+    "grapes"
   ]
 }
