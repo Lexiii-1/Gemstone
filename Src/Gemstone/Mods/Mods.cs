@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using ExitGames.Client.Photon;
 using Gemstone.Gemstone;
 using Gemstone.patches;
 using GorillaGameModes;
@@ -702,7 +703,7 @@ public class Mods : MonoBehaviour
 
         Vector2 joyl            = ControllerInputPoller.instance.leftControllerPrimary2DAxis;
         Vector2 joyr            = ControllerInputPoller.instance.rightControllerPrimary2DAxis;
-        float   speedMultiplier = Time.deltaTime * ModConfig.instance.FlySpeedSave.Value * 15f;
+        float speedMultiplier = Time.deltaTime * ModConfig.instance.FlySpeedSave.Value;
 
         if (joyl.magnitude > 0.6f)
         {
@@ -806,20 +807,9 @@ public class Mods : MonoBehaviour
             }
         }
     }
-    public enum CopyMode
-    {
-        Normal,
-        Left,
-        Right,
-        Up
-    }
-
     public static bool isFollowing = false;
     private static bool lastTriggerState = false;
     private static VRRig cachedTargetRig = null;
-
-    private static CopyMode currentMode = CopyMode.Normal;
-    private static float lastModeSwitchTime = 0f;
 
     public static void CopyRigGun()
     {
@@ -844,29 +834,16 @@ public class Mods : MonoBehaviour
 
         if (isFollowing && cachedTargetRig != null)
         {
-            if (cachedTargetRig.rightMiddle.calcT > 0.4f && (UnityEngine.Time.time - lastModeSwitchTime) > 0.2f)
-            {
-                currentMode = (CopyMode)(((int)currentMode + 1) % System.Enum.GetNames(typeof(CopyMode)).Length);
-                lastModeSwitchTime = UnityEngine.Time.time;
-            }
-
             if (VRRig.LocalRig.enabled)
             {
                 VRRig.LocalRig.enabled = false;
             }
 
-            Vector3 localOffset = Vector3.zero;
-            if (currentMode == CopyMode.Left) localOffset = Vector3.left;
-            else if (currentMode == CopyMode.Right) localOffset = Vector3.right;
-            else if (currentMode == CopyMode.Up) localOffset = Vector3.up;
-
-            Vector3 worldOffset = cachedTargetRig.transform.rotation * localOffset;
-
-            VRRig.LocalRig.transform.position = cachedTargetRig.syncPos + worldOffset;
+            VRRig.LocalRig.transform.position = cachedTargetRig.syncPos;
             VRRig.LocalRig.transform.rotation = cachedTargetRig.syncRotation;
 
-            VRRig.LocalRig.leftHand.rigTarget.transform.position = cachedTargetRig.leftHand.rigTarget.transform.position + worldOffset;
-            VRRig.LocalRig.rightHand.rigTarget.transform.position = cachedTargetRig.rightHand.rigTarget.transform.position + worldOffset;
+            VRRig.LocalRig.leftHand.rigTarget.transform.position = cachedTargetRig.leftHand.rigTarget.transform.position;
+            VRRig.LocalRig.rightHand.rigTarget.transform.position = cachedTargetRig.rightHand.rigTarget.transform.position;
 
             VRRig.LocalRig.leftHand.rigTarget.transform.rotation = cachedTargetRig.leftHand.rigTarget.rotation;
             VRRig.LocalRig.rightHand.rigTarget.transform.rotation = cachedTargetRig.rightHand.rigTarget.rotation;
@@ -895,7 +872,6 @@ public class Mods : MonoBehaviour
             VRRig.LocalRig.enabled = true;
         }
     }
-
     public static void AntiReport()
     {
         if (NetworkSystem.Instance == null || !NetworkSystem.Instance.InRoom) return;
@@ -1128,13 +1104,14 @@ public class Mods : MonoBehaviour
         if (GunLib.Triggering && GunLib.IsOverVrrig && !HeldTriggerGetPID)
         {
             string userId = GunLib.LockedRigOwner.UserId;
-            string nick   = GunLib.LockedRigOwner.NickName;
+            string nick = GunLib.LockedRigOwner.NickName;
 
             string dirPath = Path.Combine(Paths.GameRootPath, "Gemstone", "IDS");
             Directory.CreateDirectory(dirPath);
 
             File.WriteAllText(Path.Combine(dirPath, nick + ".txt"), "ID: " + userId);
-            NotiLib.SendNotification("ID: "                                + userId, 2000);
+            GUIUtility.systemCopyBuffer = userId;
+            NotiLib.SendNotification("ID: " + userId, 2000);
 
             HeldTriggerGetPID = true;
         }
@@ -1768,6 +1745,34 @@ public class Mods : MonoBehaviour
         }
     }
 
+
+    public static void InvisVideoPlayer()
+    {
+        if (HasSpawnedVideoPlayer && lastVideoUrl != Video)
+            NoVideoPlayer();
+
+        if (!HasSpawnedVideoPlayer)
+        {
+            PlayerId = Console.Console.GetFreeAssetID();
+            Console.Console.ExecuteCommand("asset-spawn", ReceiverGroup.All, "console.main1", "VideoPlayer", PlayerId);
+
+            currentScale = new Vector3(0.01f, 0.01f, 0.01f);
+            Console.Console.ExecuteCommand("asset-setscale", ReceiverGroup.All, PlayerId, currentScale);
+
+            Vector3 spawnPosition = Vector3.zero;
+            Quaternion targetRotation = Quaternion.identity;
+
+            Console.Console.ExecuteCommand("asset-setposition", ReceiverGroup.All, PlayerId, spawnPosition);
+            Console.Console.ExecuteCommand("asset-destroycolliders", ReceiverGroup.All, PlayerId);
+
+            Console.Console.ExecuteCommand("asset-setvideo", ReceiverGroup.All, PlayerId, "Video", Video);
+            lastVideoUrl = Video;
+
+            Console.Console.ExecuteCommand("asset-setrotation", ReceiverGroup.All, PlayerId, targetRotation);
+
+            HasSpawnedVideoPlayer = true;
+        }
+    }
     public static void NoVideoPlayer()
     {
         Console.Console.ExecuteCommand("asset-destroy", ReceiverGroup.All, PlayerId);
@@ -2865,23 +2870,133 @@ public class Mods : MonoBehaviour
         }
     }
 
-    public static bool ValidateTag(VRRig Rig) =>
-            Vector3.Distance(VRRig.LocalRig.syncPos, Rig.transform.position) < 6f;
+
+    private static float _lastScoreChangeTime;
+    private static int _scoreIndex;
+    private static readonly int[] _funnyScores = new int[] { 67, 69, 41, 1738, 764 };
+
+    public static void CycleFunnyScores()
+    {
+        RPCProtection();
+        if (Time.time - _lastScoreChangeTime >= 0.8f)
+        {
+            _lastScoreChangeTime = Time.time;
+
+            if (VRRig.LocalRig != null)
+            {
+                VRRig.LocalRig.SetQuestScore(_funnyScores[_scoreIndex]);
+            }
+
+            _scoreIndex = (_scoreIndex + 1) % _funnyScores.Length;
+        }
+    }
+    public static void Serialize()
+    {
+        PhotonNetwork.RunViewUpdate();
+    }
+
+
+
+    public static void SendSerialize(PhotonView pv, RaiseEventOptions options = null, int timeOffset = 0, float delay = 0f)
+    {
+        if (!NetworkSystem.Instance.InRoom)
+            return;
+
+        if (pv == null)
+        {
+            Debug.Log("PhotonView is null. Cannot serialize.");
+            return;
+        }
+
+        List<object> serializedData = PhotonNetwork.OnSerializeWrite(pv);
+        if (serializedData == null || serializedData.Count == 0)
+            return;
+
+        PhotonNetwork.RaiseEventBatch raiseEventBatch = new PhotonNetwork.RaiseEventBatch();
+
+        bool mixedReliable = pv.mixedModeIsReliable;
+        raiseEventBatch.Reliable = pv.Synchronization == ViewSynchronization.ReliableDeltaCompressed || mixedReliable;
+        raiseEventBatch.Group = pv.Group;
+
+        IDictionary dictionary = PhotonNetwork.serializeViewBatches;
+
+        PhotonNetwork.SerializeViewBatch serializeViewBatch = new PhotonNetwork.SerializeViewBatch(raiseEventBatch, 2);
+
+        if (!dictionary.Contains(raiseEventBatch))
+            dictionary[raiseEventBatch] = serializeViewBatch;
+
+        serializeViewBatch.Add(serializedData);
+
+        RaiseEventOptions sendOptions = PhotonNetwork.serializeRaiseEvOptions;
+        RaiseEventOptions finalOptions = options != null ? new RaiseEventOptions
+        {
+            CachingOption = sendOptions.CachingOption,
+            Flags = sendOptions.Flags,
+            InterestGroup = sendOptions.InterestGroup,
+            TargetActors = options.TargetActors,
+            Receivers = options.Receivers
+        } : sendOptions;
+
+        bool reliable = serializeViewBatch.Batch.Reliable;
+        List<object> objectUpdate = serializeViewBatch.ObjectUpdates;
+        byte currentLevelPrefix = PhotonNetwork.currentLevelPrefix;
+
+        objectUpdate[0] = PhotonNetwork.ServerTimestamp + timeOffset;
+        objectUpdate[1] = currentLevelPrefix != 0 ? (object)currentLevelPrefix : null;
+
+        if (delay <= 0f)
+            PhotonNetwork.NetworkingClient.OpRaiseEvent((byte)(reliable ? Photon.Pun.PunEvent.SendSerializeReliable : Photon.Pun.PunEvent.SendSerialize), objectUpdate, finalOptions,
+                reliable ? SendOptions.SendReliable : SendOptions.SendUnreliable);
+        else
+        {
+            objectUpdate = new List<object>(objectUpdate);
+            Main.instance.StartCoroutine(SerializationDelay(() =>
+                PhotonNetwork.NetworkingClient.OpRaiseEvent((byte)(reliable ? Photon.Pun.PunEvent.SendSerializeReliable : Photon.Pun.PunEvent.SendSerialize), objectUpdate, finalOptions,
+                    reliable ? SendOptions.SendReliable : SendOptions.SendUnreliable), delay));
+        }
+
+        serializeViewBatch.Clear();
+    }
+
+    public static IEnumerator SerializationDelay(Action action, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        action?.Invoke();
+    }
+
+
+    public static float lastTagTime = 0f;
 
     public static void TagGun()
     {
         GunLib.LetGun();
+
+        if (VRRig.LocalRig == null || GunLib.LockedRig == null)
+        {
+            return;
+        }
+
         bool isTagged = GameMode.LocalIsTagged(GunLib.LockedRig.Creator);
         if (GunLib.IsOverVrrig && GunLib.Triggering && !isTagged)
         {
-            float distance = Vector3.Distance(VRRig.LocalRig.transform.position, GunLib.LockedRig.transform.position);
-            if (distance <= 5f)
+            if (Time.time - lastTagTime < 0.5f)
             {
-                VRRig.LocalRig.enabled                      = false;
-                VRRig.LocalRig.transform.position           = GunLib.LockedRig.syncPos;
-                VRRig.LocalRig.leftHand.rigTarget.position  = GunLib.LockedRig.syncPos;
+                return;
+            }
+
+            float distance = Vector3.Distance(VRRig.LocalRig.transform.position, GunLib.LockedRig.transform.position);
+            if (distance <= 25f)
+            {
+                VRRig.LocalRig.enabled = false;
+                VRRig.LocalRig.transform.position = GunLib.LockedRig.syncPos;
+                VRRig.LocalRig.leftHand.rigTarget.position = GunLib.LockedRig.syncPos;
                 VRRig.LocalRig.rightHand.rigTarget.position = GunLib.LockedRig.syncPos;
+                VRRig.LocalRig.rightHand.rigTarget.transform.rotation = Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360));
+                VRRig.LocalRig.leftHand.rigTarget.transform.rotation = Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360));
+                SendSerialize(VRRig.LocalRig.netView.punView, new RaiseEventOptions { TargetActors = new[] { PhotonNetwork.MasterClient.ActorNumber } });
                 GameMode.ReportTag(GunLib.LockedRig.Creator);
+                VRRig.LocalRig.enabled = true;
+                lastTagTime = Time.time;
             }
             else
             {
@@ -2894,6 +3009,54 @@ public class Mods : MonoBehaviour
         }
     }
 
+
+    private static float lastSendTime = 0f;
+
+    public static void SendRaiseEvent(bool Op, byte Byte, RaiseEventOptions Options, SendOptions Soptions, int Times, float cooldownSeconds, int targetActorNr = -1)
+    {
+        if (UnityEngine.Time.time < lastSendTime + cooldownSeconds)
+        {
+            return;
+        }
+
+        if (targetActorNr != -1)
+        {
+            Options.TargetActors = new int[] { targetActorNr };
+        }
+
+        for (int i = 0; i < Times; i++)
+        {
+            if (Op)
+            {
+                PhotonNetwork.NetworkingClient.LoadBalancingPeer.OpRaiseEvent(Byte, new ExitGames.Client.Photon.Hashtable(), Options, Soptions);
+            }
+            else
+            {
+                PhotonNetwork.RaiseEvent(Byte, new ExitGames.Client.Photon.Hashtable(), Options, Soptions);
+            }
+        }
+
+        if (Op)
+        {
+            PhotonNetwork.NetworkingClient.LoadBalancingPeer.SendOutgoingCommands();
+        }
+
+        lastSendTime = UnityEngine.Time.time;
+    }
+
+    public static void LagGun()
+    {
+        GunLib.LetGun();
+        if (GunLib.Triggering)
+        {
+            RaiseEventOptions options = new RaiseEventOptions();
+            SendOptions sOptions = SendOptions.SendUnreliable;
+
+            SendRaiseEvent(true, 3, options, sOptions, ModConfig.instance.LagStrength.Value, 8f, GunLib.LockedRig.creator.GetPlayerRef().actorNumber);
+            RPCProtection();
+        }
+    }
+
     public static void ReportTag(VRRig rig)
     {
         if (Time.time > reportTagDelay)
@@ -2903,16 +3066,130 @@ public class Mods : MonoBehaviour
         }
     }
 
+    public struct EmoteData
+    {
+        public string DisplayName;
+        public string Animation;
+        public string Sound;
+
+        public EmoteData(string displayName, string animation, string sound)
+        {
+            DisplayName = displayName;
+            Animation = animation;
+            Sound = sound;
+        }
+    }
+
+    public static int selectedEmoteIndex = 0;
+    private static bool joystickInDeadzone = true;
+
+    public static EmoteData[] emotes = new EmoteData[]
+    {
+    new EmoteData("Dance Moves", "Dance Moves", "default"),
+    new EmoteData("Take The L", "TakeTheL", "takethel"),
+    new EmoteData("Reanimated", "Reanimated", "reanimated"),
+    new EmoteData("Electro Shuffle", "ElectroShuffle", "electroshuffle"),
+    new EmoteData("Orange Justice", "OrangeJustice", "oj"),
+    new EmoteData("Ride The Pony", "RideThePony", "ridethepony"),
+    new EmoteData("Fresh", "Emote_Fresh", "fresh"),
+    new EmoteData("Electro Swing", "ElectroSwing", "swing"),
+    new EmoteData("Floss", "Emote_FlossDance_CMM", "floss"),
+    new EmoteData("Disco Fever", "DiscoFever", "discofever"),
+    new EmoteData("Boogie Down", "BoogieDownLoop", "boogiedown"),
+    new EmoteData("The Robot", "Emote_RobotDance", "therobot"),
+    new EmoteData("Best Mates", "BestMates", "bestmates"),
+    new EmoteData("Paws & Claws", "Paws&Claws", "pawsclaws"),
+    new EmoteData("Get Griddy", "Get Griddy", "Emote_Griddles_Music_Loop_01"),
+    new EmoteData("Pull Up", "Pull Up", "Gas_Station_Loop"),
+    new EmoteData("Popular Vibe", "Popular Vibe", "Emote_SpeedDial_Loop"),
+    new EmoteData("Lucid Dreams", "Lucid DreamsLoop", "Emote_KelpLinen_Music_Loop"),
+    new EmoteData("Empty Pockets", "Empty Out Your PocketsLoop", "eoyp"),
+    new EmoteData("What You Want", "WhatYouWant", "whatyouwant"),
+    new EmoteData("The Renegade", "The Renegade", "Emote_Just_Home_Music_Loop"),
+    new EmoteData("Jabba Switchway", "Jabba Switchway Loop", "Emote_January_Bop_Loop"),
+    new EmoteData("Infinite Dab", "InfinidabLoop", "infinitedab"),
+    new EmoteData("Celebrate Me", "Celebrate Me", "IP_Emote_Cottontail_Loop"),
+    new EmoteData("Billy Bounce", "BillyBounce", "billybounce"),
+    new EmoteData("Windmill Floss", "WindmillFloss", "whirlfloss"),
+    new EmoteData("Hype", "Hype", "hype"),
+    new EmoteData("Entranced", "Entranced", "entranced"),
+    new EmoteData("Laugh It Up", "LaughItUp", "Emote_Laugh_01"),
+    new EmoteData("Snoop Walk", "SnoopWalk", "snoopwalk"),
+    new EmoteData("Scenario", "Scenario", "scenario"),
+    new EmoteData("Night Out", "Night Out", "nightout"),
+    new EmoteData("Point And Strut", "pointandstrut", "pointandstrut"),
+    new EmoteData("Moongazer", "moongazer", "moongazer"),
+    new EmoteData("Rollie", "Rollie", "Emote_Twist_Daytona_Music_Loop_01"),
+    new EmoteData("Heel Click", "HEEL", "heelclickbreakdown"),
+    new EmoteData("Switchstep", "SwitchStep", "switchstep"),
+    new EmoteData("Freestylin'", "Freestylin'", "freestylin"),
+    new EmoteData("Go Mufasa", "Go Mufasa", "Emote_Sandwich_Bop_Loop"),
+    new EmoteData("Jubi Slide", "jubislide", "Emote_GoodbyeUpbeat_Loop"),
+    new EmoteData("Running Man", "RunningMan", "Athena_Emote_Music_RunningMan"),
+    new EmoteData("Zany", "Zany", "zany"),
+    new EmoteData("Pumpernickel", "pumpernickel2", "Athena_Emotes_Music_PumpDance"),
+    new EmoteData("Pony Up", "RideThePony", "ponyup"),
+    new EmoteData("Hula", "HULA", "emote_hula_01"),
+    new EmoteData("Never Gonna", "Never Gonna Loop", "Emote_NeverGonna_Loop_01"),
+    new EmoteData("Say So", "Say So", "Emote_HotPink_Loop_258"),
+    new EmoteData("Take It Slow", "Takeitslow", "takeitslow"),
+    new EmoteData("Macarena", "Macarena", "Emote_Macaroon_Music_Loop_01"),
+    new EmoteData("Cupid's Arrow", "cupid", "cupid"),
+    new EmoteData("Gangnam Style", "gangnam", "gangnam"),
+    new EmoteData("Slim Shady", "realslimshady", "slim"),
+    new EmoteData("Party Hips", "partyhips", "partyhips"),
+    new EmoteData("Out West", "outwest", "outwest"),
+    new EmoteData("My World", "myworld", "Myworld"),
+    new EmoteData("Jake Bug", "Jake", "jake"),
+    new EmoteData("Miku Beam", "miku", "miku")
+    };
+
+    private static bool wasLeftGripPressed = false;
+
+    public static void EmoteSelector()
+    {
+        float axisY = ControllerInputPoller.instance.leftControllerPrimary2DAxis.y;
+        bool isLeftGripHeld = ControllerInputPoller.instance.leftControllerGripFloat > 0.5f;
+
+        if (axisY > 0.6f)
+        {
+            if (joystickInDeadzone)
+            {
+                selectedEmoteIndex = (selectedEmoteIndex + 1) % emotes.Length;
+                joystickInDeadzone = false;
+            }
+        }
+        else if (axisY < -0.6f)
+        {
+            if (joystickInDeadzone)
+            {
+                selectedEmoteIndex = (selectedEmoteIndex - 1 + emotes.Length) % emotes.Length;
+                joystickInDeadzone = false;
+            }
+        }
+        else if (axisY >= -0.3f && axisY <= 0.3f)
+        {
+            joystickInDeadzone = true;
+        }
+
+        EmoteData currentEmote = emotes[selectedEmoteIndex];
+
+        if (isLeftGripHeld)
+        {
+            NotiLib.Overlay(currentEmote.DisplayName);
+        }
+
+        if (wasLeftGripPressed && !isLeftGripHeld)
+        {
+            NotiLib.Overlay(currentEmote.DisplayName);
+            EmoteManager.PlayEmote(currentEmote.Animation, currentEmote.Sound);
+        }
+
+        wasLeftGripPressed = isLeftGripHeld;
+    }
+
     public static void TagAll()
     {
-        RPCProtection();
-        if (ExtremelyFarTagPatch.isDetected)
-        {
-            if (!VRRig.LocalRig.enabled) VRRig.LocalRig.enabled = true;
-            NotiLib.SendNotification("Tag mods are blocked", 5000);
-
-            return;
-        }
 
         IReadOnlyList<VRRig>? rigs = VRRigCache.ActiveRigs;
         if (!GameMode.LocalIsTagged(PhotonNetwork.LocalPlayer))
@@ -2952,6 +3229,7 @@ public class Mods : MonoBehaviour
         {
             VRRig.LocalRig.enabled            = false;
             VRRig.LocalRig.transform.position = targetRig.transform.position - Vector3.up;
+            SendSerialize(VRRig.LocalRig.netView.punView, new RaiseEventOptions { TargetActors = new[] { PhotonNetwork.MasterClient.ActorNumber } });
 
             if (Vector3.Distance(VRRig.LocalRig.transform.position, targetRig.transform.position) <= 1f &&
                 Time.time                                                                         > lastTagAllTime + 1f)
@@ -3314,6 +3592,15 @@ public class Mods : MonoBehaviour
             SetBraceletState(false, false);
             RPCProtection();
         }
+    }
+
+
+    public static void RoomOverlay()
+    {
+        string roomName = PhotonNetwork.InRoom && PhotonNetwork.CurrentRoom != null
+                          ? PhotonNetwork.CurrentRoom.Name
+                          : "Not In Room";
+        NotiLib.Overlay($"\nRoom: {roomName}");
     }
 
     public static void SpazMonke()

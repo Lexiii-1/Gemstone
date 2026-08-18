@@ -1,20 +1,26 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.IO;
+using System.Linq;
 using BepInEx;
 using Gemstone.Gemstone;
+using Photon.Pun;
 using Photon.Voice.Unity;
 using UnityEngine;
 using UnityEngine.Networking;
 
 public class EmoteManager : MonoBehaviour
 {
-    private static          EmoteManager     instance;
-    private static          AssetBundle      assetBundle;
-    private static          GameObject       activeKyle;
-    private static          float            emoteEndTime;
-    private static          Vector3          archivePosition;
-    private static          Coroutine        activeSoundCoroutine;
-    private static          string           currentAnimationName = "";
-    private static readonly List<GameObject> portedCosmetics      = [];
+    private static EmoteManager instance;
+    private static AssetBundle assetBundle;
+    private static GameObject activeKyle;
+    private static float emoteEndTime;
+    private static Vector3 archivePosition;
+    private static Coroutine activeSoundCoroutine;
+    private static string currentAnimationName = "";
+    private static readonly List<GameObject> portedCosmetics = [];
+    private static AudioSource activeAudioSource;
+    private static float lastMicPlayTime;
 
     private void Awake()
     {
@@ -26,7 +32,7 @@ public class EmoteManager : MonoBehaviour
     {
         if (activeKyle != null)
         {
-            Animator          animator  = activeKyle.transform.Find("KyleRobot").GetComponent<Animator>();
+            Animator animator = activeKyle.transform.Find("KyleRobot").GetComponent<Animator>();
             AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
 
             if (Time.time >= emoteEndTime ||
@@ -52,19 +58,19 @@ public class EmoteManager : MonoBehaviour
                     activeKyle.transform.Find(
                             "KyleRobot/ROOT/Hips/Spine1/Spine2/RightShoulder/RightUpperArm/RightArm/RightHand");
 
-            VRRig.LocalRig.leftHand.rigTarget.transform.position  = lHand.position;
+            VRRig.LocalRig.leftHand.rigTarget.transform.position = lHand.position;
             VRRig.LocalRig.rightHand.rigTarget.transform.position = rHand.position;
 
-            VRRig.LocalRig.leftHand.rigTarget.transform.rotation  = lHand.rotation * Quaternion.Euler(0,   0, 75);
+            VRRig.LocalRig.leftHand.rigTarget.transform.rotation = lHand.rotation * Quaternion.Euler(0, 0, 75);
             VRRig.LocalRig.rightHand.rigTarget.transform.rotation = rHand.rotation * Quaternion.Euler(180, 0, -75);
 
             VRRig.LocalRig.head.rigTarget.transform.rotation =
                     activeKyle.transform.Find("KyleRobot/ROOT/Hips/Spine1/Spine2/Neck/Head").transform.rotation *
                     Quaternion.Euler(0f, 0f, 90f);
 
-            SyncFinger(lHand.Find("Index1"),  VRRig.LocalRig.leftIndex);
+            SyncFinger(lHand.Find("Index1"), VRRig.LocalRig.leftIndex);
             SyncFinger(lHand.Find("Middle1"), VRRig.LocalRig.leftMiddle);
-            SyncFinger(rHand.Find("Index1"),  VRRig.LocalRig.rightIndex);
+            SyncFinger(rHand.Find("Index1"), VRRig.LocalRig.rightIndex);
             SyncFinger(rHand.Find("Middle1"), VRRig.LocalRig.rightMiddle);
         }
     }
@@ -75,23 +81,30 @@ public class EmoteManager : MonoBehaviour
     {
         string path = GetBundlePath();
 
-        if (File.Exists(path)) yield break;
-
-        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? string.Empty);
-
-        const string URL = "https://github.com/iiDk-the-actual/FortniteEmoteWheel/raw/refs/heads/master/Resources/fn";
-        using UnityWebRequest webRequest = UnityWebRequest.Get(URL);
-
-        yield return webRequest.SendWebRequest();
-
-        if (webRequest.result == UnityWebRequest.Result.Success)
+        if (!File.Exists(path))
         {
-            File.WriteAllBytes(path, webRequest.downloadHandler.data);
-            Debug.Log("Emote bundle downloaded successfully.");
+            Directory.CreateDirectory(Path.GetDirectoryName(path) ?? string.Empty);
+
+            const string URL = "https://github.com/Lexiii-1/Gemstone/raw/refs/heads/main/fn";
+            using UnityWebRequest webRequest = UnityWebRequest.Get(URL);
+
+            yield return webRequest.SendWebRequest();
+
+            if (webRequest.result == UnityWebRequest.Result.Success)
+            {
+                File.WriteAllBytes(path, webRequest.downloadHandler.data);
+                Debug.Log("Emote bundle downloaded successfully.");
+            }
+            else
+            {
+                Debug.LogError("Failed to download emote bundle: " + webRequest.error);
+                yield break;
+            }
         }
-        else
+
+        if (assetBundle == null)
         {
-            Debug.LogError("Failed to download emote bundle: " + webRequest.error);
+            assetBundle = AssetBundle.LoadFromFile(path);
         }
     }
 
@@ -101,9 +114,9 @@ public class EmoteManager : MonoBehaviour
         {
             VRRig.LocalRig.transform.Find("rig/head/gorillaface").gameObject.layer = LayerMask.NameToLayer("Default");
             foreach (GameObject Cosmetic in VRRig.LocalRig.cosmetics.Where(Cosmetic => Cosmetic.activeSelf &&
-                                                                               Cosmetic.transform.parent ==
-                                                                               VRRig.LocalRig.mainCamera.transform.Find(
-                                                                                       "HeadCosmetics")))
+                                                     Cosmetic.transform.parent ==
+                                                     VRRig.LocalRig.mainCamera.transform.Find(
+                                                          "HeadCosmetics")))
             {
                 portedCosmetics.Add(Cosmetic);
                 Cosmetic.transform.SetParent(VRRig.LocalRig.headMesh.transform, false);
@@ -112,12 +125,17 @@ public class EmoteManager : MonoBehaviour
         }
         catch
         {
-            // ignored
+
         }
     }
 
+    private static bool IsInLobby()
+    {
+        return PhotonNetwork.InRoom || (NetworkSystem.Instance != null && NetworkSystem.Instance.InRoom);
+    }
+
     public static void PlayEmoteFromUrl(string animationName, string audioUrl, float duration = -1f,
-                                        bool   looping = false)
+                                        bool looping = false)
     {
         if (activeKyle != null && currentAnimationName == animationName)
         {
@@ -132,7 +150,7 @@ public class EmoteManager : MonoBehaviour
         if (assetBundle == null)
             assetBundle = AssetBundle.LoadFromFile(GetBundlePath());
 
-        archivePosition        = GorillaTagger.Instance.transform.position;
+        archivePosition = GorillaTagger.Instance.transform.position;
         VRRig.LocalRig.enabled = false;
 
         DisableCosmetics();
@@ -168,7 +186,7 @@ public class EmoteManager : MonoBehaviour
         string dir = Path.Combine(Paths.GameRootPath, "Gemstone", "cache");
         Directory.CreateDirectory(dir);
         string extension = url.EndsWith(".mp3") ? ".mp3" : ".wav";
-        string filePath  = Path.Combine(dir, animationName + extension);
+        string filePath = Path.Combine(dir, animationName + extension);
 
         if (!File.Exists(filePath))
         {
@@ -193,16 +211,58 @@ public class EmoteManager : MonoBehaviour
 
         if (sound == null) yield break;
 
-        Recorder? recorder = NetworkSystem.Instance.VoiceConnection.PrimaryRecorder;
-        recorder.StopRecording();
-        recorder.SourceType = Recorder.InputSourceType.AudioClip;
-        recorder.AudioClip  = sound;
-        recorder.RestartRecording(true);
-        recorder.DebugEchoMode = true;
-
-        yield return new WaitForSeconds(sound.length);
+        yield return instance.StartCoroutine(PlayAudioOutputCoroutine(sound));
 
         StopEmote();
+    }
+
+    private static IEnumerator PlayAudioOutputCoroutine(AudioClip sound)
+    {
+        Recorder? recorder = NetworkSystem.Instance?.VoiceConnection?.PrimaryRecorder;
+
+        if (IsInLobby())
+        {
+            float timeSinceLastMic = Time.time - lastMicPlayTime;
+            if (timeSinceLastMic < 0.8f)
+            {
+                yield return new WaitForSeconds(0.8f - timeSinceLastMic);
+            }
+            lastMicPlayTime = Time.time;
+
+            if (recorder != null)
+            {
+                recorder.StopRecording();
+                recorder.SourceType = Recorder.InputSourceType.AudioClip;
+                recorder.AudioClip = sound;
+                recorder.RestartRecording(true);
+                recorder.DebugEchoMode = false;
+            }
+        }
+        else
+        {
+            if (recorder != null)
+            {
+                recorder.StopRecording();
+                recorder.SourceType = Recorder.InputSourceType.Microphone;
+                recorder.AudioClip = null;
+                recorder.RestartRecording(true);
+                recorder.DebugEchoMode = false;
+            }
+        }
+
+        if (activeKyle != null)
+        {
+            activeAudioSource = activeKyle.GetComponent<AudioSource>();
+            if (activeAudioSource == null)
+            {
+                activeAudioSource = activeKyle.AddComponent<AudioSource>();
+            }
+            activeAudioSource.clip = sound;
+            activeAudioSource.spatialBlend = 1f;
+            activeAudioSource.Play();
+        }
+
+        yield return new WaitForSeconds(sound.length);
     }
 
     private static void EnableCosmetics()
@@ -232,7 +292,7 @@ public class EmoteManager : MonoBehaviour
         if (assetBundle == null)
             assetBundle = AssetBundle.LoadFromFile(GetBundlePath());
 
-        archivePosition        = GorillaTagger.Instance.transform.position;
+        archivePosition = GorillaTagger.Instance.transform.position;
         VRRig.LocalRig.enabled = false;
 
         DisableCosmetics();
@@ -271,13 +331,26 @@ public class EmoteManager : MonoBehaviour
 
     private static IEnumerator PlayAudioCoroutine(AudioClip sound)
     {
-        Recorder? recorder = NetworkSystem.Instance.VoiceConnection.PrimaryRecorder;
-        recorder.SourceType = Recorder.InputSourceType.AudioClip;
-        recorder.AudioClip  = sound;
-        recorder.RestartRecording(true);
-        recorder.DebugEchoMode = true;
+        float audioLength = sound != null ? sound.length : 0f;
+        float animLength = 0f;
 
-        yield return new WaitForSeconds(sound.length);
+        if (activeKyle != null)
+        {
+            Animator animator = activeKyle.transform.Find("KyleRobot").GetComponent<Animator>();
+            AnimationClip clip = animator.runtimeAnimatorController.animationClips.FirstOrDefault(c => c.name == currentAnimationName);
+            if (clip != null)
+            {
+                animLength = clip.length;
+            }
+        }
+
+        yield return instance.StartCoroutine(PlayAudioOutputCoroutine(sound));
+
+        float remainingTime = animLength - audioLength;
+        if (remainingTime > 0f)
+        {
+            yield return new WaitForSeconds(remainingTime);
+        }
 
         StopEmote();
     }
@@ -290,11 +363,17 @@ public class EmoteManager : MonoBehaviour
             activeSoundCoroutine = null;
         }
 
-        Recorder? recorder = NetworkSystem.Instance.VoiceConnection.PrimaryRecorder;
+        if (activeAudioSource != null)
+        {
+            UnityEngine.Object.Destroy(activeAudioSource);
+            activeAudioSource = null;
+        }
+
+        Recorder? recorder = NetworkSystem.Instance?.VoiceConnection?.PrimaryRecorder;
         if (recorder != null)
         {
             recorder.SourceType = Recorder.InputSourceType.Microphone;
-            recorder.AudioClip  = null;
+            recorder.AudioClip = null;
             recorder.RestartRecording(true);
             recorder.DebugEchoMode = false;
         }
@@ -306,9 +385,9 @@ public class EmoteManager : MonoBehaviour
             EnableCosmetics();
         }
 
-        currentAnimationName   = "";
+        currentAnimationName = "";
         VRRig.LocalRig.enabled = true;
-        emoteEndTime           = -1f;
+        emoteEndTime = -1f;
     }
 
     private void SyncFinger(Transform animBone, object fingerField)

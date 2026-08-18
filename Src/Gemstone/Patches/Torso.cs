@@ -140,7 +140,7 @@ namespace Gemstone.patches
                                     }
                                 }
 
-                                float handWeight = 0.85f;
+                                float handWeight = 0.2f;
                                 float targetYaw = Mathf.LerpAngle(headYaw, handYaw, handWeight);
 
                                 if (!hasStoredYaw)
@@ -170,7 +170,7 @@ namespace Gemstone.patches
 
                                 float handPitch = -(handPitchA + handPitchB) * 0.5f;
 
-                                float handPitchWeight = 0.50f;
+                                float handPitchWeight = 0.2f;
                                 float targetPitch = Mathf.LerpAngle(headPitch, handPitch, handPitchWeight);
 
                                 float finalPitch = Mathf.Clamp(targetPitch, -50f, 50f);

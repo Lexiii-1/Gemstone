@@ -64,27 +64,27 @@
 			<HintPath>$(ManagedDir)\Oculus.VR.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
-		<Reference Include="Photon3Unity3D">
+		<Reference Include="Photon3Unity3D" Publicize="true">
 			<HintPath>$(ManagedDir)\Photon3Unity3D.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
-		<Reference Include="PhotonRealtime">
+		<Reference Include="PhotonRealtime" Publicize="true">
 			<HintPath>$(ManagedDir)\PhotonRealtime.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
-		<Reference Include="PhotonUnityNetworking">
+		<Reference Include="PhotonUnityNetworking" Publicize="true">
 			<HintPath>$(ManagedDir)\PhotonUnityNetworking.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
-		<Reference Include="PhotonVoice">
+		<Reference Include="PhotonVoice" Publicize="true">
 			<HintPath>$(ManagedDir)\PhotonVoice.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
-		<Reference Include="PhotonVoice.API">
+		<Reference Include="PhotonVoice.API" Publicize="true">
 			<HintPath>$(ManagedDir)\PhotonVoice.API.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
-		<Reference Include="PhotonVoice.PUN">
+		<Reference Include="PhotonVoice.PUN" Publicize="true">
 			<HintPath>$(ManagedDir)\PhotonVoice.PUN.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
@@ -147,6 +147,9 @@
 		<Reference Include="UnityEngine.InputModule">
 			<HintPath>$(ManagedDir)\UnityEngine.InputModule.dll</HintPath>
 			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.JSONSerializeModule">
+		  <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Gorilla Tag\Gorilla Tag_Data\Managed\UnityEngine.JSONSerializeModule.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.PhysicsModule">
 			<HintPath>$(ManagedDir)\UnityEngine.PhysicsModule.dll</HintPath>

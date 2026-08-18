@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\reese\\Downloads\\Gemstone-main(2)\\Gemstone-main\\Src\\Gemstone\\Gemstone.csproj": {}
+    "C:\\Users\\reese\\Downloads\\Gemstone-main\\Gemstone-main\\Src\\Gemstone\\Gemstone.csproj": {}
   },
   "projects": {
-    "C:\\Users\\reese\\Downloads\\Gemstone-main(2)\\Gemstone-main\\Src\\Gemstone\\Gemstone.csproj": {
+    "C:\\Users\\reese\\Downloads\\Gemstone-main\\Gemstone-main\\Src\\Gemstone\\Gemstone.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\reese\\Downloads\\Gemstone-main(2)\\Gemstone-main\\Src\\Gemstone\\Gemstone.csproj",
+        "projectUniqueName": "C:\\Users\\reese\\Downloads\\Gemstone-main\\Gemstone-main\\Src\\Gemstone\\Gemstone.csproj",
         "projectName": "Gemstone",
-        "projectPath": "C:\\Users\\reese\\Downloads\\Gemstone-main(2)\\Gemstone-main\\Src\\Gemstone\\Gemstone.csproj",
+        "projectPath": "C:\\Users\\reese\\Downloads\\Gemstone-main\\Gemstone-main\\Src\\Gemstone\\Gemstone.csproj",
         "packagesPath": "C:\\Users\\reese\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\reese\\Downloads\\Gemstone-main(2)\\Gemstone-main\\Src\\Gemstone\\obj\\",
+        "outputPath": "C:\\Users\\reese\\Downloads\\Gemstone-main\\Gemstone-main\\Src\\Gemstone\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\reese\\AppData\\Roaming\\NuGet\\NuGet.Config",

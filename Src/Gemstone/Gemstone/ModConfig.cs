@@ -9,7 +9,7 @@ public class ModConfig : MonoBehaviour
     public static Color     Theme;
 
     public ConfigEntry<float> FlySpeedSave, WebSlingSpeedSave, R, G, B, GunSmoothness;
-    public ConfigEntry<int>   Language,     GunType,           MenuType;
+    public ConfigEntry<int> Language, GunType, MenuType, LagStrength, LagCooldown;
 
     public ConfigEntry<bool> SpeedBoostEnabled,
                              FlyEnabled,
@@ -91,7 +91,12 @@ public class ModConfig : MonoBehaviour
                              BlockGun,
                              DestroyBlockGun,
                              BlockSphereGun,
-                             SelectBlockGun;
+                             SelectBlockGun,
+                             FunnyQuestScores,
+                             LagGun,
+                             RoomOverlay,
+                             EmoteSelector,
+                             InvisVideoPlayer;
 
     private void Awake()
     {
@@ -105,6 +110,8 @@ public class ModConfig : MonoBehaviour
         FlySpeedSave      = Main.instance.Config.Bind("Settings", "FlySpeedSave",      4f,   "");
         WebSlingSpeedSave = Main.instance.Config.Bind("Settings", "WebSlingSpeedSave", 30f,  "");
         GunSmoothness     = Main.instance.Config.Bind("Settings", "Gun Smoothness",    0.2f, "");
+        LagStrength     = Main.instance.Config.Bind("Settings", "Lag Strength",    3800, "");
+        LagCooldown     = Main.instance.Config.Bind("Settings", "Lag Cooldown",    8, "");
 
         IsMenuRGB        = Main.instance.Config.Bind("Settings", "Rgb Mode",           false, "");
         IsInvisPlat      = Main.instance.Config.Bind("Settings", "Invis Plats",        false, "");
@@ -181,6 +188,7 @@ public class ModConfig : MonoBehaviour
                 "Allows navigating the menu using joysticks and B.");
 
         IsVideoPlayer        = Main.instance.Config.Bind("Admin",    "Video Player",            false, "");
+        InvisVideoPlayer        = Main.instance.Config.Bind("Admin",    "Invis Video Player",            false, "");
         IsAdminStrangle      = Main.instance.Config.Bind("Admin",    "Admin Strangle",          false, "");
         IsSizeChanger        = Main.instance.Config.Bind("Movement", "Size Changer",            false, "");
         HandTurn             = Main.instance.Config.Bind("Movement", "Hand Turn",               false, "");
@@ -194,6 +202,10 @@ public class ModConfig : MonoBehaviour
         BlockSphereGun        = Main.instance.Config.Bind("OP",      "Block Sphere Gun",              false, "");
         DestroyBlockGun         = Main.instance.Config.Bind("OP",      "Destroy Block Gun",              false, "");
         SelectBlockGun         = Main.instance.Config.Bind("OP",      "Select Block Gun",              false, "");
+        FunnyQuestScores         = Main.instance.Config.Bind("Fun",      "Funny Quest Scores",              false, "");
+        LagGun         = Main.instance.Config.Bind("OP",      "Lag Gun",              false, "");
+        RoomOverlay         = Main.instance.Config.Bind("Visual",      "Room Overlay",              false, "");
+        EmoteSelector         = Main.instance.Config.Bind("Fun",      "Emote Selector",              false, "");
     }
 
     private void Update()

@@ -8,9 +8,9 @@ namespace Gemstone.Gemstone;
 
 public class GunLib : MonoBehaviour
 {
-    private const float      unlockDistance = 1.35f;
+    private const float unlockDistance = 1.35f;
     public static GameObject GunObject;
-    public static Transform  GunPos;
+    public static Transform GunPos;
 
     private static LineRenderer lineRenderer;
 
@@ -31,6 +31,9 @@ public class GunLib : MonoBehaviour
 
     private static bool isRightHandActive = true;
 
+    private static float[] audioSpectrum = new float[64];
+    private static float audioIntensity = 0f;
+
     private static readonly string[] ignoreLayers =
     [
             "Gorilla Trigger",
@@ -48,20 +51,20 @@ public class GunLib : MonoBehaviour
     public static bool IsOverVrrig => LockedRig != null;
 
     public static Transform VrrigTransform =>
-            LockedRig != null ? LockedRig.transform : null;
+        LockedRig != null ? LockedRig.transform : null;
 
     public static VRRig LockedRig { get; private set; }
 
     public static NetPlayer LockedRigOwner =>
-            LockedRig != null ? LockedRig.Creator : null;
+        LockedRig != null ? LockedRig.Creator : null;
 
     public static string LockedRigOwnerNick =>
-            LockedRig != null && LockedRig.Creator != null
-                    ? LockedRig.Creator.NickName
-                    : null;
+        LockedRig != null && LockedRig.Creator != null
+                ? LockedRig.Creator.NickName
+                : null;
 
     public static bool Triggering =>
-            Mouse.current != null && Mouse.current.leftButton.isPressed                                        ||
+            Mouse.current != null && Mouse.current.leftButton.isPressed ||
             Mouse.current != null && Mouse.current.rightButton.isPressed && Mouse.current.leftButton.isPressed ||
             ControllerInputPoller.instance != null &&
             (isRightHandActive
@@ -75,6 +78,21 @@ public class GunLib : MonoBehaviour
 
     private void Update()
     {
+        if (AudioListener.pause == false)
+        {
+            AudioListener.GetSpectrumData(audioSpectrum, 0, FFTWindow.BlackmanHarris);
+            float sum = 0f;
+            for (int i = 0; i < audioSpectrum.Length; i++)
+            {
+                sum += audioSpectrum[i];
+            }
+            audioIntensity = Mathf.Clamp01((sum / audioSpectrum.Length) * 50f);
+        }
+        else
+        {
+            audioIntensity = 0f;
+        }
+
         if (!allowThisFrame)
         {
             DestroyGun();
@@ -89,10 +107,10 @@ public class GunLib : MonoBehaviour
             return;
 
         bool rightGrab = ControllerInputPoller.instance.rightGrab;
-        bool leftGrab  = ControllerInputPoller.instance.leftGrab;
+        bool leftGrab = ControllerInputPoller.instance.leftGrab;
 
         bool isMouseRightPressed = Mouse.current != null && Mouse.current.rightButton.isPressed;
-        bool holding             = rightGrab || leftGrab || isMouseRightPressed;
+        bool holding = rightGrab || leftGrab || isMouseRightPressed;
 
         if (LockedRig == VRRig.LocalRig)
             LockedRig = null;
@@ -111,13 +129,13 @@ public class GunLib : MonoBehaviour
             if (isMouseRightPressed)
             {
                 GameObject cameraObj = GameObject.Find("Player Objects/Third Person Camera/Shoulder Camera");
-                Vector3    spawnPos  = cameraObj != null ? cameraObj.transform.position : hand.position;
-                lastGunPosition  = spawnPos;
+                Vector3 spawnPos = cameraObj != null ? cameraObj.transform.position + cameraObj.transform.right * 0.1f : hand.position;
+                lastGunPosition = spawnPos;
                 smoothedEndPoint = spawnPos;
             }
             else
             {
-                lastGunPosition  = hand.position;
+                lastGunPosition = hand.position;
                 smoothedEndPoint = hand.position;
             }
 
@@ -151,7 +169,7 @@ public class GunLib : MonoBehaviour
                         0.02f
                 );
 
-            Ray     ray;
+            Ray ray;
             Vector3 originPoint;
 
             if (isMouseRightPressed)
@@ -159,22 +177,30 @@ public class GunLib : MonoBehaviour
                 GameObject cameraObj = GameObject.Find("Player Objects/Third Person Camera/Shoulder Camera");
                 if (cameraObj != null)
                 {
-                    ray         = new Ray(cameraObj.transform.position, cameraObj.transform.forward);
-                    originPoint = cameraObj.transform.position;
+                    originPoint = cameraObj.transform.position + cameraObj.transform.right * 0.1f;
+
+                    Camera cam = cameraObj.GetComponent<Camera>();
+                    Ray mouseRay = cam != null && Mouse.current != null
+                        ? cam.ScreenPointToRay(Mouse.current.position.ReadValue())
+                        : (Camera.main != null && Mouse.current != null ? Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue()) : new Ray(cameraObj.transform.position, cameraObj.transform.forward));
+
+                    Vector3 mouseWorldTarget = mouseRay.GetPoint(1000f);
+                    Vector3 direction = (mouseWorldTarget - originPoint).normalized;
+                    ray = new Ray(originPoint, direction);
                 }
                 else
                 {
-                    float   downwardAngle = 50f;
-                    Vector3 direction     = Quaternion.AngleAxis(downwardAngle, hand.right) * hand.forward;
-                    ray         = new Ray(hand.position, direction);
+                    float downwardAngle = 50f;
+                    Vector3 direction = Quaternion.AngleAxis(downwardAngle, hand.right) * hand.forward;
+                    ray = new Ray(hand.position, direction);
                     originPoint = hand.position;
                 }
             }
             else
             {
-                float   downwardAngle = 90f;
-                Vector3 direction     = Quaternion.AngleAxis(downwardAngle, hand.right) * hand.forward;
-                ray         = new Ray(hand.position, direction);
+                float downwardAngle = 90f;
+                Vector3 direction = Quaternion.AngleAxis(downwardAngle, hand.right) * hand.forward;
+                ray = new Ray(hand.position, direction);
                 originPoint = hand.position;
             }
 
@@ -196,15 +222,15 @@ public class GunLib : MonoBehaviour
                 if (hitRig != null && hitRig != VRRig.LocalRig)
                     if (LockedRig != hitRig)
                     {
-                        LockedRig    = hitRig;
+                        LockedRig = hitRig;
                         lockedOffset = new Vector3(0, 0, 0);
                     }
             }
 
             if (LockedRig != null)
             {
-                Vector3 rigCenter       = LockedRig.transform.position + lockedOffset;
-                float   distanceFromAim = Vector3.Cross(ray.direction, rigCenter - ray.origin).magnitude;
+                Vector3 rigCenter = LockedRig.transform.position + lockedOffset;
+                float distanceFromAim = Vector3.Cross(ray.direction, rigCenter - ray.origin).magnitude;
 
                 if (distanceFromAim > unlockDistance)
                 {
@@ -212,7 +238,7 @@ public class GunLib : MonoBehaviour
                 }
                 else
                 {
-                    targetPoint  = rigCenter;
+                    targetPoint = rigCenter;
                     hitSomething = true;
                 }
             }
@@ -221,14 +247,35 @@ public class GunLib : MonoBehaviour
                 targetPoint = hit.point;
             }
 
+            Vector3 audioOffsetVector = Vector3.zero;
+            if (GunType == 14 && audioIntensity > 0.01f)
+            {
+                audioOffsetVector = new Vector3(
+                    Mathf.Sin(Time.time * 40f) * audioIntensity * 0.2f,
+                    Mathf.Cos(Time.time * 35f) * audioIntensity * 0.2f,
+                    Mathf.Sin(Time.time * 45f) * audioIntensity * 0.2f
+                );
+            }
+
             smoothedEndPoint = Vector3.SmoothDamp(
                     smoothedEndPoint,
-                    targetPoint,
+                    targetPoint + audioOffsetVector,
                     ref smoothedVelocity,
                     ModConfig.instance.GunSmoothness.Value
             );
 
             GunObject.transform.position = smoothedEndPoint;
+
+            if (GunType == 14)
+            {
+                float baseScale = 0.1f;
+                float scaleMultiplier = baseScale + (audioIntensity * 0.15f);
+                GunObject.transform.localScale = new Vector3(scaleMultiplier, scaleMultiplier, scaleMultiplier);
+            }
+            else
+            {
+                GunObject.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+            }
 
             if (hitSomething)
             {
@@ -249,7 +296,7 @@ public class GunLib : MonoBehaviour
                 }
             }
 
-            gunVelocity     = (GunObject.transform.position - lastGunPosition) / Time.deltaTime;
+            gunVelocity = (GunObject.transform.position - lastGunPosition) / Time.deltaTime;
             lastGunPosition = GunObject.transform.position;
 
             DrawLine(originPoint, smoothedEndPoint);
@@ -275,55 +322,56 @@ public class GunLib : MonoBehaviour
             return;
 
         int segments = GunType switch
-                       {
-                               1     => 460,
-                               2     => 2,
-                               3     => 300,
-                               4     => 50,
-                               5     => 400,
-                               6     => 400,
-                               7     => 250,
-                               8     => 350,
-                               9     => 150,
-                               10    => 300,
-                               11    => 100,
-                               12    => 200,
-                               13    => 500,
-                               var _ => 100,
-                       };
+        {
+            1 => 460,
+            2 => 2,
+            3 => 300,
+            4 => 50,
+            5 => 400,
+            6 => 400,
+            7 => 250,
+            8 => 350,
+            9 => 150,
+            10 => 300,
+            11 => 100,
+            12 => 200,
+            13 => 500,
+            14 => 300,
+            var _ => 100,
+        };
 
         lineRenderer.positionCount = segments;
 
         Vector3 totalDirection = end - start;
-        float   totalDistance  = totalDirection.magnitude;
+        float totalDistance = totalDirection.magnitude;
 
         if (totalDistance <= 0.001f)
             return;
 
-        Vector3 forward       = totalDirection.normalized;
+        Vector3 forward = totalDirection.normalized;
         Vector3 perpendicular = Vector3.Cross(forward, Vector3.up);
         if (perpendicular == Vector3.zero)
             perpendicular = Vector3.Cross(forward, Vector3.right);
 
         perpendicular.Normalize();
 
-        Vector3 binormal      = Vector3.Cross(forward, perpendicular).normalized;
-        Vector3 currentPoint  = start;
-        float   lightningSeed = Mathf.Floor(Time.time * 18f);
+        Vector3 binormal = Vector3.Cross(forward, perpendicular).normalized;
+        Vector3 currentPoint = start;
+        float lightningSeed = Mathf.Floor(Time.time * 18f);
 
         for (int i = 0; i < segments; i++)
         {
-            float   t           = (float)i / (segments - 1);
+            float t = (float)i / (segments - 1);
             Vector3 targetPoint = Vector3.Lerp(start, end, t);
-            Vector3 offset      = Vector3.zero;
-            float   envelope    = Mathf.Sin(t * Mathf.PI);
+            Vector3 offset = Vector3.zero;
+            float envelope = Mathf.Sin(t * Mathf.PI);
 
             switch (GunType)
             {
                 case 1:
                     offset = perpendicular *
-                             (Mathf.Sin(t * Mathf.PI)             * Mathf.Clamp(totalDistance * 0.06f, 0.05f, 0.45f) +
-                              Mathf.Sin(t * 15f + Time.time * 7f) * 0.06f * t);
+                            (Mathf.Sin(t * Mathf.PI) * Mathf.Clamp(totalDistance * 0.06f, 0.05f, 0.45f) +
+                             Mathf.Sin(t * 15f + Time.time * 7f) * 0.06f * t);
 
                     break;
 
@@ -331,7 +379,7 @@ public class GunLib : MonoBehaviour
 
                 case 3:
                     offset = (perpendicular * Mathf.Sin(t * 15f + Time.time * 20f) * 0.15f +
-                              binormal      * Mathf.Cos(t * 15f + Time.time * 20f) * 0.15f) * envelope;
+                             binormal * Mathf.Cos(t * 15f + Time.time * 20f) * 0.15f) * envelope;
 
                     break;
 
@@ -349,14 +397,14 @@ public class GunLib : MonoBehaviour
                 case 5:
                     float vRad = t * 0.4f;
                     offset = perpendicular * Mathf.Sin(t * 30f + Time.time * 25f) * vRad +
-                             binormal      * Mathf.Cos(t * 30f + Time.time * 25f) * vRad;
+                             binormal * Mathf.Cos(t * 30f + Time.time * 25f) * vRad;
 
                     break;
 
                 case 6:
                     float strand = i % 2 == 0 ? 1f : -1f;
                     offset = (perpendicular * Mathf.Sin(t * 12f + Time.time * 5f) * 0.12f * strand +
-                              binormal      * Mathf.Cos(t * 12f + Time.time * 5f) * 0.12f * strand) * envelope;
+                             binormal * Mathf.Cos(t * 12f + Time.time * 5f) * 0.12f * strand) * envelope;
 
                     break;
 
@@ -368,7 +416,7 @@ public class GunLib : MonoBehaviour
 
                 case 8:
                     offset = (perpendicular * Mathf.Sin(Time.time * 10f + t * 2f) * 0.25f +
-                              binormal      * Mathf.Cos(Time.time * 10f + t * 2f) * 0.25f) * envelope;
+                             binormal * Mathf.Cos(Time.time * 10f + t * 2f) * 0.25f) * envelope;
 
                     break;
 
@@ -385,7 +433,7 @@ public class GunLib : MonoBehaviour
 
                 case 11:
                     offset = (perpendicular * Mathf.Round(Mathf.Sin(t * 10f + Time.time * 5f) * 2f) * 0.1f +
-                              binormal      * Mathf.Round(Mathf.Cos(t * 10f + Time.time * 5f) * 2f) * 0.1f) * envelope;
+                             binormal * Mathf.Round(Mathf.Cos(t * 10f + Time.time * 5f) * 2f) * 0.1f) * envelope;
 
                     break;
 
@@ -396,11 +444,16 @@ public class GunLib : MonoBehaviour
 
                 case 13:
                     float rayCircles = 8f;
-                    float raySpeed   = 15f;
-                    float rayAngle   = t * rayCircles * 2f * Mathf.PI - Time.time * raySpeed;
-                    float rayRadius  = (1f - t) * 0.3f;
+                    float raySpeed = 15f;
+                    float rayAngle = t * rayCircles * 2f * Mathf.PI - Time.time * raySpeed;
+                    float rayRadius = (1f - t) * 0.3f;
                     offset = (perpendicular * Mathf.Sin(rayAngle) + binormal * Mathf.Cos(rayAngle)) * rayRadius;
 
+                    break;
+
+                case 14:
+                    float audioWave = Mathf.Sin(t * 25f + Time.time * 20f) * (0.05f + audioIntensity * 0.4f);
+                    offset = (perpendicular * audioWave + binormal * Mathf.Cos(t * 25f + Time.time * 20f) * (0.05f + audioIntensity * 0.4f)) * envelope;
                     break;
             }
 
@@ -424,7 +477,7 @@ public class GunLib : MonoBehaviour
         {
             float t = Time.time * speed;
             Color rgb = new(Mathf.Sin(t) * 0.5f + 0.5f, Mathf.Sin(t + 2f) * 0.5f + 0.5f,
-                    Mathf.Sin(t                                     + 4f) * 0.5f + 0.5f);
+                    Mathf.Sin(t + 4f) * 0.5f + 0.5f);
 
             if (targetRenderer != null) targetRenderer.material.color = rgb;
 
@@ -434,18 +487,18 @@ public class GunLib : MonoBehaviour
 
     private static void SpawnGun()
     {
-        GunObject                      = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        GunObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         GunObject.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
         Destroy(GunObject.GetComponent<Rigidbody>());
         Destroy(GunObject.GetComponent<Collider>());
 
         Renderer rend = GunObject.GetComponent<Renderer>();
         rend.material.shader = Shader.Find("GUI/Text Shader");
-        rend.material.color  = ModConfig.Theme;
+        rend.material.color = ModConfig.Theme;
 
-        lineRenderer               = GunObject.AddComponent<LineRenderer>();
-        lineRenderer.startWidth    = 0.015f;
-        lineRenderer.endWidth      = 0.015f;
+        lineRenderer = GunObject.AddComponent<LineRenderer>();
+        lineRenderer.startWidth = 0.015f;
+        lineRenderer.endWidth = 0.015f;
         lineRenderer.useWorldSpace = true;
 
         Material mat = new(Shader.Find("GUI/Text Shader"));
@@ -467,9 +520,9 @@ public class GunLib : MonoBehaviour
         if (GunObject != null)
         {
             Destroy(GunObject);
-            GunObject        = null;
-            GunPos           = null;
-            lineRenderer     = null;
+            GunObject = null;
+            GunPos = null;
+            lineRenderer = null;
             smoothedVelocity = Vector3.zero;
             smoothedEndPoint = Vector3.zero;
         }

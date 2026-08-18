@@ -2,3 +2,9 @@
 #pragma warning disable CS0436 // Type conflicts with imported type
 
 [assembly: System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute("Assembly-CSharp")]
+[assembly: System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute("Photon3Unity3D")]
+[assembly: System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute("PhotonRealtime")]
+[assembly: System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute("PhotonUnityNetworking")]
+[assembly: System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute("PhotonVoice.API")]
+[assembly: System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute("PhotonVoice")]
+[assembly: System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute("PhotonVoice.PUN")]

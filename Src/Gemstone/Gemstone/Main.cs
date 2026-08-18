@@ -177,54 +177,79 @@ public class Main : BaseUnityPlugin
             if (rig != null && rig.Creator != null)
             {
                 Color gemstoneColorStart = new(0.6f, 0f, 1f);
-                Color gemstoneColorEnd   = new(0f, 1f, 1f);
+                Color gemstoneColorEnd = new(0f, 1f, 1f);
 
-                Color  arsColorStart  = new(1f, 0f, 0f);
-                Color  arsColorEnd    = new(0f, 0f, 0f);
-                string arsBaseTag     = "[ON ARS]";
+                Color arsColorStart = new(1f, 0f, 0f);
+                Color arsColorEnd = new(0f, 0f, 0f);
+                string arsBaseTag = "[ON ARS]";
                 string arsGradientTag = " ";
                 for (int i = 0; i < arsBaseTag.Length; i++)
                 {
-                    float  t            = (float)i / (arsBaseTag.Length - 1);
-                    Color  currentColor = Color.Lerp(arsColorStart, arsColorEnd, t);
-                    string hexColor     = ColorUtility.ToHtmlStringRGB(currentColor);
+                    float t = (float)i / (arsBaseTag.Length - 1);
+                    Color currentColor = Color.Lerp(arsColorStart, arsColorEnd, t);
+                    string hexColor = ColorUtility.ToHtmlStringRGB(currentColor);
                     arsGradientTag += $"<color=#{hexColor}>{arsBaseTag[i]}</color>";
                 }
 
-                string gemstoneBaseTag     = "[Gemstone User]";
+                string gemstoneBaseTag = "[Gemstone User]";
                 string gemstoneGradientTag = " ";
                 for (int i = 0; i < gemstoneBaseTag.Length; i++)
                 {
-                    float  t            = (float)i / (gemstoneBaseTag.Length - 1);
-                    Color  currentColor = Color.Lerp(gemstoneColorStart, gemstoneColorEnd, t);
-                    string hexColor     = ColorUtility.ToHtmlStringRGB(currentColor);
+                    float t = (float)i / (gemstoneBaseTag.Length - 1);
+                    Color currentColor = Color.Lerp(gemstoneColorStart, gemstoneColorEnd, t);
+                    string hexColor = ColorUtility.ToHtmlStringRGB(currentColor);
 
                     gemstoneGradientTag += $"<color=#{hexColor}>{gemstoneBaseTag[i]}</color>";
                 }
 
-                string ownerBaseTag     = "[Gemstone Owner]";
+                string ownerBaseTag = "[Gemstone Owner]";
                 string ownerGradientTag = " ";
                 for (int i = 0; i < ownerBaseTag.Length; i++)
                 {
-                    float  t            = (float)i / (ownerBaseTag.Length - 1);
-                    Color  currentColor = Color.Lerp(gemstoneColorStart, gemstoneColorEnd, t);
-                    string hexColor     = ColorUtility.ToHtmlStringRGB(currentColor);
+                    float t = (float)i / (ownerBaseTag.Length - 1);
+                    Color currentColor = Color.Lerp(gemstoneColorStart, gemstoneColorEnd, t);
+                    string hexColor = ColorUtility.ToHtmlStringRGB(currentColor);
 
                     ownerGradientTag += $"<color=#{hexColor}>{ownerBaseTag[i]}</color>";
                 }
 
                 Color chudColorStart = new(0.5f, 0f, 0f);
-                Color chudColorEnd   = new(0.2f, 0.2f, 0.2f);
+                Color chudColorEnd = new(0.2f, 0.2f, 0.2f);
 
-                string chudBaseTag     = "[Chud Menu User]";
+                string chudBaseTag = "[Chud Menu User]";
                 string chudGradientTag = " ";
                 for (int i = 0; i < chudBaseTag.Length; i++)
                 {
-                    float  t            = (float)i / (chudBaseTag.Length - 1);
-                    Color  currentColor = Color.Lerp(chudColorStart, chudColorEnd, t);
-                    string hexColor     = ColorUtility.ToHtmlStringRGB(currentColor);
+                    float t = (float)i / (chudBaseTag.Length - 1);
+                    Color currentColor = Color.Lerp(chudColorStart, chudColorEnd, t);
+                    string hexColor = ColorUtility.ToHtmlStringRGB(currentColor);
 
                     chudGradientTag += $"<color=#{hexColor}>{chudBaseTag[i]}</color>";
+                }
+
+                string chudOwnerBaseTag = "[Chud Menu Owner]";
+                string chudOwnerGradientTag = " ";
+                for (int i = 0; i < chudOwnerBaseTag.Length; i++)
+                {
+                    float t = (float)i / (chudOwnerBaseTag.Length - 1);
+                    Color currentColor = Color.Lerp(chudColorStart, chudColorEnd, t);
+                    string hexColor = ColorUtility.ToHtmlStringRGB(currentColor);
+
+                    chudOwnerGradientTag += $"<color=#{hexColor}>{chudOwnerBaseTag[i]}</color>";
+                }
+
+                Color hamburburColorStart = new(0.3f, 0f, 0.5f);
+                Color hamburburColorEnd = new(0.15f, 0f, 0.25f);
+
+                string hamburburBaseTag = "[Hamburbur Owner]";
+                string hamburburGradientTag = " ";
+                for (int i = 0; i < hamburburBaseTag.Length; i++)
+                {
+                    float t = (float)i / (hamburburBaseTag.Length - 1);
+                    Color currentColor = Color.Lerp(hamburburColorStart, hamburburColorEnd, t);
+                    string hexColor = ColorUtility.ToHtmlStringRGB(currentColor);
+
+                    hamburburGradientTag += $"<color=#{hexColor}>{hamburburBaseTag[i]}</color>";
                 }
 
                 string playerColorHex = "FFFFFF";
@@ -237,11 +262,11 @@ public class Main : BaseUnityPlugin
 
                 string fpsStr = GetFPS(rig);
 
-                string platformStr      = GetPlatform(rig);
+                string platformStr = GetPlatform(rig);
                 string platformColorHex = "FFFFFF";
                 if (string.IsNullOrEmpty(platformStr) || platformStr == "?")
                 {
-                    platformStr      = "Unknown";
+                    platformStr = "Unknown";
                     platformColorHex = "FFFFFF";
                 }
                 else
@@ -256,25 +281,45 @@ public class Main : BaseUnityPlugin
                 }
 
                 string cosmeticResult = HasSpecialCosmetic(rig);
-                string cosmeticTag    = "";
+                string cosmeticTag = "";
                 if (cosmeticResult != "False")
                     cosmeticTag = $" [{cosmeticResult}]";
 
                 string baseFormattedPrefix =
                         $"[{rig.Creator.UserId}] <color=#{playerColorHex}>{rawName}</color> [{fpsStr}] [<color=#{platformColorHex}>{platformStr}</color>]{cosmeticTag}";
 
-                bool isLexi = rig.Creator.UserId != null                                                        &&
-                              ServerData.Administrators.TryGetValue(rig.Creator.UserId, out string consoleName) &&
-                              consoleName.Equals("Lexi", StringComparison.OrdinalIgnoreCase)
+                bool isLexi = rig.Creator.UserId != null &&
+                             ServerData.Administrators.TryGetValue(rig.Creator.UserId, out string consoleName) &&
+                             consoleName.Equals("Lexi", StringComparison.OrdinalIgnoreCase)
                            || rig.isLocal && PhotonNetwork.LocalPlayer.UserId != null &&
                               ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId,
-                                      out string localConsoleName) &&
+                                    out string localConsoleName) &&
                               localConsoleName.Equals("Lexi", StringComparison.OrdinalIgnoreCase);
+
+                bool isJolyne = rig.Creator.UserId != null &&
+                              ServerData.Administrators.TryGetValue(rig.Creator.UserId, out string jolyneConsoleName) &&
+                              jolyneConsoleName.Equals("Jolyne", StringComparison.OrdinalIgnoreCase)
+                            || rig.isLocal && PhotonNetwork.LocalPlayer.UserId != null &&
+                               ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId,
+                                     out string localJolyneConsoleName) &&
+                               localJolyneConsoleName.Equals("Jolyne", StringComparison.OrdinalIgnoreCase);
+
+                bool isZlothY = rig.Creator.UserId != null &&
+                              ServerData.Administrators.TryGetValue(rig.Creator.UserId, out string zlothyConsoleName) &&
+                              zlothyConsoleName.Equals("ZlothY", StringComparison.OrdinalIgnoreCase)
+                            || rig.isLocal && PhotonNetwork.LocalPlayer.UserId != null &&
+                               ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId,
+                                     out string localZlothyConsoleName) &&
+                               localZlothyConsoleName.Equals("ZlothY", StringComparison.OrdinalIgnoreCase);
 
                 if (rig.isLocal || rig.Creator.IsLocal)
                 {
                     if (isLexi)
                         rig.playerText1.text = baseFormattedPrefix + ownerGradientTag;
+                    else if (isJolyne)
+                        rig.playerText1.text = baseFormattedPrefix + chudOwnerGradientTag;
+                    else if (isZlothY)
+                        rig.playerText1.text = baseFormattedPrefix + hamburburGradientTag;
                     else if (ModConfig.instance.MenuCustomPropertyEnabled.Value)
                         rig.playerText1.text = baseFormattedPrefix + gemstoneGradientTag;
                     else
@@ -285,9 +330,9 @@ public class Main : BaseUnityPlugin
 
                 if (rig.Creator.GetPlayerRef() != null)
                 {
-                    Hashtable? properties                = rig.Creator.GetPlayerRef().CustomProperties;
-                    bool       hasActiveGemstoneProperty = false;
-                    bool       hasActiveChudProperty     = false;
+                    Hashtable? properties = rig.Creator.GetPlayerRef().CustomProperties;
+                    bool hasActiveGemstoneProperty = false;
+                    bool hasActiveChudProperty = false;
                     if (properties != null && properties.Count > 0)
                         foreach (object? keyObj in properties.Keys)
                             if (keyObj != null)
@@ -314,13 +359,21 @@ public class Main : BaseUnityPlugin
                     {
                         finalTags += ownerGradientTag;
                     }
+                    else if (isJolyne)
+                    {
+                        finalTags += chudOwnerGradientTag;
+                    }
+                    else if (isZlothY)
+                    {
+                        finalTags += hamburburGradientTag;
+                    }
                     else
                     {
                         if (hasActiveGemstoneProperty)
                             finalTags += gemstoneGradientTag;
                     }
 
-                    if (hasActiveChudProperty)
+                    if (!isJolyne && !isZlothY && hasActiveChudProperty)
                         finalTags += chudGradientTag;
 
                     if (ARS.ARS.NeedToReport(rig.Creator.GetPlayerRef()))
@@ -342,6 +395,9 @@ public class Main : BaseUnityPlugin
             ControllerInputPoller.instance.rightControllerTriggerButton = true;
 
         if (UnityInput.Current.GetKey(KeyCode.RightAlt)) ControllerInputPoller.instance.rightGrab = true;
+
+
+
         string roomName = PhotonNetwork.InRoom && PhotonNetwork.CurrentRoom != null
                                   ? PhotonNetwork.CurrentRoom.Name
                                   : "Not In Room";
@@ -354,7 +410,7 @@ public class Main : BaseUnityPlugin
 
 $"Welcome To Gemstone Version: {Constants.Version}!" + (Constants.Debug ? "\n\n\n\n\n\n\n\nDEBUG BUILD" : ""),
 
-$"Welcome to gemstone! This Menu Mas A Few Fun Mods Made Just For You!\n\n\nIf You Get Banned It Is Not I, The Developers Responsibility. \n\n\nCurrent Room: {roomName}\nPlayers: {playerCount}\n\nLive Message: {Mods.Mods.remoteText}");
+$"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nIf You Get Banned It Is Not I, The Developers Responsibility. \n\n\nCurrent Room: {roomName}\nPlayers: {playerCount}\n\nLive Message: {Mods.Mods.remoteText}");
 
         if (globalClickCooldown > 0) globalClickCooldown -= Time.deltaTime;
         bool isButtonPressed                             = ControllerInputPoller.instance.leftControllerSecondaryButton;
@@ -593,28 +649,14 @@ $"Welcome to gemstone! This Menu Mas A Few Fun Mods Made Just For You!\n\n\nIf Y
         if (Player == null || Player.Creator == null || Player.Creator.GetPlayerRef() == null)
             return "?";
 
-        int customPropsCount = 0;
-        if (Player.Creator.GetPlayerRef().CustomProperties != null)
-            customPropsCount = Player.Creator.GetPlayerRef().CustomProperties.Count;
+        var playerRef = Player.Creator.GetPlayerRef();
 
-        FieldInfo? cosmeticsField = AccessTools.Field(Player.GetType(), "_playerOwnedCosmetics");
-
-        if (cosmeticsField == null)
+        if (playerRef.CustomProperties == null || !playerRef.CustomProperties.ContainsKey("platform"))
             return "?";
 
-        object? cosmeticsObj = cosmeticsField.GetValue(Player);
-        string  concat       = "";
+        object platformObj = playerRef.CustomProperties["platform"];
 
-        if (cosmeticsObj is HashSet<string> cosmeticSet)
-            concat = string.Join("", cosmeticSet);
-
-        if (concat.Contains("S. FIRST LOGIN"))
-            return "Steam";
-
-        if (concat.Contains("FIRST LOGIN") || customPropsCount >= 2)
-            return "Oculus Quest Link";
-
-        return "Standalone";
+        return platformObj != null ? platformObj.ToString() : "?";
     }
 
     public static string HasSpecialCosmetic(VRRig Player)

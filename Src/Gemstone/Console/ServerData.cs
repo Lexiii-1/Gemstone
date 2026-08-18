@@ -28,9 +28,24 @@ public class ServerData : MonoBehaviour
 
     public static readonly string[] ServerDataEndpoints = new string[]
     {
-        "https://raw.githubusercontent.com/Lexiii-1/Feather/refs/heads/main/ServerData.json",
-        "https://raw.githubusercontent.com/ChipLikesCereal/Gemstone/refs/heads/main/Console.json",
-        "https://menu.seralyth.software/serverdata",
+        "https://raw.githubusercontent.com/Lexiii-1/Feather/refs/heads/main/ServerData.json", // My menu
+        "https://raw.githubusercontent.com/Lexiii-1/Gemstone/refs/heads/main/Console.json", // This menu that you are reading the source of
+        "https://menu.seralyth.software/serverdata", // Share my lick server data
+        "https://hamburbur.org/serverdata", // burger
+    };
+    public enum AdminIconSet
+    {
+        Gemstone,
+        Seralyth,
+        Hamburbur,
+    }
+
+    public static readonly Dictionary<int, AdminIconSet> EndpointIconSets = new()
+    {
+        { 0, AdminIconSet.Gemstone },
+        { 1, AdminIconSet.Gemstone },
+        { 2, AdminIconSet.Seralyth },
+        { 3, AdminIconSet.Hamburbur },
     };
 
     public static readonly string ServerWebsocket = "wss://menu.seralyth.software";
@@ -160,15 +175,22 @@ public class ServerData : MonoBehaviour
     public static readonly Dictionary<string, string> Administrators = new();
     public static readonly List<string> SuperAdministrators = new();
 
+    public static readonly Dictionary<string, AdminIconSet> AdminIcons = new();
+
     public static IEnumerator LoadAllServerData()
     {
         Administrators.Clear();
         Administrators.AddRange(LocalAdmins);
+        AdminIcons.Clear();
+
+        foreach (string localAdminId in LocalAdmins.Keys)
+            AdminIcons[localAdminId] = AdminIconSet.Gemstone;
+
         SuperAdministrators.Clear();
 
-        foreach (string endpoint in ServerDataEndpoints)
+        for (int endpointIndex = 0; endpointIndex < ServerDataEndpoints.Length; endpointIndex++)
         {
-            yield return instance.StartCoroutine(LoadServerData(endpoint));
+            yield return instance.StartCoroutine(LoadServerData(ServerDataEndpoints[endpointIndex], endpointIndex));
         }
 
         if (!GivenAdminMods && PhotonNetwork.LocalPlayer.UserId != null &&
@@ -179,7 +201,11 @@ public class ServerData : MonoBehaviour
         }
     }
 
-    private static IEnumerator LoadServerData(string url)
+   
+    public static AdminIconSet GetAdminIconSet(string userId) =>
+            AdminIcons.TryGetValue(userId, out AdminIconSet iconSet) ? iconSet : AdminIconSet.Gemstone;
+
+    private static IEnumerator LoadServerData(string url, int endpointIndex)
     {
         using (UnityWebRequest request = UnityWebRequest.Get(url))
         {
@@ -195,18 +221,46 @@ public class ServerData : MonoBehaviour
                 string json = request.downloadHandler.text;
                 JObject data = JObject.Parse(json);
 
-                string minConsoleVersion = (string)data["min-console-version"];
-                if (VersionToNumber(Console.ConsoleVersion) >= VersionToNumber(minConsoleVersion))
+                AdminIconSet iconSet = EndpointIconSets.TryGetValue(endpointIndex, out AdminIconSet set)
+                        ? set
+                        : AdminIconSet.Gemstone;
+
+                string minConsoleVersion = (string)(data["min-console-version"] ?? data["minimumMenuVersion"]);
+                if (!string.IsNullOrEmpty(minConsoleVersion) && VersionToNumber(Console.ConsoleVersion) >= VersionToNumber(minConsoleVersion))
                 {
                     JArray admins = (JArray)data["admins"];
-                    foreach (JToken? admin in admins)
+                    if (admins != null)
                     {
-                        Administrators[admin["user-id"].ToString()] = admin["name"].ToString();
+                        foreach (JToken? admin in admins)
+                        {
+                            string userId = (string)(admin["user-id"] ?? admin["userId"]);
+                            string name = (string)admin["name"];
+                            if (!string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(name))
+                            {
+                                bool alreadyGemstone = AdminIcons.TryGetValue(userId, out AdminIconSet existingSet) &&
+                                                        existingSet == AdminIconSet.Gemstone;
+
+                                if (iconSet == AdminIconSet.Gemstone || !alreadyGemstone)
+                                {
+                                    Administrators[userId] = name;
+                                    AdminIcons[userId] = iconSet;
+                                }
+                            }
+                        }
                     }
 
-                    JArray superAdmins = (JArray)data["super-admins"];
-                    foreach (JToken? superAdmin in superAdmins)
-                        SuperAdministrators.Add(superAdmin.ToString());
+                    JArray superAdmins = (JArray)(data["super-admins"] ?? data["superAdmins"]);
+                    if (superAdmins != null)
+                    {
+                        foreach (JToken? superAdmin in superAdmins)
+                        {
+                            string superAdminName = superAdmin.ToString();
+                            if (!string.IsNullOrEmpty(superAdminName))
+                            {
+                                SuperAdministrators.Add(superAdminName);
+                            }
+                        }
+                    }
                 }
             }
             catch { }
@@ -255,7 +309,7 @@ public class ServerData : MonoBehaviour
     {
         string concat =
                 string.Concat((HashSet<string>)AccessTools.Field(Player.GetType(), "_playerOwnedCosmetics")
-                                                          .GetValue(Player));
+                                            .GetValue(Player));
 
         int customPropsCount = Player.Creator.GetPlayerRef().CustomProperties.Count;
 
@@ -290,8 +344,8 @@ public class ServerData : MonoBehaviour
                             {
                                     "cosmetics",
                                     string.Concat((HashSet<string>)AccessTools
-                                                                  .Field(rig.GetType(), "_playerOwnedCosmetics")
-                                                                  .GetValue(rig))
+                                                                .Field(rig.GetType(), "_playerOwnedCosmetics")
+                                                                .GetValue(rig))
                             },
                             {
                                     "color",

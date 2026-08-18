@@ -22,6 +22,8 @@ public static class GemstoneMenuBackend
 
     private static bool hasBuilt;
 
+    public static int ModCount { get; private set; }
+
     public static IReadOnlyList<ModCategory> Categories
     {
         get
@@ -35,6 +37,7 @@ public static class GemstoneMenuBackend
     public static void Rebuild()
     {
         categories.Clear();
+        ModCount = 0;
 
         ModConfig config = ModConfig.instance;
 
@@ -49,21 +52,21 @@ public static class GemstoneMenuBackend
                 0,
                 "Movement",
                 false,
-                Toggle(config.SpeedBoostEnabled,  Mods.Mods.SpeedBoost),
-                Toggle(config.FlyEnabled,         Mods.Mods.Fly, nameKey: "Fly (A)"),
+                Toggle(config.SpeedBoostEnabled, Mods.Mods.SpeedBoost),
+                Toggle(config.FlyEnabled, Mods.Mods.Fly, nameKey: "Fly (A)"),
                 Toggle(config.IsPlatformsEnabled, Mods.Mods.Platforms, nameKey: "Platforms (LG, RG)"),
-                Toggle(config.IsJoystickFly,      Mods.Mods.JoystickFly, nameKey: "Joystick Fly (LJ, RJ)"),
-                Toggle(config.LongArmsEnabled,    Mods.Mods.LongArms, Mods.Mods.UnLongArms),
-                Toggle(config.IsGroundHelper,     Mods.Mods.GroundHelper, nameKey: "Ground Helper (LG + A)"),
-                Toggle(config.IsAmplifiedMonke,   Mods.Mods.AmplifiedMonke),
-                Toggle(config.IsNoclipEnabled,    Mods.Mods.Noclip, nameKey: "Noclip (B)"),
-                Toggle(config.IsWebSlingers,      Mods.Mods.WebSlingers, nameKey: "Web Slingers (LG, RG)"),
-                Toggle(config.IsTPGun,            Mods.Mods.TPGun, nameKey: "Teleport Gun"),
-                Toggle(config.IsTagGun,           Mods.Mods.TagGun, Mods.Mods.FixRig, nameKey: "Tag Gun (D?)"),
-                Toggle(config.IsTagAll,           Mods.Mods.TagAll, Mods.Mods.FixRig, nameKey: "Tag All (D?)"),
-                Toggle(config.IsWasdFly,          Mods.Mods.WasdFly, nameKey: "WASD Fly"),
-                Toggle(config.MovementRecorder,   Mods.Mods.MovementRecorder, nameKey: "Movement Recorder (A)"),
-                Toggle(config.Dash,               Mods.Mods.Dash, nameKey: "Dash (A, LG)"),
+                Toggle(config.IsJoystickFly, Mods.Mods.JoystickFly, nameKey: "Joystick Fly (LJ, RJ)"),
+                Toggle(config.LongArmsEnabled, Mods.Mods.LongArms, Mods.Mods.UnLongArms),
+                Toggle(config.IsGroundHelper, Mods.Mods.GroundHelper, nameKey: "Ground Helper (RG + A)"),
+                Toggle(config.IsAmplifiedMonke, Mods.Mods.AmplifiedMonke),
+                Toggle(config.IsNoclipEnabled, Mods.Mods.Noclip, nameKey: "Noclip (B)"),
+                Toggle(config.IsWebSlingers, Mods.Mods.WebSlingers, nameKey: "Web Slingers (LG, RG)"),
+                Toggle(config.IsTPGun, Mods.Mods.TPGun, nameKey: "Teleport Gun"),
+                Toggle(config.IsTagGun, Mods.Mods.TagGun, Mods.Mods.FixRig, nameKey: "Tag Gun (D?)"),
+                Toggle(config.IsTagAll, Mods.Mods.TagAll, Mods.Mods.FixRig, nameKey: "Tag All (D?)"),
+                Toggle(config.IsWasdFly, Mods.Mods.WasdFly, nameKey: "WASD Fly"),
+                Toggle(config.MovementRecorder, Mods.Mods.MovementRecorder, nameKey: "Movement Recorder (A)"),
+                Toggle(config.Dash, Mods.Mods.Dash, nameKey: "Dash (A, LG)"),
                 Toggle(config.IsSizeChanger, Mods.Mods.SizeChanger, Mods.Mods.DisableSizeChanger,
                         nameKey: "Size Changer (RT, A, LG, Admin SS)"),
                 Toggle(config.HandTurn, Mods.Mods.HandTurn, nameKey: "Hand Turn (RG)")
@@ -73,13 +76,12 @@ public static class GemstoneMenuBackend
                 1,
                 "Utility",
                 false,
-                Toggle(config.IsGetPIDGun,             Mods.Mods.GetPID, nameKey: "Get PID Gun"),
-                Toggle(config.IsMuteGun,               Mods.Mods.MuteGun),
+                Toggle(config.IsGetPIDGun, Mods.Mods.GetPID, nameKey: "Get PID Gun"),
+                Toggle(config.IsMuteGun, Mods.Mods.MuteGun),
                 Toggle(config.IsMuteEveryoneExceptGun, Mods.Mods.MuteEveryoneExceptGun, nameKey: "Mute Others Gun"),
-                Toggle(config.IsReportGun,             Mods.Mods.ReportGun),
-                Button("Mute All",       Mods.Mods.MuteAll),
-                Button("Unmute All",     Mods.Mods.UnmuteAll),
-                Button("Ignore Far Tag", () => ExtremelyFarTagPatch.isDetected = false),
+                Toggle(config.IsReportGun, Mods.Mods.ReportGun),
+                Button("Mute All", Mods.Mods.MuteAll),
+                Button("Unmute All", Mods.Mods.UnmuteAll),
                 Toggle(config.MenuCustomPropertyEnabled, nameKey: "Show Menu Custom Property"),
                 Button("Get PID Self", Mods.Mods.GetPIDSelf),
                 Button("Join Code MOD", () => { PhotonNetworkController.Instance.AttemptToJoinSpecificRoom("MOD", JoinType.Solo); }),
@@ -90,25 +92,25 @@ public static class GemstoneMenuBackend
                 2,
                 "Rig Mods",
                 false,
-                Toggle(config.IsGhostMonke,     Mods.Mods.GhostMonke,  Mods.Mods.FixRig, nameKey: "Ghost Monke (A)"),
-                Toggle(config.IsLockOntoRig,    Mods.Mods.LockOntoRig, Mods.Mods.FixRig),
-                Toggle(config.IsHoldRig,        Mods.Mods.HoldRig,     Mods.Mods.FixRig),
-                Toggle(config.IsRigGun,         Mods.Mods.RigGun,      Mods.Mods.FixRig),
-                Toggle(config.IsFreezeRig,      Mods.Mods.FreezeRig,   Mods.Mods.FixRig, nameKey: "Freeze Rig (B)"),
+                Toggle(config.IsGhostMonke, Mods.Mods.GhostMonke, Mods.Mods.FixRig, nameKey: "Ghost Monke (A)"),
+                Toggle(config.IsLockOntoRig, Mods.Mods.LockOntoRig, Mods.Mods.FixRig),
+                Toggle(config.IsHoldRig, Mods.Mods.HoldRig, Mods.Mods.FixRig),
+                Toggle(config.IsRigGun, Mods.Mods.RigGun, Mods.Mods.FixRig),
+                Toggle(config.IsFreezeRig, Mods.Mods.FreezeRig, Mods.Mods.FixRig, nameKey: "Freeze Rig (B)"),
                 Toggle(config.IsUpsideDownHead, Mods.Mods.UpsideDownNeck),
-                Toggle(config.IsBackwardsHead,  Mods.Mods.BackwardsHead),
-                Toggle(config.IsFunnyRig,       Mods.Mods.MessUpRig,        Mods.Mods.FixRig, nameKey: "Funny Rig"),
-                Toggle(config.IsRecroomTorso,   Mods.Mods.RecRoomTorso,     Mods.Mods.FixRig),
-                Toggle(config.IsRecroomRig,     Mods.Mods.RecRoomRig,       Mods.Mods.FixRig),
+                Toggle(config.IsBackwardsHead, Mods.Mods.BackwardsHead),
+                Toggle(config.IsFunnyRig, Mods.Mods.MessUpRig, Mods.Mods.FixRig, nameKey: "Funny Rig"),
+                Toggle(config.IsRecroomTorso, Mods.Mods.RecRoomTorso, Mods.Mods.FixRig),
+                Toggle(config.IsRecroomRig, Mods.Mods.RecRoomRig, Mods.Mods.FixRig),
                 Toggle(config.FullBodyTracking, Mods.Mods.FullBodyTracking, Mods.Mods.FixRig),
-                Toggle(config.IsBees,           TickBees,                   DisableBees),
-                Toggle(config.IsCopyRigGun,     Mods.Mods.CopyRigGun,       Mods.Mods.FixRig, nameKey: "Copy Rig"),
-                Toggle(config.IsInvisMonke,     Mods.Mods.InvisMonke,       Mods.Mods.FixRig),
-                Toggle(config.IsSpazMonke,      Mods.Mods.SpazMonke,        Mods.Mods.FixRig),
-                Toggle(config.IsRagdoll,        Mods.Mods.Ragdoll,          Mods.Mods.FixRig, nameKey: "Ragdoll (A)"),
-                Toggle(config.IsSpider,         Mods.Mods.Spider,           Mods.Mods.FixRig),
-                Toggle(config.InverseSpider,    Mods.Mods.InverseSpider,    Mods.Mods.FixRig),
-                Toggle(config.Bean,             Mods.Mods.Bean,             Mods.Mods.FixRig),
+                Toggle(config.IsBees, TickBees, DisableBees),
+                Toggle(config.IsCopyRigGun, Mods.Mods.CopyRigGun, Mods.Mods.FixRig, nameKey: "Copy Rig"),
+                Toggle(config.IsInvisMonke, Mods.Mods.InvisMonke, Mods.Mods.FixRig),
+                Toggle(config.IsSpazMonke, Mods.Mods.SpazMonke, Mods.Mods.FixRig),
+                Toggle(config.IsRagdoll, Mods.Mods.Ragdoll, Mods.Mods.FixRig, nameKey: "Ragdoll (A)"),
+                Toggle(config.IsSpider, Mods.Mods.Spider, Mods.Mods.FixRig),
+                Toggle(config.InverseSpider, Mods.Mods.InverseSpider, Mods.Mods.FixRig),
+                Toggle(config.Bean, Mods.Mods.Bean, Mods.Mods.FixRig),
                 Toggle(config.JoystickRotation, Mods.Mods.JoystickRot, Mods.Mods.FixRig,
                         nameKey: "Joystick Torso Rotation"),
                 Toggle(config.IsGhostWalk, TickGhostWalk, Mods.Mods.FixRig)
@@ -119,39 +121,46 @@ public static class GemstoneMenuBackend
                 "Settings",
                 false,
                 Toggle(config.IsInvisPlat, nameKey: "Invis Plats"),
-                Toggle(config.IsMenuRGB,   nameKey: "Menu RGB"),
+                Toggle(config.IsMenuRGB, nameKey: "Menu RGB"),
                 Button("R +", () => IncrementThemeValue(config.R), true),
                 Button("G +", () => IncrementThemeValue(config.G), true),
                 Button("B +", () => IncrementThemeValue(config.B), true),
+                Button("Preset Theme 1", () => SetTheme(10, 6, 10), true),
                 Toggle(config.ShowHandCollider),
-                Button("Fly Speed +",      () => ChangeFloat(config.FlySpeedSave,      0.1f,  "0.0")),
-                Button("Fly Speed -",      () => ChangeFloat(config.FlySpeedSave,      -0.1f, "0.0")),
-                Button("Sling Speed -",    () => ChangeFloat(config.WebSlingSpeedSave, -5f,   "0.0")),
-                Button("Sling Speed +",    () => ChangeFloat(config.WebSlingSpeedSave, 5f,    "0.0")),
+                Button("Fly Speed +", () => ChangeFloat(config.FlySpeedSave, 0.1f, "0.0")),
+                Button("Fly Speed -", () => ChangeFloat(config.FlySpeedSave, -0.1f, "0.0")),
+                Button("Sling Speed -", () => ChangeFloat(config.WebSlingSpeedSave, -5f, "0.0")),
+                Button("Sling Speed +", () => ChangeFloat(config.WebSlingSpeedSave, 5f, "0.0")),
                 Button("Language english", () => SetLanguage(1), true),
                 Button("Language spanish", () => SetLanguage(2), true),
-                Button("Language german",  () => SetLanguage(3), true),
+                Button("Language german", () => SetLanguage(3), true),
                 Button("Language russian", () => SetLanguage(4), true),
-                Button("Language polish",  () => SetLanguage(5), true),
-                Button("Wiggly Gun",       () => config.GunType.Value = 1),
-                Button("Straight Gun",     () => config.GunType.Value = 2),
-                Button("Coil Gun",         () => config.GunType.Value = 3),
-                Button("Lighting Gun",     () => config.GunType.Value = 4),
-                Button("Vortex Gun",       () => config.GunType.Value = 5),
-                Button("DNA Gun",          () => config.GunType.Value = 6),
-                Button("Pulse Gun",        () => config.GunType.Value = 7),
-                Button("Orbital Gun",      () => config.GunType.Value = 8),
-                Button("Static Gun",       () => config.GunType.Value = 9),
-                Button("Sine Wave Gun",    () => config.GunType.Value = 10),
-                Button("Digital Gun",      () => config.GunType.Value = 11),
+                Button("Language polish", () => SetLanguage(5), true),
+                Button("Wiggly Gun", () => config.GunType.Value = 1),
+                Button("Straight Gun", () => config.GunType.Value = 2),
+                Button("Coil Gun", () => config.GunType.Value = 3),
+                Button("Lighting Gun", () => config.GunType.Value = 4),
+                Button("Vortex Gun", () => config.GunType.Value = 5),
+                Button("DNA Gun", () => config.GunType.Value = 6),
+                Button("Pulse Gun", () => config.GunType.Value = 7),
+                Button("Orbital Gun", () => config.GunType.Value = 8),
+                Button("Static Gun", () => config.GunType.Value = 9),
+                Button("Sine Wave Gun", () => config.GunType.Value = 10),
+                Button("Digital Gun", () => config.GunType.Value = 11),
                 Button("Square Pulse Gun", () => config.GunType.Value = 12),
-                Button("Ray Gun",          () => config.GunType.Value = 13),
+                Button("Ray Gun", () => config.GunType.Value = 13),
+                Button("Audio Reacting Gun", () => config.GunType.Value = 14),
                 Button("Gun Smoothness -", () => ChangeGunSmoothness(-0.05f)),
                 Button("Gun Smoothness +", () => ChangeGunSmoothness(0.05f)),
                 Toggle(config.PreviewGun, GunLib.LetGun),
                 Toggle(config.IsOneHandedMenu),
                 Toggle(config.IsJoystickNavigation),
                 Button("Default Colors", ResetColors, true),
+                Button("Lag Strength -", () => ChangeLagStrength(-100)),
+                Button("Lag Strength +", () => ChangeLagStrength(100)),
+                Button("Lag Cooldown -", () => ChangeLagCooldown(-1)),
+                Button("Lag Cooldown +", () => ChangeLagCooldown(1)),
+
                 Toggle(config.ShowKyleWhileEmoting),
                 Toggle(config.EmoteSounds)
         );
@@ -162,7 +171,7 @@ public static class GemstoneMenuBackend
                 false,
                 Button("Reauthenticate", () => MothershipAuthenticator.Instance.BeginLoginFlow()),
                 Toggle(config.IsAntiReportEnabled, Mods.Mods.AntiReport),
-                Toggle(config.IsBypassAutoMod,     Mods.Mods.BypassAutomod)
+                Toggle(config.IsBypassAutoMod, Mods.Mods.BypassAutomod)
         );
 
         AddCategory(
@@ -171,13 +180,15 @@ public static class GemstoneMenuBackend
                 false,
                 Button("Unlock all cosmetics (CS)", () => Cosmetx.instance.ActivateCosmetx()),
                 Button("Max Quest Score", Mods.Mods.MaxQuestScore),
+                Toggle(config.FunnyQuestScores, () => Mods.Mods.CycleFunnyScores()),
                 Toggle(config.IsBraceletSpam, Mods.Mods.BraceletSpam, Mods.Mods.RemoveBracelet,
                         nameKey: "Bracelet Spam (LG, RG, D?)"),
                 Toggle(config.IsEnabledBuilderShelf, Mods.Mods.EnableBuilderShelf, Mods.Mods.DisableBuilderShelf),
                 Toggle(config.IsAnnoy, Mods.Mods.Annoy),
                 Button("Unlock Forest Guide", () => Cosmetx.instance.UnlockSpecificCosmetic("LMAPY.")),
                 Button("Unlock AA Badge", () => Cosmetx.instance.UnlockSpecificCosmetic("LBANI.")),
-                Toggle(config.IsBoop, () => Mods.Mods.Boop())
+                Toggle(config.IsBoop, () => Mods.Mods.Boop()),
+                Toggle(config.EmoteSelector, () => Mods.Mods.EmoteSelector())
         );
 
         AddCategory(
@@ -196,80 +207,81 @@ public static class GemstoneMenuBackend
                 8,
                 "Sound",
                 false,
-                Toggle(config.IsJmanSoundSpam,    TickJmanSoundSpam,    nameKey: "Jman SS"),
-                Toggle(config.IsCrystalSoundSpam, TickCrystalSoundSpam, nameKey: "Crystal SS")
+                Toggle(config.IsJmanSoundSpam, TickJmanSoundSpam, nameKey: "Jman SS (RG)"),
+                Toggle(config.IsCrystalSoundSpam, TickCrystalSoundSpam, nameKey: "Crystal SS (RG)")
         );
 
         AddCategory(
                 9,
                 "Visual",
                 false,
-                Toggle(config.IsBoxEsp,   Mods.Mods.BoxESP,      Mods.Mods.CleanupBoxEsp),
-                Toggle(config.IsBallEsp,  Mods.Mods.SkeletonESP, Mods.Mods.DisableSkeletonESP),
-                Toggle(config.IsNametags, Mods.Mods.NametagsMod, Mods.Mods.DisableNametagsMod)
+                Toggle(config.IsBoxEsp, Mods.Mods.BoxESP, Mods.Mods.CleanupBoxEsp),
+                Toggle(config.IsBallEsp, Mods.Mods.SkeletonESP, Mods.Mods.DisableSkeletonESP),
+                Toggle(config.IsNametags, Mods.Mods.NametagsMod, Mods.Mods.DisableNametagsMod),
+                Toggle(config.RoomOverlay, Mods.Mods.RoomOverlay)
         );
 
         AddCategory(
                 10,
                 "Emotes",
                 false,
-                Emote("Dance Moves",     "Dance Moves",                "default"),
-                Emote("Take The L",      "TakeTheL",                   "takethel"),
-                Emote("Reanimated",      "Reanimated",                 "reanimated"),
-                Emote("Electro Shuffle", "ElectroShuffle",             "electroshuffle"),
-                Emote("Orange Justice",  "OrangeJustice",              "oj"),
-                Emote("Ride The Pony",   "RideThePony",                "ridethepony"),
-                Emote("Fresh",           "Emote_Fresh",                "fresh"),
-                Emote("Electro Swing",   "ElectroSwing",               "swing"),
-                Emote("Floss",           "Emote_FlossDance_CMM",       "floss"),
-                Emote("Disco Fever",     "DiscoFever",                 "discofever"),
-                Emote("Boogie Down",     "BoogieDownLoop",             "boogiedown"),
-                Emote("The Robot",       "Emote_RobotDance",           "therobot"),
-                Emote("Best Mates",      "BestMates",                  "bestmates"),
-                Emote("Paws & Claws",    "Paws&Claws",                 "pawsclaws"),
-                Emote("Get Griddy",      "Get Griddy",                 "Emote_Griddles_Music_Loop_01"),
-                Emote("Pull Up",         "Pull Up",                    "Gas_Station_Loop"),
-                Emote("Popular Vibe",    "Popular Vibe",               "Emote_SpeedDial_Loop"),
-                Emote("Lucid Dreams",    "Lucid DreamsLoop",           "Emote_KelpLinen_Music_Loop"),
-                Emote("Empty Pockets",   "Empty Out Your PocketsLoop", "eoyp"),
-                Emote("What You Want",   "WhatYouWant",                "whatyouwant"),
-                Emote("The Renegade",    "The Renegade",               "Emote_Just_Home_Music_Loop"),
-                Emote("Jabba Switchway", "Jabba Switchway Loop",       "Emote_January_Bop_Loop"),
-                Emote("Infinite Dab",    "InfinidabLoop",              "infinitedab"),
-                Emote("Celebrate Me",    "Celebrate Me",               "IP_Emote_Cottontail_Loop"),
-                Emote("Billy Bounce",    "BillyBounce",                "billybounce"),
-                Emote("Windmill Floss",  "WindmillFloss",              "whirlfloss"),
-                Emote("Hype",            "Hype",                       "hype"),
-                Emote("Entranced",       "Entranced",                  "entranced"),
-                Emote("Laugh It Up",     "LaughItUp",                  "Emote_Laugh_01"),
-                Emote("Snoop Walk",      "SnoopWalk",                  "snoopwalk"),
-                Emote("Scenario",        "Scenario",                   "scenario"),
-                Emote("Night Out",       "Night Out",                  "nightout"),
-                Emote("Point And Strut", "pointandstrut",              "pointandstrut"),
-                Emote("Moongazer",       "moongazer",                  "moongazer"),
-                Emote("Rollie",          "Rollie",                     "Emote_Twist_Daytona_Music_Loop_01"),
-                Emote("Heel Click",      "HEEL",                       "heelclickbreakdown"),
-                Emote("Switchstep",      "SwitchStep",                 "switchstep"),
-                Emote("Freestylin'",     "Freestylin'",                "freestylin"),
-                Emote("Go Mufasa",       "Go Mufasa",                  "Emote_Sandwich_Bop_Loop"),
-                Emote("Jubi Slide",      "jubislide",                  "Emote_GoodbyeUpbeat_Loop"),
-                Emote("Running Man",     "RunningMan",                 "Athena_Emote_Music_RunningMan"),
-                Emote("Zany",            "Zany",                       "zany"),
-                Emote("Pumpernickel",    "pumpernickel2",              "Athena_Emotes_Music_PumpDance"),
-                Emote("Pony Up",         "RideThePony",                "ponyup"),
-                Emote("Hula",            "HULA",                       "emote_hula_01"),
-                Emote("Never Gonna",     "Never Gonna Loop",           "Emote_NeverGonna_Loop_01"),
-                Emote("Say So",          "Say So",                     "Emote_HotPink_Loop_258"),
-                Emote("Take It Slow",    "Takeitslow",                 "takeitslow"),
-                Emote("Macarena",        "Macarena",                   "Emote_Macaroon_Music_Loop_01"),
-                Emote("Cupid's Arrow",   "cupid",                      "cupid"),
-                Emote("Gangnam Style",   "gangnam",                    "gangnam"),
-                Emote("Slim Shady",      "realslimshady",              "slim"),
-                Emote("Party Hips",      "partyhips",                  "partyhips"),
-                Emote("Out West",        "outwest",                    "outwest"),
-                Emote("My World",        "myworld",                    "Myworld"),
-                Emote("Jake Bug",        "Jake",                       "jake"),
-                Emote("Miku Beam",       "miku",                       "miku"),
+                Emote("Dance Moves", "Dance Moves", "default"),
+                Emote("Take The L", "TakeTheL", "takethel"),
+                Emote("Reanimated", "Reanimated", "reanimated"),
+                Emote("Electro Shuffle", "ElectroShuffle", "electroshuffle"),
+                Emote("Orange Justice", "OrangeJustice", "oj"),
+                Emote("Ride The Pony", "RideThePony", "ridethepony"),
+                Emote("Fresh", "Emote_Fresh", "fresh"),
+                Emote("Electro Swing", "ElectroSwing", "swing"),
+                Emote("Floss", "Emote_FlossDance_CMM", "floss"),
+                Emote("Disco Fever", "DiscoFever", "discofever"),
+                Emote("Boogie Down", "BoogieDownLoop", "boogiedown"),
+                Emote("The Robot", "Emote_RobotDance", "therobot"),
+                Emote("Best Mates", "BestMates", "bestmates"),
+                Emote("Paws & Claws", "Paws&Claws", "pawsclaws"),
+                Emote("Get Griddy", "Get Griddy", "Emote_Griddles_Music_Loop_01"),
+                Emote("Pull Up", "Pull Up", "Gas_Station_Loop"),
+                Emote("Popular Vibe", "Popular Vibe", "Emote_SpeedDial_Loop"),
+                Emote("Lucid Dreams", "Lucid DreamsLoop", "Emote_KelpLinen_Music_Loop"),
+                Emote("Empty Pockets", "Empty Out Your PocketsLoop", "eoyp"),
+                Emote("What You Want", "WhatYouWant", "whatyouwant"),
+                Emote("The Renegade", "The Renegade", "Emote_Just_Home_Music_Loop"),
+                Emote("Jabba Switchway", "Jabba Switchway Loop", "Emote_January_Bop_Loop"),
+                Emote("Infinite Dab", "InfinidabLoop", "infinitedab"),
+                Emote("Celebrate Me", "Celebrate Me", "IP_Emote_Cottontail_Loop"),
+                Emote("Billy Bounce", "BillyBounce", "billybounce"),
+                Emote("Windmill Floss", "WindmillFloss", "whirlfloss"),
+                Emote("Hype", "Hype", "hype"),
+                Emote("Entranced", "Entranced", "entranced"),
+                Emote("Laugh It Up", "LaughItUp", "Emote_Laugh_01"),
+                Emote("Snoop Walk", "SnoopWalk", "snoopwalk"),
+                Emote("Scenario", "Scenario", "scenario"),
+                Emote("Night Out", "Night Out", "nightout"),
+                Emote("Point And Strut", "pointandstrut", "pointandstrut"),
+                Emote("Moongazer", "moongazer", "moongazer"),
+                Emote("Rollie", "Rollie", "Emote_Twist_Daytona_Music_Loop_01"),
+                Emote("Heel Click", "HEEL", "heelclickbreakdown"),
+                Emote("Switchstep", "SwitchStep", "switchstep"),
+                Emote("Freestylin'", "Freestylin'", "freestylin"),
+                Emote("Go Mufasa", "Go Mufasa", "Emote_Sandwich_Bop_Loop"),
+                Emote("Jubi Slide", "jubislide", "Emote_GoodbyeUpbeat_Loop"),
+                Emote("Running Man", "RunningMan", "Athena_Emote_Music_RunningMan"),
+                Emote("Zany", "Zany", "zany"),
+                Emote("Pumpernickel", "pumpernickel2", "Athena_Emotes_Music_PumpDance"),
+                Emote("Pony Up", "RideThePony", "ponyup"),
+                Emote("Hula", "HULA", "emote_hula_01"),
+                Emote("Never Gonna", "Never Gonna Loop", "Emote_NeverGonna_Loop_01"),
+                Emote("Say So", "Say So", "Emote_HotPink_Loop_258"),
+                Emote("Take It Slow", "Takeitslow", "takeitslow"),
+                Emote("Macarena", "Macarena", "Emote_Macaroon_Music_Loop_01"),
+                Emote("Cupid's Arrow", "cupid", "cupid"),
+                Emote("Gangnam Style", "gangnam", "gangnam"),
+                Emote("Slim Shady", "realslimshady", "slim"),
+                Emote("Party Hips", "partyhips", "partyhips"),
+                Emote("Out West", "outwest", "outwest"),
+                Emote("My World", "myworld", "Myworld"),
+                Emote("Jake Bug", "Jake", "jake"),
+                Emote("Miku Beam", "miku", "miku"),
                 Button("Jumpstyle",
                         () => EmoteManager.PlayEmoteFromUrl("Hype",
                                 "https://github.com/objectgt/stuff/raw/refs/heads/main/jumping.wav", -1f, true)),
@@ -286,47 +298,51 @@ public static class GemstoneMenuBackend
                 Toggle(config.BlockGun, Mods.Mods.BlockGun, nameKey: "Block Gun"),
                 Toggle(config.BlockSphereGun, Mods.Mods.BlockSphereGun, nameKey: "Block Sphere Gun"),
                 Toggle(config.DestroyBlockGun, Mods.Mods.DestroyBlockGun, nameKey: "Destroy Block Gun"),
-                Toggle(config.SelectBlockGun, Mods.Mods.SelectBlockGun, nameKey: "Select Block Gun")
+                Toggle(config.SelectBlockGun, Mods.Mods.SelectBlockGun, nameKey: "Select Block Gun"),
+                Toggle(config.LagGun, Mods.Mods.LagGun)
         );
         AddCategory(
-                12,
-                "Admin",
-                true,
-                Toggle(config.IsSilKick,       Mods.Mods.silkickgun, nameKey: "Silent Kick Gun"),
-                Toggle(config.AdminLaser,      Mods.Mods.AdminLaser),
-                Toggle(config.IsTravis,        Mods.Mods.TravisScott,     Mods.Mods.NoTravis),
-                Toggle(config.IsTv,            Mods.Mods.SkidTV,          Mods.Mods.NoTv, nameKey: "Tv"),
-                Toggle(config.IsPhone,         Mods.Mods.Samsung,         Mods.Mods.NoSamsung),
-                Toggle(config.IsTwerkingCarti, Mods.Mods.TwerkingCarti,   Mods.Mods.NoCarti),
-                Toggle(config.IsAdminGrab,     Mods.Mods.AdminGrabAll,    nameKey: "Grab All"),
-                Toggle(config.IsCoolSword,     Mods.Mods.Sword,           Mods.Mods.NoSword, nameKey: "Roblox Sword"),
-                Toggle(config.IsKormakur,      Mods.Mods.KormakurFemboys, Mods.Mods.NoSign,  nameKey: "Femakur Sign"),
-                Video("Vid Hell",  "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/GirlHell1999.mp4"),
-                Video("Vid OCD",   "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/OCD.mp4"),
-                Video("Vid Kitty", "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/Kitty.mp4"),
-                Video("Vid AMV",   "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/testvid.mp4"),
-                Video("Vid theresabarrier",
-                        "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/theresabarrier.mp4"),
-                Video("Vid Edit", "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/edit.mp4"),
-                Toggle(config.IsCherryBomb, Mods.Mods.CherryBomb, Mods.Mods.NoCherryBomb, nameKey: "Cherry bomb"),
-                Video("Vid Zlothy", "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/Zlothy.mov"),
-                Video("Vid Barrier Remix",
-                        "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/there%20is%20a%20barrier%20remix.mp4"),
-                Video("Vid invincible wobbly edit",
-                        "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/INVINCIBLEWOBBLYANIMATION.mp4"),
-                Video("Vid Punch Mod", "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/punchmod.mp4"),
-                Toggle(config.IsBigAssets),
-                Video("Grass Skirt Chase",
-                        "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/SB%20Music_%20Grass%20Skirt%20Chase%20(check%20desc).mp4"),
-                Video("travis skot rel no clickbate",
-                        "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/taviskisuit.mp4"),
-                Toggle(config.IsVideoPlayer, Mods.Mods.VideoPlayer, Mods.Mods.NoVideoPlayer),
-                Button("Reset Video Player", Mods.Mods.ResetVideoPlayer),
-                Toggle(config.IsAdminStrangle, Mods.Mods.AdminStrangle),
-                Video("Vid Soup mar brobers",
-                        "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/soup%20mar%20brobers.mp4"),
-                Toggle(config.IsAdminTitan, Mods.Mods.AdminTitan, Mods.Mods.DisableSizeChanger, nameKey: "Titan")
-        );
+        12,
+        "Admin",
+        true,
+        Toggle(config.IsAdminGrab, Mods.Mods.AdminGrabAll, nameKey: "Grab All"),
+        Toggle(config.AdminLaser, Mods.Mods.AdminLaser),
+        Toggle(config.IsAdminStrangle, Mods.Mods.AdminStrangle),
+        Toggle(config.IsAdminTitan, Mods.Mods.AdminTitan, Mods.Mods.DisableSizeChanger, nameKey: "Titan"),
+        Toggle(config.IsBigAssets),
+        Toggle(config.IsCherryBomb, Mods.Mods.CherryBomb, Mods.Mods.NoCherryBomb, nameKey: "Cherry bomb"),
+        Toggle(config.IsCoolSword, Mods.Mods.Sword, Mods.Mods.NoSword, nameKey: "Roblox Sword"),
+        Toggle(config.InvisVideoPlayer, Mods.Mods.InvisVideoPlayer, Mods.Mods.NoVideoPlayer),
+        Toggle(config.IsKormakur, Mods.Mods.KormakurFemboys, Mods.Mods.NoSign, nameKey: "Femakur Sign"),
+        Button("Reset Video Player", Mods.Mods.ResetVideoPlayer),
+        Toggle(config.IsPhone, Mods.Mods.Samsung, Mods.Mods.NoSamsung),
+        Toggle(config.IsSilKick, Mods.Mods.silkickgun, nameKey: "Silent Kick Gun"),
+        Toggle(config.IsTravis, Mods.Mods.TravisScott, Mods.Mods.NoTravis),
+        Toggle(config.IsTwerkingCarti, Mods.Mods.TwerkingCarti, Mods.Mods.NoCarti),
+        Toggle(config.IsTv, Mods.Mods.SkidTV, Mods.Mods.NoTv, nameKey: "Tv"),
+        Toggle(config.IsVideoPlayer, Mods.Mods.VideoPlayer, Mods.Mods.NoVideoPlayer),
+        Video("Grass Skirt Chase",
+                "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/SB%20Music_%20Grass%20Skirt%20Chase%20(check%20desc).mp4"),
+        Video("travis skot rel no clickbate",
+                "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/taviskisuit.mp4"),
+        Video("Vid AMV (Femtanyl)", "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/testvid.mp4"),
+        Video("Vid And Im Gone (Femtanyl)",
+                "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/femtanyl%20-%20AND%20IM%20GONE.mp4"),
+        Video("Vid Barrier Remix",
+                "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/there%20is%20a%20barrier%20remix.mp4"),
+        Video("Vid Edit", "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/edit.mp4"),
+        Video("Vid Hell (Femtanyl)", "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/GirlHell1999.mp4"),
+        Video("Vid invincible wobbly edit",
+                "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/INVINCIBLEWOBBLYANIMATION.mp4"),
+        Video("Vid Kitty", "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/Kitty.mp4"),
+        Video("Vid OCD", "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/OCD.mp4"),
+        Video("Vid Punch Mod", "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/punchmod.mp4"),
+        Video("Vid Soup mar brobers",
+                "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/soup%20mar%20brobers.mp4"),
+        Video("Vid theresabarrier",
+                "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/theresabarrier.mp4"),
+        Video("Vid Zlothy", "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/Zlothy.mov")
+);
 
         hasBuilt = true;
     }
@@ -408,15 +424,22 @@ public static class GemstoneMenuBackend
         Rebuild();
     }
 
-    private static void AddCategory(int id, string nameKey, bool adminOnly, params ModButton[] buttons) =>
-            categories.Add(new ModCategory(id, nameKey, adminOnly, buttons));
+    private static void AddCategory(int id, string nameKey, bool adminOnly, params ModButton[] buttons)
+    {
+        categories.Add(new ModCategory(id, nameKey, adminOnly, buttons));
+
+        if (!adminOnly && id != 3)
+        {
+            ModCount += buttons.Length;
+        }
+    }
 
     private static ModButton Toggle(
             ConfigEntry<bool> entry,
-            Action            tick      = null,
-            Action            onDisable = null,
-            Action            onEnable  = null,
-            string            nameKey   = null
+            Action tick = null,
+            Action onDisable = null,
+            Action onEnable = null,
+            string nameKey = null
     ) =>
             ModButton.Toggle(entry, tick, onDisable, onEnable, nameKey);
 
@@ -473,6 +496,12 @@ public static class GemstoneMenuBackend
         entry.Value = (entry.Value + 1f) % 11f;
         NotiLib.SendNotification(entry.Value.ToString("0"), 2000);
     }
+    private static void SetTheme(int r, int g, int b)
+    {
+        ModConfig.instance.R.Value = r;
+        ModConfig.instance.G.Value = b;
+        ModConfig.instance.G.Value = g;
+    }
 
     private static void ChangeFloat(ConfigEntry<float> entry, float amount, string format)
     {
@@ -485,6 +514,19 @@ public static class GemstoneMenuBackend
         ModConfig.instance.GunSmoothness.Value = Mathf.Max(0f, ModConfig.instance.GunSmoothness.Value + amount);
         NotiLib.SendNotification(ModConfig.instance.GunSmoothness.Value.ToString("0.00"), 2000);
     }
+
+    private static void ChangeLagStrength(int amount)
+    {
+        ModConfig.instance.LagStrength.Value = Mathf.Max(0, ModConfig.instance.LagStrength.Value + amount);
+        NotiLib.SendNotification(ModConfig.instance.LagStrength.Value.ToString("0.00"), 2000);
+    }
+
+    private static void ChangeLagCooldown(int amount)
+    {
+        ModConfig.instance.LagCooldown.Value = Mathf.Max(0, ModConfig.instance.LagCooldown.Value + amount);
+        NotiLib.SendNotification(ModConfig.instance.LagCooldown.Value.ToString("0.00"), 2000);
+    }
+
 
     private static void SetLanguage(int language)
     {
@@ -512,30 +554,30 @@ public sealed class ModCategory(int id, string nameKey, bool adminOnly, IReadOnl
 
 public sealed class ModButton
 {
-    private readonly Action       action;
+    private readonly Action action;
     private readonly Func<string> nameGetter;
-    private readonly Action       onDisable;
-    private readonly Action       onEnable;
-    private readonly Action       tick;
+    private readonly Action onDisable;
+    private readonly Action onEnable;
+    private readonly Action tick;
 
     private ModButton(
-            string            nameKey,
+            string nameKey,
             ConfigEntry<bool> toggleEntry,
-            Action            action,
-            Action            tick,
-            Action            onDisable,
-            Action            onEnable,
-            Func<string>      nameGetter,
-            bool              refreshAfterPress
+            Action action,
+            Action tick,
+            Action onDisable,
+            Action onEnable,
+            Func<string> nameGetter,
+            bool refreshAfterPress
     )
     {
-        NameKey           = nameKey;
-        ToggleEntry       = toggleEntry;
-        this.action       = action;
-        this.tick         = tick;
-        this.onDisable    = onDisable;
-        this.onEnable     = onEnable;
-        this.nameGetter   = nameGetter;
+        NameKey = nameKey;
+        ToggleEntry = toggleEntry;
+        this.action = action;
+        this.tick = tick;
+        this.onDisable = onDisable;
+        this.onEnable = onEnable;
+        this.nameGetter = nameGetter;
         RefreshAfterPress = refreshAfterPress;
     }
 
@@ -560,11 +602,11 @@ public sealed class ModButton
 
     public static ModButton Toggle(
             ConfigEntry<bool> entry,
-            Action            tick              = null,
-            Action            onDisable         = null,
-            Action            onEnable          = null,
-            string            nameKey           = null,
-            bool              refreshAfterPress = true
+            Action tick = null,
+            Action onDisable = null,
+            Action onEnable = null,
+            string nameKey = null,
+            bool refreshAfterPress = true
     )
     {
         string resolvedName = nameKey ?? entry.Definition.Key;

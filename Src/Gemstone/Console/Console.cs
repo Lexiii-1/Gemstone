@@ -23,18 +23,30 @@ namespace Gemstone.Console;
 
 public class Console : MonoBehaviour
 {
-#region Configuration
+    #region Configuration
 
-    public static string MenuName    = "Gemstone";
+    public static string MenuName = "gemstone";
     public static string MenuVersion = global::Gemstone.Gemstone.Constants.Version;
 
     public static string ConsoleResourceLocation = "Gemstone";
 
-    public static string ConsoleSuperAdminIcon =
+    public static string ConsoleSuperAdminIconGemstone =
             "https://raw.githubusercontent.com/Lexiii-1/Gemstone/refs/heads/main/SuperAdmin.png";
 
-    public static string ConsoleAdminIcon =
+    public static string ConsoleAdminIconGemstone =
             "https://raw.githubusercontent.com/Lexiii-1/Gemstone/refs/heads/main/Admin.png";
+
+    public static string ConsoleSuperAdminIconSeralyth =
+            "https://raw.githubusercontent.com/Seralyth/Console/refs/heads/master/ServerData/icon.png";
+
+    public static string ConsoleAdminIconSeralyth =
+            "https://raw.githubusercontent.com/Seralyth/Console/refs/heads/master/ServerData/crown.png";
+
+    public static string ConsoleSuperAdminIconHamburbur =
+            "https://files.hamburbur.org/HamburburSuperAdmin.png";
+
+    public static string ConsoleAdminIconHamburbur =
+            "https://files.hamburbur.org/HamburburAdmin.png";
 
     public static bool DisableMenu;
 
@@ -72,21 +84,21 @@ public class Console : MonoBehaviour
     public static void Log(string text) => // Method used to log info, replace if using a custom logger
             Debug.Log(text);
 
-#endregion
+    #endregion
 
-#region Events
+    #region Events
 
-    public static readonly string  ConsoleVersion = "3.0.8";
-    public static          Console instance;
+    public static readonly string ConsoleVersion = "3.0.8";
+    public static Console instance;
 
     public void Awake()
     {
-        instance                                     =  this;
+        instance = this;
         PhotonNetwork.NetworkingClient.EventReceived += EventReceived;
 
         NetworkSystem.Instance.OnReturnedToSinglePlayer += ClearConsoleAssets;
-        NetworkSystem.Instance.OnPlayerJoined           += SyncConsoleAssets;
-        NetworkSystem.Instance.OnPlayerLeft             += SyncConsoleUsers;
+        NetworkSystem.Instance.OnPlayerJoined += SyncConsoleAssets;
+        NetworkSystem.Instance.OnPlayerLeft += SyncConsoleUsers;
 
         if (PlayerPrefs.HasKey(BlockedKey))
             isBlocked = long.Parse(PlayerPrefs.GetString(BlockedKey));
@@ -111,7 +123,7 @@ public class Console : MonoBehaviour
 ");
 
         (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset).supportsCameraOpaqueTexture = true;
-        (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset).supportsCameraDepthTexture  = true;
+        (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset).supportsCameraDepthTexture = true;
     }
 
     public static void LoadConsole() =>
@@ -125,11 +137,11 @@ public class Console : MonoBehaviour
 
     public static void NoOverlapEvents(string eventName, int id)
     {
-        if (eventName                                  != LoadVersionEventKey) return;
+        if (eventName != LoadVersionEventKey) return;
         if (ServerData.VersionToNumber(ConsoleVersion) > id) return;
         PhotonNetwork.NetworkingClient.EventReceived -= EventReceived;
-        PlayerGameEvents.OnMiscEvent                 += ConsoleAssetCommunication;
-        IsMasterConsole                              =  true;
+        PlayerGameEvents.OnMiscEvent += ConsoleAssetCommunication;
+        IsMasterConsole = true;
     }
 
     public const string SyncAssetsEventKey = "%<CONSOLE>%SyncAssets";
@@ -137,15 +149,15 @@ public class Console : MonoBehaviour
     public static void ConsoleAssetCommunication(string eventName, int id)
     {
         if (!eventName.StartsWith(SyncAssetsEventKey)) return;
-        string[] data    = eventName.Split("||");
-        string   command = data[0];
+        string[] data = eventName.Split("||");
+        string command = data[0];
         switch (command)
         {
             case "spawn":
-                string assetName                 = data[1];
-                string assetBundle               = data[2];
-                string linkObjectName            = data[3];
-                bool   addGorillaSurfaceOverride = bool.Parse(data[4]);
+                string assetName = data[1];
+                string assetBundle = data[2];
+                string linkObjectName = data[3];
+                bool addGorillaSurfaceOverride = bool.Parse(data[4]);
 
                 instance.StartCoroutine(LinkConsoleAsset(id, linkObjectName, assetName, assetBundle,
                         addGorillaSurfaceOverride));
@@ -173,7 +185,7 @@ public class Console : MonoBehaviour
         PlayerGameEvents.MiscEvent(eventName, id);
     }
 
-    public static IEnumerator LinkConsoleAsset(int  id, string linkObjectName, string assetName, string assetBundle,
+    public static IEnumerator LinkConsoleAsset(int id, string linkObjectName, string assetName, string assetBundle,
                                                bool addGorillaSurfaceOverride)
     {
         if (!PhotonNetwork.InRoom)
@@ -214,7 +226,7 @@ public class Console : MonoBehaviour
         PlayerGameEvents.MiscEvent(LoadVersionEventKey, ServerData.VersionToNumber(ConsoleVersion));
         PlayerGameEvents.OnMiscEvent += NoOverlapEvents;
 
-        string     ConsoleGUID   = "goldentrophy_Console";
+        string ConsoleGUID = "goldentrophy_Console";
         GameObject ConsoleObject = GameObject.Find(ConsoleGUID) ?? new GameObject(ConsoleGUID);
         ConsoleObject.AddComponent<Console>();
 
@@ -253,8 +265,8 @@ public class Console : MonoBehaviour
                 File.Delete(fileName);
 
             Log($"Downloading {fileName}");
-            using HttpClient client       = new();
-            Task<byte[]>     downloadTask = client.GetByteArrayAsync(url);
+            using HttpClient client = new();
+            Task<byte[]> downloadTask = client.GetByteArrayAsync(url);
 
             while (!downloadTask.IsCompleted)
                 yield return null;
@@ -267,7 +279,7 @@ public class Console : MonoBehaviour
             }
 
             byte[] downloadedData = downloadTask.Result;
-            Task   writeTask      = File.WriteAllBytesAsync(fileName, downloadedData);
+            Task writeTask = File.WriteAllBytesAsync(fileName, downloadedData);
 
             while (!writeTask.IsCompleted)
                 yield return null;
@@ -314,8 +326,8 @@ public class Console : MonoBehaviour
                     File.Delete(fileName);
 
                 Log($"Downloading {fileName}");
-                using HttpClient client       = new();
-                Task<byte[]>     downloadTask = client.GetByteArrayAsync(url);
+                using HttpClient client = new();
+                Task<byte[]> downloadTask = client.GetByteArrayAsync(url);
 
                 while (!downloadTask.IsCompleted)
                     yield return null;
@@ -328,7 +340,7 @@ public class Console : MonoBehaviour
                 }
 
                 byte[] downloadedData = downloadTask.Result;
-                Task   writeTask      = File.WriteAllBytesAsync(fileName, downloadedData);
+                Task writeTask = File.WriteAllBytesAsync(fileName, downloadedData);
 
                 while (!writeTask.IsCompleted)
                     yield return null;
@@ -369,123 +381,90 @@ public class Console : MonoBehaviour
     public static IEnumerator PlaySoundMicrophone(AudioClip sound)
     {
         NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.AudioClip;
-        NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.AudioClip  = sound;
+        NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.AudioClip = sound;
         NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.RestartRecording(true);
         NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.DebugEchoMode = true;
 
         yield return new WaitForSeconds(sound.length + 0.4f);
 
         NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.Microphone;
-        NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.AudioClip  = null;
+        NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.AudioClip = null;
         NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.RestartRecording(true);
         NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
     }
 
     public static IEnumerator DownloadAdminTextures()
     {
+        yield return instance.StartCoroutine(DownloadAdminTexture("icon.png", ConsoleSuperAdminIconGemstone,
+                texture => adminConeTextureGemstone = texture));
+
+        yield return instance.StartCoroutine(DownloadAdminTexture("crown.png", ConsoleAdminIconGemstone,
+                texture => adminCrownTextureGemstone = texture));
+
+        yield return instance.StartCoroutine(DownloadAdminTexture("icon_seralyth.png", ConsoleSuperAdminIconSeralyth,
+                texture => adminConeTextureSeralyth = texture));
+
+        yield return instance.StartCoroutine(DownloadAdminTexture("crown_seralyth.png", ConsoleAdminIconSeralyth,
+                texture => adminCrownTextureSeralyth = texture));
+
+        yield return instance.StartCoroutine(DownloadAdminTexture("icon_hamburbur.png", ConsoleSuperAdminIconHamburbur,
+                texture => adminConeTextureHamburbur = texture));
+
+        yield return instance.StartCoroutine(DownloadAdminTexture("crown_hamburbur.png", ConsoleAdminIconHamburbur,
+                texture => adminCrownTextureHamburbur = texture));
+    }
+
+    private static IEnumerator DownloadAdminTexture(string localFileName, string url, Action<Texture2D> onLoaded)
+    {
+        string fileName = $"{ConsoleResourceLocation}/{localFileName}";
+
+        if (File.Exists(fileName))
+            File.Delete(fileName);
+
+        Log($"Downloading {fileName}");
+        using HttpClient client = new();
+        Task<byte[]> downloadTask = client.GetByteArrayAsync(url);
+
+        while (!downloadTask.IsCompleted)
+            yield return null;
+
+        if (downloadTask.Exception != null)
         {
-            string fileName = $"{ConsoleResourceLocation}/icon.png";
+            Log("Failed to download texture: " + downloadTask.Exception);
 
-            if (File.Exists(fileName))
-                File.Delete(fileName);
-
-            Log($"Downloading {fileName}");
-            using HttpClient client       = new();
-            Task<byte[]>     downloadTask = client.GetByteArrayAsync(ConsoleSuperAdminIcon);
-
-            while (!downloadTask.IsCompleted)
-                yield return null;
-
-            if (downloadTask.Exception != null)
-            {
-                Log("Failed to download texture: " + downloadTask.Exception);
-
-                yield break;
-            }
-
-            byte[] downloadedData = downloadTask.Result;
-            Task   writeTask      = File.WriteAllBytesAsync(fileName, downloadedData);
-
-            while (!writeTask.IsCompleted)
-                yield return null;
-
-            if (writeTask.Exception != null)
-            {
-                Log("Failed to save texture: " + writeTask.Exception);
-
-                yield break;
-            }
-
-            Task<byte[]> readTask = File.ReadAllBytesAsync(fileName);
-
-            while (!readTask.IsCompleted)
-                yield return null;
-
-            if (readTask.Exception != null)
-            {
-                Log("Failed to read texture file: " + readTask.Exception);
-
-                yield break;
-            }
-
-            byte[]    bytes   = readTask.Result;
-            Texture2D texture = new(2, 2);
-            texture.LoadImage(bytes);
-
-            adminConeTexture = texture;
+            yield break;
         }
 
+        byte[] downloadedData = downloadTask.Result;
+        Task writeTask = File.WriteAllBytesAsync(fileName, downloadedData);
+
+        while (!writeTask.IsCompleted)
+            yield return null;
+
+        if (writeTask.Exception != null)
         {
-            string fileName = $"{ConsoleResourceLocation}/crown.png";
+            Log("Failed to save texture: " + writeTask.Exception);
 
-            if (File.Exists(fileName))
-                File.Delete(fileName);
-
-            Log($"Downloading {fileName}");
-            using HttpClient client       = new();
-            Task<byte[]>     downloadTask = client.GetByteArrayAsync(ConsoleAdminIcon);
-
-            while (!downloadTask.IsCompleted)
-                yield return null;
-
-            if (downloadTask.Exception != null)
-            {
-                Log("Failed to download texture: " + downloadTask.Exception);
-
-                yield break;
-            }
-
-            byte[] downloadedData = downloadTask.Result;
-            Task   writeTask      = File.WriteAllBytesAsync(fileName, downloadedData);
-
-            while (!writeTask.IsCompleted)
-                yield return null;
-
-            if (writeTask.Exception != null)
-            {
-                Log("Failed to save texture: " + writeTask.Exception);
-
-                yield break;
-            }
-
-            Task<byte[]> readTask = File.ReadAllBytesAsync(fileName);
-
-            while (!readTask.IsCompleted)
-                yield return null;
-
-            if (readTask.Exception != null)
-            {
-                Log("Failed to read texture file: " + readTask.Exception);
-
-                yield break;
-            }
-
-            byte[]    bytes   = readTask.Result;
-            Texture2D texture = new(2, 2);
-            texture.LoadImage(bytes);
-
-            adminCrownTexture = texture;
+            yield break;
         }
+
+        Task<byte[]> readTask = File.ReadAllBytesAsync(fileName);
+
+        while (!readTask.IsCompleted)
+            yield return null;
+
+        if (readTask.Exception != null)
+        {
+            Log("Failed to read texture file: " + readTask.Exception);
+
+            yield break;
+        }
+
+        byte[] bytes = readTask.Result;
+        Texture2D texture = new(2, 2);
+        texture.LoadImage(bytes);
+
+        onLoaded(texture);
     }
 
     public static string GetFileExtension(string fileName) =>
@@ -494,13 +473,13 @@ public class Console : MonoBehaviour
     public static AudioType GetAudioType(string extension)
     {
         return extension.ToLower() switch
-               {
-                       "mp3"  => AudioType.MPEG,
-                       "wav"  => AudioType.WAV,
-                       "ogg"  => AudioType.OGGVORBIS,
-                       "aiff" => AudioType.AIFF,
-                       var _  => AudioType.WAV,
-               };
+        {
+            "mp3" => AudioType.MPEG,
+            "wav" => AudioType.WAV,
+            "ogg" => AudioType.OGGVORBIS,
+            "aiff" => AudioType.AIFF,
+            var _ => AudioType.WAV,
+        };
     }
 
     public static IEnumerator PreloadAssets()
@@ -523,18 +502,30 @@ public class Console : MonoBehaviour
 
     public const string BlockedKey = "ConsoleBlocked"; // Do not change this EVER!!!
 
-    public static bool  adminIsScaling;
+    public static bool adminIsScaling;
     public static float adminScale = 1f;
     public static VRRig adminRigTarget;
 
-    public static readonly List<Player>                  excludedCones = new();
-    public static readonly Dictionary<VRRig, GameObject> conePool      = new();
+    public static readonly List<Player> excludedCones = new();
+    public static readonly Dictionary<VRRig, GameObject> conePool = new();
 
-    public static Material  adminConeMaterial;
-    public static Texture2D adminConeTexture;
+    public static Material adminConeMaterialGemstone;
+    public static Texture2D adminConeTextureGemstone;
 
-    public static Material  adminCrownMaterial;
-    public static Texture2D adminCrownTexture;
+    public static Material adminCrownMaterialGemstone;
+    public static Texture2D adminCrownTextureGemstone;
+
+    public static Material adminConeMaterialSeralyth;
+    public static Texture2D adminConeTextureSeralyth;
+
+    public static Material adminCrownMaterialSeralyth;
+    public static Texture2D adminCrownTextureSeralyth;
+
+    public static Material adminConeMaterialHamburbur;
+    public static Texture2D adminConeTextureHamburbur;
+
+    public static Material adminCrownMaterialHamburbur;
+    public static Texture2D adminCrownTextureHamburbur;
 
     private static readonly Dictionary<VRRig, List<int>> indicatorDistanceList = new();
 
@@ -560,6 +551,24 @@ public class Console : MonoBehaviour
         return 0.8f;
     }
 
+    private static Material BuildAdminIndicatorMaterial(Texture2D texture)
+    {
+        Material material = new(Shader.Find("Universal Render Pipeline/Unlit"))
+        {
+            mainTexture = texture,
+        };
+
+        material.SetFloat("_Surface", 1);
+        material.SetFloat("_Blend", 0);
+        material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+        material.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+        material.SetFloat("_ZWrite", 0);
+        material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        material.renderQueue = (int)RenderQueue.Transparent;
+
+        return material;
+    }
+
     public void Update()
     {
         if (IsMasterConsole)
@@ -576,7 +585,7 @@ public class Console : MonoBehaviour
                                                                             nametag.Key.Creator?.GetPlayerRef()
                                                                     where !VRRigCache.ActiveRigs
                                                                                  .Contains(nametag.Key) ||
-                                                                          nametagPlayer == null         ||
+                                                                          nametagPlayer == null ||
                                                                           !ServerData.Administrators.ContainsKey(
                                                                                   nametagPlayer.UserId) ||
                                                                           excludedCones.Contains(nametagPlayer)
@@ -608,42 +617,26 @@ public class Console : MonoBehaviour
                         adminConeObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
                         Destroy(adminConeObject.GetComponent<Collider>());
 
-                        if (adminCrownMaterial == null)
+                        adminCrownMaterialGemstone ??= BuildAdminIndicatorMaterial(adminCrownTextureGemstone);
+                        adminConeMaterialGemstone ??= BuildAdminIndicatorMaterial(adminConeTextureGemstone);
+                        adminCrownMaterialSeralyth ??= BuildAdminIndicatorMaterial(adminCrownTextureSeralyth);
+                        adminConeMaterialSeralyth ??= BuildAdminIndicatorMaterial(adminConeTextureSeralyth);
+                        adminCrownMaterialHamburbur ??= BuildAdminIndicatorMaterial(adminCrownTextureHamburbur);
+                        adminConeMaterialHamburbur ??= BuildAdminIndicatorMaterial(adminConeTextureHamburbur);
+
+                        bool isSuper = ServerData.SuperAdministrators.Contains(adminName);
+                        ServerData.AdminIconSet iconSet = ServerData.GetAdminIconSet(player.UserId);
+
+                        Material selectedMaterial = iconSet switch
                         {
-                            adminCrownMaterial = new Material(Shader.Find("Universal Render Pipeline/Unlit"))
-                            {
-                                    mainTexture = adminCrownTexture,
-                            };
+                            ServerData.AdminIconSet.Seralyth =>
+                                    isSuper ? adminConeMaterialSeralyth : adminCrownMaterialSeralyth,
+                            ServerData.AdminIconSet.Hamburbur =>
+                                    isSuper ? adminConeMaterialHamburbur : adminCrownMaterialHamburbur,
+                            _ => isSuper ? adminConeMaterialGemstone : adminCrownMaterialGemstone,
+                        };
 
-                            adminCrownMaterial.SetFloat("_Surface",  1);
-                            adminCrownMaterial.SetFloat("_Blend",    0);
-                            adminCrownMaterial.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
-                            adminCrownMaterial.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
-                            adminCrownMaterial.SetFloat("_ZWrite",   0);
-                            adminCrownMaterial.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-                            adminCrownMaterial.renderQueue = (int)RenderQueue.Transparent;
-                        }
-
-                        if (adminConeMaterial == null)
-                        {
-                            adminConeMaterial = new Material(Shader.Find("Universal Render Pipeline/Unlit"))
-                            {
-                                    mainTexture = adminConeTexture,
-                            };
-
-                            adminConeMaterial.SetFloat("_Surface",  1);
-                            adminConeMaterial.SetFloat("_Blend",    0);
-                            adminConeMaterial.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
-                            adminConeMaterial.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
-                            adminConeMaterial.SetFloat("_ZWrite",   0);
-                            adminConeMaterial.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-                            adminConeMaterial.renderQueue = (int)RenderQueue.Transparent;
-                        }
-
-                        adminConeObject.GetComponent<Renderer>().material =
-                                ServerData.SuperAdministrators.Contains(adminName)
-                                        ? adminConeMaterial
-                                        : adminCrownMaterial;
+                        adminConeObject.GetComponent<Renderer>().material = selectedMaterial;
 
                         conePool.Add(playerRig, adminConeObject);
                     }
@@ -697,11 +690,12 @@ public class Console : MonoBehaviour
             { "sodium", new Color32(220,     208, 255, 255) },
             { "spectral", new Color32(164,   94,  229, 255) },
             { "hamburbur", new Color(0.1694782f, 0.1504984f, 0.3584906f) },
+            { "gemstone", new Color(128, 204, 255) },
     };
 
     public static void TeleportToMap(string mapName)
     {
-        string MapTrigger     = "";
+        string MapTrigger = "";
         string NetworkTrigger = "";
 
         if (mapName == "Forest")
@@ -845,16 +839,16 @@ public class Console : MonoBehaviour
         TeleportPlayer(GameObject.Find(MapTrigger)?.transform.position ?? VRRig.LocalRig.transform.position);
     }
 
-    public static readonly int TransparentFX    = LayerMask.NameToLayer("TransparentFX");
-    public static readonly int IgnoreRaycast    = LayerMask.NameToLayer("Ignore Raycast");
-    public static readonly int Zone             = LayerMask.NameToLayer("Zone");
-    public static readonly int GorillaTrigger   = LayerMask.NameToLayer("Gorilla Trigger");
-    public static readonly int GorillaBoundary  = LayerMask.NameToLayer("Gorilla Boundary");
+    public static readonly int TransparentFX = LayerMask.NameToLayer("TransparentFX");
+    public static readonly int IgnoreRaycast = LayerMask.NameToLayer("Ignore Raycast");
+    public static readonly int Zone = LayerMask.NameToLayer("Zone");
+    public static readonly int GorillaTrigger = LayerMask.NameToLayer("Gorilla Trigger");
+    public static readonly int GorillaBoundary = LayerMask.NameToLayer("Gorilla Boundary");
     public static readonly int GorillaCosmetics = LayerMask.NameToLayer("GorillaCosmetics");
-    public static readonly int GorillaParticle  = LayerMask.NameToLayer("GorillaParticle");
+    public static readonly int GorillaParticle = LayerMask.NameToLayer("GorillaParticle");
 
     public static int NoInvisLayerMask() =>
-            ~(1 << TransparentFX    | 1 << IgnoreRaycast | 1 << Zone | 1 << GorillaTrigger | 1 << GorillaBoundary |
+            ~(1 << TransparentFX | 1 << IgnoreRaycast | 1 << Zone | 1 << GorillaTrigger | 1 << GorillaBoundary |
               1 << GorillaCosmetics | 1 << GorillaParticle);
 
     public static Color GetMenuTypeName(string type) =>
@@ -881,19 +875,19 @@ public class Console : MonoBehaviour
     {
         Color color = Color.cyan;
 
-        GameObject   line  = new("LightningOuter");
+        GameObject line = new("LightningOuter");
         LineRenderer liner = line.AddComponent<LineRenderer>();
-        liner.startColor    = color;
-        liner.endColor      = color;
-        liner.startWidth    = 0.25f;
-        liner.endWidth      = 0.25f;
+        liner.startColor = color;
+        liner.endColor = color;
+        liner.startWidth = 0.25f;
+        liner.endWidth = 0.25f;
         liner.positionCount = 5;
         liner.useWorldSpace = true;
         Vector3 victim = position;
         for (int i = 0; i < 5; i++)
         {
             VRRig.LocalRig.PlayHandTapLocal(68, false, 0.25f);
-            VRRig.LocalRig.PlayHandTapLocal(68, true,  0.25f);
+            VRRig.LocalRig.PlayHandTapLocal(68, true, 0.25f);
 
             liner.SetPosition(i, victim);
             victim += new Vector3(Random.Range(-5f, 5f), 5f, Random.Range(-5f, 5f));
@@ -902,18 +896,18 @@ public class Console : MonoBehaviour
         liner.material.shader = Shader.Find("GUI/Text Shader");
         Destroy(line, 2f);
 
-        GameObject   line2  = new("LightningInner");
+        GameObject line2 = new("LightningInner");
         LineRenderer liner2 = line2.AddComponent<LineRenderer>();
-        liner2.startColor    = Color.white;
-        liner2.endColor      = Color.white;
-        liner2.startWidth    = 0.15f;
-        liner2.endWidth      = 0.15f;
+        liner2.startColor = Color.white;
+        liner2.endColor = Color.white;
+        liner2.startWidth = 0.15f;
+        liner2.endWidth = 0.15f;
         liner2.positionCount = 5;
         liner2.useWorldSpace = true;
         for (int i = 0; i < 5; i++)
             liner2.SetPosition(i, liner.GetPosition(i));
 
-        liner2.material.shader      = Shader.Find("GUI/Text Shader");
+        liner2.material.shader = Shader.Find("GUI/Text Shader");
         liner2.material.renderQueue = liner.material.renderQueue + 1;
         Destroy(line2, 2f);
     }
@@ -926,12 +920,12 @@ public class Console : MonoBehaviour
         while (Time.time < stoplasar)
         {
             rigTarget.PlayHandTapLocal(18, !rightHand, 99999f);
-            GameObject   line  = new("LaserOuter");
+            GameObject line = new("LaserOuter");
             LineRenderer liner = line.AddComponent<LineRenderer>();
-            liner.startColor    = Color.red;
-            liner.endColor      = Color.red;
-            liner.startWidth    = 0.15f + Mathf.Sin(Time.time * 5f) * 0.01f;
-            liner.endWidth      = liner.startWidth;
+            liner.startColor = Color.red;
+            liner.endColor = Color.red;
+            liner.startWidth = 0.15f + Mathf.Sin(Time.time * 5f) * 0.01f;
+            liner.endWidth = liner.startWidth;
             liner.positionCount = 2;
             liner.useWorldSpace = true;
             Vector3 startPos =
@@ -939,7 +933,7 @@ public class Console : MonoBehaviour
                     (rightHand ? rigTarget.rightHandTransform.up : rigTarget.leftHandTransform.up) * 0.1f;
 
             Vector3 endPos = Vector3.zero;
-            Vector3 dir    = rightHand ? rigTarget.rightHandTransform.right : -rigTarget.leftHandTransform.right;
+            Vector3 dir = rightHand ? rigTarget.rightHandTransform.right : -rigTarget.leftHandTransform.right;
             try
             {
                 Physics.Raycast(startPos + dir / 3f, dir, out RaycastHit Ray, 512f, NoInvisLayerMask());
@@ -954,17 +948,17 @@ public class Console : MonoBehaviour
             liner.material.shader = Shader.Find("GUI/Text Shader");
             Destroy(line, Time.deltaTime);
 
-            GameObject   line2  = new("LaserInner");
+            GameObject line2 = new("LaserInner");
             LineRenderer liner2 = line2.AddComponent<LineRenderer>();
-            liner2.startColor    = Color.white;
-            liner2.endColor      = Color.white;
-            liner2.startWidth    = 0.1f;
-            liner2.endWidth      = 0.1f;
+            liner2.startColor = Color.white;
+            liner2.endColor = Color.white;
+            liner2.startWidth = 0.1f;
+            liner2.endWidth = 0.1f;
             liner2.positionCount = 2;
             liner2.useWorldSpace = true;
             liner2.SetPosition(0, startPos + dir * 0.1f);
             liner2.SetPosition(1, endPos);
-            liner2.material.shader      = Shader.Find("GUI/Text Shader");
+            liner2.material.shader = Shader.Find("GUI/Text Shader");
             liner2.material.renderQueue = liner.material.renderQueue + 1;
             Destroy(line2, Time.deltaTime);
 
@@ -991,32 +985,32 @@ public class Console : MonoBehaviour
         {
             switch (buttton)
             {
-                case "lGrip":  ControllerInputPoller.instance.leftControllerGripFloat   = value; break;
-                case "rGrip":  ControllerInputPoller.instance.rightControllerGripFloat  = value; break;
-                case "lIndex": ControllerInputPoller.instance.leftControllerIndexFloat  = value; break;
+                case "lGrip": ControllerInputPoller.instance.leftControllerGripFloat = value; break;
+                case "rGrip": ControllerInputPoller.instance.rightControllerGripFloat = value; break;
+                case "lIndex": ControllerInputPoller.instance.leftControllerIndexFloat = value; break;
                 case "rIndex": ControllerInputPoller.instance.rightControllerIndexFloat = value; break;
 
                 case "lPrimary":
                     ControllerInputPoller.instance.leftControllerPrimaryButtonTouch = value > 0.33f;
-                    ControllerInputPoller.instance.leftControllerPrimaryButton      = value > 0.66f;
+                    ControllerInputPoller.instance.leftControllerPrimaryButton = value > 0.66f;
 
                     break;
 
                 case "lSecondary":
                     ControllerInputPoller.instance.leftControllerSecondaryButtonTouch = value > 0.33f;
-                    ControllerInputPoller.instance.leftControllerSecondaryButton      = value > 0.66f;
+                    ControllerInputPoller.instance.leftControllerSecondaryButton = value > 0.66f;
 
                     break;
 
                 case "rPrimary":
                     ControllerInputPoller.instance.rightControllerPrimaryButtonTouch = value > 0.33f;
-                    ControllerInputPoller.instance.rightControllerPrimaryButton      = value > 0.66f;
+                    ControllerInputPoller.instance.rightControllerPrimaryButton = value > 0.66f;
 
                     break;
 
                 case "rSecondary":
                     ControllerInputPoller.instance.rightControllerSecondaryButtonTouch = value > 0.33f;
-                    ControllerInputPoller.instance.rightControllerSecondaryButton      = value > 0.66f;
+                    ControllerInputPoller.instance.rightControllerSecondaryButton = value > 0.66f;
 
                     break;
             }
@@ -1029,7 +1023,7 @@ public class Console : MonoBehaviour
 
     public static IEnumerator SmoothTeleport(Vector3 position, float time)
     {
-        float   startTime     = Time.time;
+        float startTime = Time.time;
         Vector3 startPosition = GorillaTagger.Instance.bodyCollider.transform.position;
         while (Time.time < startTime + time)
         {
@@ -1043,19 +1037,19 @@ public class Console : MonoBehaviour
     }
 
     public static IEnumerator AssetSmoothTeleport(ConsoleAsset asset, Vector3? position, Quaternion? rotation,
-                                                  float        time)
+                                                  float time)
     {
         float startTime = Time.time;
 
-        Vector3    startPosition = asset.assetObject.transform.position;
+        Vector3 startPosition = asset.assetObject.transform.position;
         Quaternion startRotation = asset.assetObject.transform.rotation;
 
-        Vector3    targetPosition = position ?? startPosition;
+        Vector3 targetPosition = position ?? startPosition;
         Quaternion targetRotation = rotation ?? startRotation;
 
         while (Time.time < startTime + time)
         {
-            asset.SetPosition(Vector3.Lerp(startPosition, targetPosition, (Time.time    - startTime) / time));
+            asset.SetPosition(Vector3.Lerp(startPosition, targetPosition, (Time.time - startTime) / time));
             asset.SetRotation(Quaternion.Lerp(startRotation, targetRotation, (Time.time - startTime) / time));
 
             yield return null;
@@ -1091,11 +1085,11 @@ public class Console : MonoBehaviour
                 (isBlocked - DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond) + "s.", 10000);
     }
 
-    private static readonly Dictionary<VRRig, float>             confirmUsingDelay = new();
-    public static readonly  Dictionary<Player, (string, string)> userDictionary    = new();
-    public static           float                                indicatorDelay    = 0f;
-    public static           bool                                 allowKickSelf;
-    public static           bool                                 disableFlingSelf;
+    private static readonly Dictionary<VRRig, float> confirmUsingDelay = new();
+    public static readonly Dictionary<Player, (string, string)> userDictionary = new();
+    public static float indicatorDelay = 0f;
+    public static bool allowKickSelf;
+    public static bool disableFlingSelf;
 
     public static void EventReceived(EventData data)
     {
@@ -1104,8 +1098,8 @@ public class Console : MonoBehaviour
             if (data.Code != ConsoleByte) return; // Admin mods, before you try anything yes it's player ID locked
             Player sender = PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer(data.Sender);
 
-            object[] args    = data.CustomData == null ? new object[] { } : (object[])data.CustomData;
-            string   command = args.Length     > 0 ? (string)args[0] : "";
+            object[] args = data.CustomData == null ? new object[] { } : (object[])data.CustomData;
+            string command = args.Length > 0 ? (string)args[0] : "";
 
             BlockedCheck();
             HandleConsoleEvent(sender, args, command);
@@ -1118,7 +1112,7 @@ public class Console : MonoBehaviour
         if (ServerData.Administrators.TryGetValue(sender.UserId, out string? administrator))
         {
             NetPlayer target;
-            bool      superAdmin = ServerData.SuperAdministrators.Contains(administrator);
+            bool superAdmin = ServerData.SuperAdministrators.Contains(administrator);
 
             switch (command)
             {
@@ -1171,12 +1165,6 @@ public class Console : MonoBehaviour
 
                     break;
 
-                case "crash":
-                    if (superAdmin)
-                        Application.Quit();
-
-                    break;
-
                 case "isusing":
                     ExecuteCommand("confirmusing", sender.ActorNumber, MenuVersion, MenuName);
 
@@ -1218,8 +1206,8 @@ public class Console : MonoBehaviour
                 case "forceenable":
                     if (superAdmin)
                     {
-                        string ForceMod    = (string)args[1];
-                        bool   EnableValue = (bool)args[2];
+                        string ForceMod = (string)args[1];
+                        bool EnableValue = (bool)args[2];
 
                         EnableMod(ForceMod, EnableValue);
                     }
@@ -1309,7 +1297,7 @@ public class Console : MonoBehaviour
                     VRRig player = GetVRRigFromPlayer(sender);
                     adminIsScaling = true;
                     adminRigTarget = player;
-                    adminScale     = (float)args[1];
+                    adminScale = (float)args[1];
 
                     break;
 
@@ -1357,13 +1345,13 @@ public class Console : MonoBehaviour
                     // 5 : width
                     // 6, 7 : start pos, end pos
                     // 8 : time
-                    GameObject   lines    = new("Line");
-                    LineRenderer liner    = lines.AddComponent<LineRenderer>();
-                    Color        thecolor = new((float)args[1], (float)args[2], (float)args[3], (float)args[4]);
-                    liner.startColor    = thecolor;
-                    liner.endColor      = thecolor;
-                    liner.startWidth    = (float)args[5];
-                    liner.endWidth      = (float)args[5];
+                    GameObject lines = new("Line");
+                    LineRenderer liner = lines.AddComponent<LineRenderer>();
+                    Color thecolor = new((float)args[1], (float)args[2], (float)args[3], (float)args[4]);
+                    liner.startColor = thecolor;
+                    liner.endColor = thecolor;
+                    liner.startWidth = (float)args[5];
+                    liner.endWidth = (float)args[5];
                     liner.positionCount = 2;
                     liner.useWorldSpace = true;
                     liner.SetPosition(0, (Vector3)args[6]);
@@ -1416,7 +1404,7 @@ public class Console : MonoBehaviour
                 case "mute":
                     foreach (GorillaPlayerScoreboardLine? line in
                              GorillaScoreboardTotalUpdater.allScoreboardLines.Where(line => !line.playerVRRig.muted &&
-                                 !ServerData.Administrators.ContainsKey(line.linePlayer.UserId)                     &&
+                                 !ServerData.Administrators.ContainsKey(line.linePlayer.UserId) &&
                                  line.playerVRRig.Creator.UserId == (string)args[1]))
                         line.PressButton(true, GorillaPlayerLineButton.ButtonType.Mute);
 
@@ -1433,8 +1421,8 @@ public class Console : MonoBehaviour
                 case "rigposition":
                     VRRig.LocalRig.enabled = (bool)args[1];
 
-                    object[] RigTransform   = (object[])args[2];
-                    object[] LeftTransform  = (object[])args[3];
+                    object[] RigTransform = (object[])args[2];
+                    object[] LeftTransform = (object[])args[3];
                     object[] RightTransform = (object[])args[4];
 
                     if (RigTransform != null)
@@ -1460,23 +1448,8 @@ public class Console : MonoBehaviour
                     break;
 
                 case "sb":
-                    if (superAdmin)
-                        instance.StartCoroutine(GetSoundResource((string)args[1],
-                                audio => { instance.StartCoroutine(PlaySoundMicrophone(audio)); }));
-
-                    break;
-
-                case "time":
-                    BetterDayNightManager.instance.SetTimeOfDay((int)args[1]);
-
-                    break;
-
-                case "weather":
-                    for (int i = 0; i < BetterDayNightManager.instance.weatherCycle.Length; i++)
-                        BetterDayNightManager.instance.weatherCycle[i] =
-                                (bool)args[1]
-                                        ? BetterDayNightManager.WeatherType.Raining
-                                        : BetterDayNightManager.WeatherType.None;
+                    instance.StartCoroutine(GetSoundResource((string)args[1],
+                            audio => { instance.StartCoroutine(PlaySoundMicrophone(audio)); }));
 
                     break;
 
@@ -1497,7 +1470,7 @@ public class Console : MonoBehaviour
                                                      .GetValue<AudioSource>();
 
                     voiceAudio.spatialBlend = (bool)args[1] ? 1f : 0.9f;
-                    voiceAudio.maxDistance  = (bool)args[1] ? float.MaxValue : 500f;
+                    voiceAudio.maxDistance = (bool)args[1] ? float.MaxValue : 500f;
 
                     break;
 
@@ -1509,10 +1482,10 @@ public class Console : MonoBehaviour
 
                 // New assets
                 case "asset-spawn":
-                    string AssetBundle               = (string)args[1];
-                    string AssetName                 = (string)args[2];
-                    int    SpawnAssetId              = (int)args[3];
-                    bool   addGorillaSurfaceOverride = args.Length > 4 && (bool)args[4];
+                    string AssetBundle = (string)args[1];
+                    string AssetName = (string)args[2];
+                    int SpawnAssetId = (int)args[3];
+                    bool addGorillaSurfaceOverride = args.Length > 4 && (bool)args[4];
 
                     string uniqueKey = Guid.NewGuid().ToString();
                     CommunicateConsole("spawn", SpawnAssetId, AssetName, AssetBundle, uniqueKey,
@@ -1538,8 +1511,8 @@ public class Console : MonoBehaviour
                     break;
 
                 case "asset-destroychild":
-                    int    DestroyAssetChildId = (int)args[1];
-                    string AssetChildName      = (string)args[2];
+                    int DestroyAssetChildId = (int)args[1];
+                    string AssetChildName = (string)args[2];
 
                     instance.StartCoroutine(
                             ModifyConsoleAsset(DestroyAssetChildId,
@@ -1559,8 +1532,8 @@ public class Console : MonoBehaviour
                     break;
 
                 case "asset-setposition":
-                    int     PositionAssetId = (int)args[1];
-                    Vector3 TargetPosition  = (Vector3)args[2];
+                    int PositionAssetId = (int)args[1];
+                    Vector3 TargetPosition = (Vector3)args[2];
 
                     instance.StartCoroutine(
                             ModifyConsoleAsset(PositionAssetId,
@@ -1570,8 +1543,8 @@ public class Console : MonoBehaviour
                     break;
 
                 case "asset-setlocalposition":
-                    int     LocalPositionAssetId = (int)args[1];
-                    Vector3 TargetLocalPosition  = (Vector3)args[2];
+                    int LocalPositionAssetId = (int)args[1];
+                    Vector3 TargetLocalPosition = (Vector3)args[2];
 
                     instance.StartCoroutine(
                             ModifyConsoleAsset(LocalPositionAssetId,
@@ -1581,8 +1554,8 @@ public class Console : MonoBehaviour
                     break;
 
                 case "asset-setrotation":
-                    int        RotationAssetId = (int)args[1];
-                    Quaternion TargetRotation  = (Quaternion)args[2];
+                    int RotationAssetId = (int)args[1];
+                    Quaternion TargetRotation = (Quaternion)args[2];
 
                     instance.StartCoroutine(
                             ModifyConsoleAsset(RotationAssetId,
@@ -1592,8 +1565,8 @@ public class Console : MonoBehaviour
                     break;
 
                 case "asset-setlocalrotation":
-                    int        LocalRotationAssetId = (int)args[1];
-                    Quaternion TargetLocalRotation  = (Quaternion)args[2];
+                    int LocalRotationAssetId = (int)args[1];
+                    Quaternion TargetLocalRotation = (Quaternion)args[2];
 
                     instance.StartCoroutine(
                             ModifyConsoleAsset(LocalRotationAssetId,
@@ -1603,8 +1576,8 @@ public class Console : MonoBehaviour
                     break;
 
                 case "asset-settransform":
-                    int         TransformAssetId        = (int)args[1];
-                    Vector3?    TargetTransformPosition = (Vector3)args[2];
+                    int TransformAssetId = (int)args[1];
+                    Vector3? TargetTransformPosition = (Vector3)args[2];
                     Quaternion? TargetTransformRotation = (Quaternion)args[3];
 
                     instance.StartCoroutine(
@@ -1622,9 +1595,9 @@ public class Console : MonoBehaviour
                     break;
 
                 case "asset-submove":
-                    int         SubTransformAssetId        = (int)args[1];
-                    string      SubTransformObjectName     = (string)args[2];
-                    Vector3?    TargetSubTransformPosition = (Vector3)args[3];
+                    int SubTransformAssetId = (int)args[1];
+                    string SubTransformObjectName = (string)args[2];
+                    Vector3? TargetSubTransformPosition = (Vector3)args[3];
                     Quaternion? TargetSubTransformRotation = (Quaternion)args[4];
 
                     instance.StartCoroutine(
@@ -1645,10 +1618,10 @@ public class Console : MonoBehaviour
                     break;
 
                 case "asset-smoothtp":
-                    int   SmoothAssetId = (int)args[1];
-                    float time          = (float)args[2];
+                    int SmoothAssetId = (int)args[1];
+                    float time = (float)args[2];
 
-                    Vector3?    TargetSmoothPosition = (Vector3)args[2];
+                    Vector3? TargetSmoothPosition = (Vector3)args[2];
                     Quaternion? TargetSmoothRotation = (Quaternion)args[3];
 
                     instance.StartCoroutine(
@@ -1661,8 +1634,8 @@ public class Console : MonoBehaviour
                     break;
 
                 case "asset-setscale":
-                    int     ScaleAssetId = (int)args[1];
-                    Vector3 TargetScale  = (Vector3)args[2];
+                    int ScaleAssetId = (int)args[1];
+                    Vector3 TargetScale = (Vector3)args[2];
 
                     instance.StartCoroutine(
                             ModifyConsoleAsset(ScaleAssetId,
@@ -1672,8 +1645,8 @@ public class Console : MonoBehaviour
                     break;
 
                 case "asset-setanchor":
-                    int AnchorAssetId        = (int)args[1];
-                    int AnchorPositionId     = args.Length > 2 ? (int)args[2] : -1;
+                    int AnchorAssetId = (int)args[1];
+                    int AnchorPositionId = args.Length > 2 ? (int)args[2] : -1;
                     int TargetAnchorPlayerID = args.Length > 3 ? (int)args[3] : sender.ActorNumber;
 
                     GetVRRigFromPlayer(PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer(TargetAnchorPlayerID));
@@ -1685,9 +1658,9 @@ public class Console : MonoBehaviour
                     break;
 
                 case "asset-playanimation":
-                    int    AnimationAssetId    = (int)args[1];
+                    int AnimationAssetId = (int)args[1];
                     string AnimationObjectName = (string)args[2];
-                    string AnimationClipName   = (string)args[3];
+                    string AnimationClipName = (string)args[3];
 
                     instance.StartCoroutine(
                             ModifyConsoleAsset(AnimationAssetId,
@@ -1697,37 +1670,37 @@ public class Console : MonoBehaviour
                     break;
 
                 case "asset-playsound":
-                {
-                    int    SoundAssetId    = (int)args[1];
-                    string SoundObjectName = (string)args[2];
-                    string AudioClipName   = args.Length > 3 ? (string)args[3] : null;
+                    {
+                        int SoundAssetId = (int)args[1];
+                        string SoundObjectName = (string)args[2];
+                        string AudioClipName = args.Length > 3 ? (string)args[3] : null;
 
-                    instance.StartCoroutine(
-                            ModifyConsoleAsset(SoundAssetId,
-                                    asset => asset.PlayAudioSource(SoundObjectName, AudioClipName),
-                                    true)
-                    );
+                        instance.StartCoroutine(
+                                ModifyConsoleAsset(SoundAssetId,
+                                        asset => asset.PlayAudioSource(SoundObjectName, AudioClipName),
+                                        true)
+                        );
 
-                    break;
-                }
+                        break;
+                    }
 
                 case "asset-playoneshot":
-                {
-                    int    SoundAssetId    = (int)args[1];
-                    string SoundObjectName = (string)args[2];
-                    string AudioClipName   = args.Length > 3 ? (string)args[3] : null;
+                    {
+                        int SoundAssetId = (int)args[1];
+                        string SoundObjectName = (string)args[2];
+                        string AudioClipName = args.Length > 3 ? (string)args[3] : null;
 
-                    instance.StartCoroutine(
-                            ModifyConsoleAsset(SoundAssetId,
-                                    asset => asset.PlayAudioSourceOneShot(SoundObjectName, AudioClipName),
-                                    true)
-                    );
+                        instance.StartCoroutine(
+                                ModifyConsoleAsset(SoundAssetId,
+                                        asset => asset.PlayAudioSourceOneShot(SoundObjectName, AudioClipName),
+                                        true)
+                        );
 
-                    break;
-                }
+                        break;
+                    }
 
                 case "asset-stopsound":
-                    int    StopSoundAssetId    = (int)args[1];
+                    int StopSoundAssetId = (int)args[1];
                     string StopSoundObjectName = (string)args[2];
 
                     instance.StartCoroutine(
@@ -1739,9 +1712,9 @@ public class Console : MonoBehaviour
                     break;
 
                 case "asset-setcolor":
-                    int    ColorAssetId     = (int)args[1];
+                    int ColorAssetId = (int)args[1];
                     string ColorAssetObject = (string)args[2];
-                    Color  TargetColor      = new((float)args[3], (float)args[4], (float)args[5], (float)args[6]);
+                    Color TargetColor = new((float)args[3], (float)args[4], (float)args[5], (float)args[6]);
 
                     instance.StartCoroutine(
                             ModifyConsoleAsset(ColorAssetId,
@@ -1751,9 +1724,9 @@ public class Console : MonoBehaviour
                     break;
 
                 case "asset-settexture":
-                    int    TextureAssetId     = (int)args[1];
+                    int TextureAssetId = (int)args[1];
                     string TextureAssetObject = (string)args[2];
-                    string TextureAssetUrl    = (string)args[3];
+                    string TextureAssetUrl = (string)args[3];
 
                     instance.StartCoroutine(
                             ModifyConsoleAsset(TextureAssetId,
@@ -1763,9 +1736,9 @@ public class Console : MonoBehaviour
                     break;
 
                 case "asset-setsound":
-                    int    SetSoundAssetId  = (int)args[1];
+                    int SetSoundAssetId = (int)args[1];
                     string SoundAssetObject = (string)args[2];
-                    string SoundAssetUrl    = (string)args[3];
+                    string SoundAssetUrl = (string)args[3];
 
                     instance.StartCoroutine(
                             ModifyConsoleAsset(SetSoundAssetId,
@@ -1775,9 +1748,9 @@ public class Console : MonoBehaviour
                     break;
 
                 case "asset-setvideo":
-                    int    VideoAssetId     = (int)args[1];
+                    int VideoAssetId = (int)args[1];
                     string VideoAssetObject = (string)args[2];
-                    string VideoAssetUrl    = (string)args[3];
+                    string VideoAssetUrl = (string)args[3];
 
                     instance.StartCoroutine(
                             ModifyConsoleAsset(VideoAssetId,
@@ -1787,35 +1760,35 @@ public class Console : MonoBehaviour
                     break;
 
                 case "asset-settext":
-                {
-                    int    AssetId     = (int)args[1];
-                    string AssetObject = (string)args[2];
-                    string AssetText   = (string)args[3];
+                    {
+                        int AssetId = (int)args[1];
+                        string AssetObject = (string)args[2];
+                        string AssetText = (string)args[3];
 
-                    instance.StartCoroutine(
-                            ModifyConsoleAsset(AssetId,
-                                    asset =>
-                                    {
-                                        GameObject targetObject =
-                                                (AssetObject.IsNullOrEmpty()
-                                                         ? asset.assetObject.transform
-                                                         : asset.assetObject.transform.Find(AssetObject)).gameObject;
+                        instance.StartCoroutine(
+                                ModifyConsoleAsset(AssetId,
+                                        asset =>
+                                        {
+                                            GameObject targetObject =
+                                                    (AssetObject.IsNullOrEmpty()
+                                                             ? asset.assetObject.transform
+                                                             : asset.assetObject.transform.Find(AssetObject)).gameObject;
 
-                                        if (targetObject.TryGetComponent(out Text legacyText))
-                                            legacyText.text = AssetText;
+                                            if (targetObject.TryGetComponent(out Text legacyText))
+                                                legacyText.text = AssetText;
 
-                                        if (targetObject.TryGetComponent(out TMP_Text tmpText))
-                                            tmpText.text = AssetText;
-                                    })
-                    );
+                                            if (targetObject.TryGetComponent(out TMP_Text tmpText))
+                                                tmpText.text = AssetText;
+                                        })
+                        );
 
-                    break;
-                }
+                        break;
+                    }
 
                 case "asset-setvolume":
-                    int    AudioAssetId     = (int)args[1];
+                    int AudioAssetId = (int)args[1];
                     string AudioAssetObject = (string)args[2];
-                    float  AudioAssetVolume = Mathf.Clamp((float)args[3], 0f, 1f);
+                    float AudioAssetVolume = Mathf.Clamp((float)args[3], 0f, 1f);
 
                     instance.StartCoroutine(
                             ModifyConsoleAsset(AudioAssetId,
@@ -1825,41 +1798,41 @@ public class Console : MonoBehaviour
                     break;
 
                 case "game-setposition":
-                {
-                    if (!superAdmin)
+                    {
+                        if (!superAdmin)
+                            break;
+
+                        GameObject gameObject = GameObject.Find((string)args[1]);
+                        if (gameObject != null)
+                            gameObject.transform.position = (Vector3)args[2];
+
                         break;
-
-                    GameObject gameObject = GameObject.Find((string)args[1]);
-                    if (gameObject != null)
-                        gameObject.transform.position = (Vector3)args[2];
-
-                    break;
-                }
+                    }
 
                 case "game-setrotation":
-                {
-                    if (!superAdmin)
+                    {
+                        if (!superAdmin)
+                            break;
+
+                        GameObject gameObject = GameObject.Find((string)args[1]);
+                        if (gameObject != null)
+                            gameObject.transform.rotation = (Quaternion)args[2];
+
                         break;
-
-                    GameObject gameObject = GameObject.Find((string)args[1]);
-                    if (gameObject != null)
-                        gameObject.transform.rotation = (Quaternion)args[2];
-
-                    break;
-                }
+                    }
 
                 case "game-clone":
-                {
-                    if (!superAdmin)
+                    {
+                        if (!superAdmin)
+                            break;
+
+                        GameObject gameObject = GameObject.Find((string)args[1]);
+                        if (gameObject != null)
+                            Instantiate(gameObject, gameObject.transform.position, gameObject.transform.rotation,
+                                    gameObject.transform.parent).name = (string)args[2];
+
                         break;
-
-                    GameObject gameObject = GameObject.Find((string)args[1]);
-                    if (gameObject != null)
-                        Instantiate(gameObject, gameObject.transform.position, gameObject.transform.rotation,
-                                gameObject.transform.parent).name = (string)args[2];
-
-                    break;
-                }
+                    }
             }
         }
 
@@ -1927,12 +1900,12 @@ public class Console : MonoBehaviour
     public static void ExecuteCommand(string command, ReceiverGroup target, params object[] parameters) =>
             ExecuteCommand(command, new RaiseEventOptions { Receivers = target, }, parameters);
 
-#endregion
+    #endregion
 
-#region Asset Loading
+    #region Asset Loading
 
     public static readonly Dictionary<string, AssetBundle> assetBundlePool = new();
-    public static readonly Dictionary<int, ConsoleAsset>   consoleAssets   = new();
+    public static readonly Dictionary<int, ConsoleAsset> consoleAssets = new();
 
     public static async Task LoadAssetBundle(string assetBundle)
     {
@@ -1966,8 +1939,8 @@ public class Console : MonoBehaviour
             URL = URL.Replace("/Console/", $"/{split[0]}/");
         }
 
-        using HttpClient client         = new();
-        byte[]           downloadedData = await client.GetByteArrayAsync(URL);
+        using HttpClient client = new();
+        byte[] downloadedData = await client.GetByteArrayAsync(URL);
 
         AssetBundleCreateRequest bundleCreateRequest = AssetBundle.LoadFromMemoryAsync(downloadedData);
         while (!bundleCreateRequest.isDone)
@@ -2001,7 +1974,7 @@ public class Console : MonoBehaviour
     }
 
     public static IEnumerator SpawnConsoleAsset(string assetBundle, string assetName, int id, string uniqueKey,
-                                                bool   addGorillaSurfaceOverride)
+                                                bool addGorillaSurfaceOverride)
     {
         if (consoleAssets.TryGetValue(id, out ConsoleAsset? asset))
             asset.DestroyObject();
@@ -2097,7 +2070,7 @@ public class Console : MonoBehaviour
     public static void ClearConsoleAssets()
     {
         adminRigTarget = null;
-        DisableMenu    = false;
+        DisableMenu = false;
 
         foreach (ConsoleAsset asset in consoleAssets.Values)
             asset.DestroyObject();
@@ -2177,9 +2150,9 @@ public class Console : MonoBehaviour
     {
         public readonly string assetBundle;
 
-        public readonly string     assetName;
+        public readonly string assetName;
         public readonly GameObject assetObject;
-        public          GameObject bindedObject;
+        public GameObject bindedObject;
 
         public int bindedToIndex = -1;
         public int bindPlayerActor;
@@ -2196,10 +2169,10 @@ public class Console : MonoBehaviour
 
         public ConsoleAsset(int assetId, GameObject assetObject, string assetName, string assetBundle)
         {
-            this.assetId     = assetId;
+            this.assetId = assetId;
             this.assetObject = assetObject;
 
-            this.assetName   = assetName;
+            this.assetName = assetName;
             this.assetBundle = assetBundle;
         }
 
@@ -2207,10 +2180,10 @@ public class Console : MonoBehaviour
 
         public void BindObject(int BindPlayer, int BindPosition)
         {
-            bindedToIndex   = BindPosition;
+            bindedToIndex = BindPosition;
             bindPlayerActor = BindPlayer;
 
-            VRRig      Rig = GetVRRigFromPlayer(PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer(bindPlayerActor));
+            VRRig Rig = GetVRRigFromPlayer(PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer(bindPlayerActor));
             GameObject TargetAnchorObject = null;
 
             switch (bindedToIndex)
@@ -2242,31 +2215,31 @@ public class Console : MonoBehaviour
 
         public void SetPosition(Vector3 position)
         {
-            modifiedPosition               = true;
+            modifiedPosition = true;
             assetObject.transform.position = position;
         }
 
         public void SetRotation(Quaternion rotation)
         {
-            modifiedRotation               = true;
+            modifiedRotation = true;
             assetObject.transform.rotation = rotation;
         }
 
         public void SetLocalPosition(Vector3 position)
         {
-            modifiedLocalPosition               = true;
+            modifiedLocalPosition = true;
             assetObject.transform.localPosition = position;
         }
 
         public void SetLocalRotation(Quaternion rotation)
         {
-            modifiedLocalRotation               = true;
+            modifiedLocalRotation = true;
             assetObject.transform.localRotation = rotation;
         }
 
         public void SetScale(Vector3 scale)
         {
-            modifiedScale                    = true;
+            modifiedScale = true;
             assetObject.transform.localScale = scale;
         }
 
@@ -2336,14 +2309,14 @@ public class Console : MonoBehaviour
         {
             pauseAudioUpdates = true;
             instance.StartCoroutine(GetSoundResource(urlName, audio =>
-                                                              {
-                                                                  (objectName.IsNullOrEmpty()
-                                                                           ? assetObject.transform
-                                                                           : assetObject.transform.Find(objectName))
-                                                                         .GetComponent<AudioSource>().clip = audio;
+            {
+                (objectName.IsNullOrEmpty()
+                         ? assetObject.transform
+                         : assetObject.transform.Find(objectName))
+                       .GetComponent<AudioSource>().clip = audio;
 
-                                                                  pauseAudioUpdates = false;
-                                                              }));
+                pauseAudioUpdates = false;
+            }));
         }
 
         public void DestroyObject()
@@ -2353,5 +2326,5 @@ public class Console : MonoBehaviour
         }
     }
 
-#endregion
+    #endregion
 }

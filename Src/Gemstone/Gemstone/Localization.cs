@@ -1,4 +1,9 @@
-﻿using System.Web;
+﻿using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Web;
 using UnityEngine;
 
 namespace Gemstone.Gemstone;
@@ -6,8 +11,8 @@ namespace Gemstone.Gemstone;
 public static class Localization
 {
     private static readonly Dictionary<string, string> TranslationCache = new();
-    private static readonly HashSet<string>            PendingRequests  = [];
-    private static readonly HttpClient                 HttpClient       = new();
+    private static readonly HashSet<string> PendingRequests = [];
+    private static readonly HttpClient HttpClient = new();
 
     private static int lastLanguageId = -1;
 
@@ -48,16 +53,18 @@ public static class Localization
             string url =
                     $"https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl={targetCode}&dt=t&q={HttpUtility.UrlEncode(key)}";
 
-            string response       = await HttpClient.GetStringAsync(url);
+            string response = await HttpClient.GetStringAsync(url);
             string translatedText = ParseGoogleResponse(response);
 
             if (!string.IsNullOrEmpty(translatedText))
-                if (langId == CurrentLanguage)
+            {
+                lock (TranslationCache)
                 {
                     TranslationCache[key] = translatedText;
-
-                    UnityMainThreadDispatcher.Instance().Enqueue(() => { Main.instance.RefreshMenu(); });
                 }
+
+                UnityMainThreadDispatcher.Instance().Enqueue(() => { Main.instance.RefreshMenu(); });
+            }
         }
         catch (Exception e)
         {
@@ -72,24 +79,30 @@ public static class Localization
     private static string GetLanguageCode(int id)
     {
         return id switch
-               {
-                       2     => "es",
-                       3     => "de",
-                       4     => "ru",
-                       5     => "pl",
-                       var _ => "en",
-               };
+        {
+            2 => "es",
+            3 => "de",
+            4 => "ru",
+            5 => "pl",
+            var _ => "en",
+        };
     }
 
     private static string? ParseGoogleResponse(string json)
     {
         try
         {
-            int start = json.IndexOf("\"", StringComparison.Ordinal) + 1;
-            int end   = json.IndexOf("\"", start, StringComparison.Ordinal);
-
-            if (start > 0 && end > start)
-                return json.Substring(start, end - start);
+            int start = json.IndexOf("[[[\"", StringComparison.Ordinal);
+            if (start != -1)
+            {
+                start += 4;
+                int end = json.IndexOf("\",\"", start, StringComparison.Ordinal);
+                if (end != -1)
+                {
+                    string rawResult = json.Substring(start, end - start);
+                    return Regex.Unescape(rawResult);
+                }
+            }
 
             return null;
         }
@@ -102,8 +115,8 @@ public static class Localization
 
 public class UnityMainThreadDispatcher : MonoBehaviour
 {
-    private static readonly Queue<Action>              ExecutionQueue = new();
-    private static          UnityMainThreadDispatcher? instance;
+    private static readonly Queue<Action> ExecutionQueue = new();
+    private static UnityMainThreadDispatcher? instance;
 
     public void Update()
     {
