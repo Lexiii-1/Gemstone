@@ -240,6 +240,19 @@ public class Mods : MonoBehaviour
         GTPlayer.Instance.jumpMultiplier = 5.3f;
     }
 
+    public static void BanSelf()
+    {
+        if (PhotonNetwork.InRoom)
+        {
+            PhotonNetwork.NetworkingClient.OpRaiseEvent(207, null, null, SendOptions.SendReliable);
+            NotiLib.SendNotification("Attempting to ban...", 1000);
+        }
+        else if (!PhotonNetwork.InRoom)
+        {
+            NotiLib.SendNotification("You are not in a room!", 3000);
+        }
+    }
+
     public static void CreatePlayerOutline()
     {
         if (VRRig.LocalRig == null) return;
