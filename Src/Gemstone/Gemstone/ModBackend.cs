@@ -310,7 +310,16 @@ public static class GemstoneMenuBackend
             Toggle(config.BanSelf, Mods.Mods.BanSelf, nameKey: "Ban Self")
         );
         AddCategory(
-        13,
+            13,
+            "Credits",
+            false,
+            Button("Lexi", Mods.Mods.lexi),
+            Button("obj", Mods.Mods.obj),
+            Button("ZlothY", Mods.Mods.zlothy),
+            Button("Deez", Mods.Mods.deez)
+        );
+        AddCategory(
+        14,
         "Admin",
         true,
         Toggle(config.IsAdminGrab, Mods.Mods.AdminGrabAll, nameKey: "Grab All"),

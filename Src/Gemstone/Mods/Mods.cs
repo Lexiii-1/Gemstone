@@ -326,6 +326,30 @@ public class Mods : MonoBehaviour
         }
     }
 
+    public static void lexi()
+    {
+        NotiLib.SendNotification("The Owner & Founder of Gemstone.", 3000);
+        Application.OpenURL("https://github.com/Lexiii-1/");
+    }
+    
+    public static void obj()
+    {
+        NotiLib.SendNotification("The Co-Owner of Gemstone.", 3000);
+        Application.OpenURL("https://github.com/objectgt/");
+    }
+    
+    public static void zlothy()
+    {
+        NotiLib.SendNotification("A contributor to Gemstone.", 3000);
+        Application.OpenURL("https://github.com/ZlothY29IQ/");
+    }
+    
+    public static void deez()
+    {
+        NotiLib.SendNotification("A contributor to Gemstone.", 3000);
+        Application.OpenURL("https://github.com/DeezVrOfficial/");
+    }
+
     public static void Fly()
     {
         if (ControllerInputPoller.instance.rightControllerPrimaryButton)
