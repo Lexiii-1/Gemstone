@@ -190,7 +190,9 @@ public static class GemstoneMenuBackend
                 Button("Unlock Forest Guide", () => Cosmetx.instance.UnlockSpecificCosmetic("LMAPY.")),
                 Button("Unlock AA Badge", () => Cosmetx.instance.UnlockSpecificCosmetic("LBANI.")),
                 Toggle(config.IsBoop, () => Mods.Mods.Boop()),
-                Toggle(config.EmoteSelector, () => Mods.Mods.EmoteSelector())
+                Toggle(config.EmoteSelector, () => Mods.Mods.EmoteSelector()),
+                Button("Open Elevator", Mods.Mods.OpenElevator),
+                Button("Close Elevator", Mods.Mods.CloseElevator)
         );
 
         AddCategory(

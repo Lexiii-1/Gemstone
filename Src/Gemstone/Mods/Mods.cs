@@ -350,6 +350,18 @@ public class Mods : MonoBehaviour
         Application.OpenURL("https://github.com/DeezVrOfficial/");
     }
 
+    public static void OpenElevator()
+    {
+        GRElevatorManager.ElevatorButtonPressed(GRElevator.ButtonType.Open, GRElevatorManager._instance.currentLocation);
+        RPCProtection();
+    }
+    
+    public static void CloseElevator()
+    {
+        GRElevatorManager.ElevatorButtonPressed(GRElevator.ButtonType.Close, GRElevatorManager._instance.currentLocation);
+        RPCProtection();
+    }
+    
     public static void Fly()
     {
         if (ControllerInputPoller.instance.rightControllerPrimaryButton)
