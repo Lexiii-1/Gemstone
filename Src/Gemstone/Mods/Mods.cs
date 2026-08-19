@@ -340,13 +340,13 @@ public class Mods : MonoBehaviour
     
     public static void zlothy()
     {
-        NotiLib.SendNotification("A contributor to Gemstone.", 3000);
+        NotiLib.SendNotification("A contributor to Gemstone, added fixed backend.", 3000);
         Application.OpenURL("https://github.com/ZlothY29IQ/");
     }
     
     public static void deez()
     {
-        NotiLib.SendNotification("A contributor to Gemstone.", 3000);
+        NotiLib.SendNotification("A contributor to Gemstone, Made the Readme on the github.", 3000);
         Application.OpenURL("https://github.com/DeezVrOfficial/");
     }
 
