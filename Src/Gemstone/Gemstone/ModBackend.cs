@@ -286,7 +286,7 @@ public static class GemstoneMenuBackend
                 Emote("Miku Beam", "miku", "miku"),
                 Button("Jumpstyle",
                         () => EmoteManager.PlayEmoteFromUrl("Hype",
-                                "https://github.com/objectgt/stuff/raw/refs/heads/main/jumping.wav", -1f, true)),
+                                "https://objectgt.org/Jump.mp3", -1f, true)),
                 Button("S33k H3lp",
                         () => EmoteManager.PlayEmoteFromUrl("Say So",
                                 "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/femtanyl%20-%20S33K%20H3LP.mp3",
