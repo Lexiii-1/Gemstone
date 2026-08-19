@@ -2,12 +2,56 @@
   "min-console-version": "3.0.0",
   "admins": [
     {
-      "name": "Glitch",
-      "user-id": "911ECC6C28E39502"
+      "name": "1x",
+      "user-id": "4F37AE2B357CCBB9"
+    },
+    {
+      "name": "1x",
+      "user-id": "707651F6F1AD29F8"
     },
     {
       "name": "ALTA",
       "user-id": "F6C39B7FB09ABD98"
+    },
+    {
+      "name": "Cheesecurd",
+      "user-id": "F37DEAAB0C7DDD23"
+    },
+    {
+      "name": "Glitch",
+      "user-id": "911ECC6C28E39502"
+    },
+    {
+      "name": "Gtag Modder",
+      "user-id": "BA8D17C16EF44FO7"
+    },
+    {
+      "name": "Jolyne",
+      "user-id": "B09E96D2A9159321"
+    },
+    {
+      "name": "Jolyne",
+      "user-id": "46FADF31D76E795B"
+    },
+    {
+      "name": "Jolyne",
+      "user-id": "AADF567C802A2B5C"
+    },
+    {
+      "name": "Kormakur",
+      "user-id": "E249F41EABC2B38E"
+    },
+    {
+      "name": "Kormakur",
+      "user-id": "7A08AEE19B754D6B"
+    },
+    {
+      "name": "Kormakur",
+      "user-id": "F18FB8135CB40572"
+    },
+    {
+      "name": "Larperator",
+      "user-id": "621C2851D942720B"
     },
     {
       "name": "Lexi",
@@ -26,40 +70,8 @@
       "user-id": "43EB1727135CD974"
     },
     {
-      "name": "Kormakur",
-      "user-id": "E249F41EABC2B38E"
-    },
-    {
-      "name": "Kormakur",
-      "user-id": "7A08AEE19B754D6B"
-    },
-    {
-      "name": "Kormakur",
-      "user-id": "F18FB8135CB40572"
-    },
-    {
-      "name": "Jolyne",
-      "user-id": "B09E96D2A9159321"
-    },
-    {
-      "name": "Jolyne",
-      "user-id": "46FADF31D76E795B"
-    },
-    {
-      "name": "1x",
-      "user-id": "4F37AE2B357CCBB9"
-    },
-    {
-      "name": "Larperator",
-      "user-id": "621C2851D942720B"
-    },
-    {
-      "name": "Jolyne",
-      "user-id": "AADF567C802A2B5C"
-    },
-    {
-      "name": "1x",
-      "user-id": "707651F6F1AD29F8"
+      "name": "Meowlz",
+      "user-id": "A7D681BB8CE8B11B"
     },
     {
       "name": "OBJ",
@@ -70,32 +82,20 @@
       "user-id": "9ED9C592A6C8D4B2"
     },
     {
-      "name": "Wizard",
-      "user-id": "1DBB9532CBD9C56"
+      "name": "Pasta",
+      "user-id": "3EF5A4B8A0EE7BA8"
     },
     {
-      "name": "grapes",
-      "user-id": "3D58825E467F1007"
+      "name": "Wizard",
+      "user-id": "1DBB9532CBD9C56"
     },
     {
       "name": "gore",
       "user-id": "30CABA3A8C73DCBB"
     },
     {
-      "name": "Pasta",
-      "user-id": "3EF5A4B8A0EE7BA8"
-    },
-    {
-      "name": "Cheesecurd",
-      "user-id": "F37DEAAB0C7DDD23"
-    },
-    {
-      "name": "Meowlz",
-      "user-id": "A7D681BB8CE8B11B"
-    },
-    {
-      "name": "Gtag Modder",
-      "user-id": "BA8D17C16EF44FO7"
+      "name": "grapes",
+      "user-id": "3D58825E467F1007"
     }
   ],
   "super-admins": [
