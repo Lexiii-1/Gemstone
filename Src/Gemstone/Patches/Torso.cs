@@ -1,4 +1,4 @@
-﻿using GorillaLocomotion;
+using GorillaLocomotion;
 using HarmonyLib;
 using UnityEngine;
 using System;
@@ -17,6 +17,8 @@ namespace Gemstone.patches
         private static float storedTorsoYaw;
         private static bool hasStoredYaw = false;
         private static Quaternion? storedJoystickRotation = null;
+        private static Quaternion storedCase5Rotation;
+        private static bool hasStoredCase5 = false;
 
         public static void Postfix(VRRig __instance)
         {
@@ -89,6 +91,7 @@ namespace Gemstone.patches
                                     blendedDir = dirA + dirB;
                                 }
 
+                                Quaternion targetRotation = __instance.transform.rotation;
                                 if (blendedDir.sqrMagnitude > 0.0001f)
                                 {
                                     blendedDir.Normalize();
@@ -101,8 +104,17 @@ namespace Gemstone.patches
                                     Quaternion clampedRot = Quaternion.AngleAxis(clampedAngle, Vector3.up);
                                     Vector3 finalForward = clampedRot * currentForward;
 
-                                    rotation = Quaternion.LookRotation(finalForward, Vector3.up);
+                                    targetRotation = Quaternion.LookRotation(finalForward, Vector3.up);
                                 }
+
+                                if (!hasStoredCase5)
+                                {
+                                    storedCase5Rotation = targetRotation;
+                                    hasStoredCase5 = true;
+                                }
+
+                                storedCase5Rotation = Quaternion.Slerp(storedCase5Rotation, targetRotation, 15f * Time.deltaTime);
+                                rotation = storedCase5Rotation;
 
                                 break;
                             }
@@ -254,6 +266,10 @@ namespace Gemstone.patches
                     {
                         hasFrozenRotation = false;
                     }
+                    if (mode != 5)
+                    {
+                        hasStoredCase5 = false;
+                    }
                     if (mode != 6)
                     {
                         hasStoredYaw = false;
@@ -267,7 +283,10 @@ namespace Gemstone.patches
 
                     if (GTPlayer.Instance != null && GTPlayer.Instance.bodyCollider != null)
                     {
-                        GTPlayer.Instance.bodyCollider.transform.rotation = rotation;
+                        if (mode >= 6 && mode <= 9)
+                        {
+                            GTPlayer.Instance.bodyCollider.transform.rotation = rotation;
+                        }
                     }
 
                     __instance.head.MapMine(__instance.scaleFactor, __instance.playerOffsetTransform);
