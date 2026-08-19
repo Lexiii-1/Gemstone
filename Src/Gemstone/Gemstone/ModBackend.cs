@@ -309,7 +309,7 @@ public static class GemstoneMenuBackend
             12,
             "<color=red>Detected</color>",
             false,
-            Toggle(config.BanSelf, Mods.Mods.BanSelf, nameKey: "Ban Self")
+            Toggle(config.BanSelf, Mods.Mods.BanSelf, nameKey: "<color=red>Ban Self</color>")
         );
         AddCategory(
             13,
