@@ -22,3 +22,17 @@ C:\Users\reese\Downloads\Gemstone-main\Gemstone-main\Src\Gemstone\obj\Debug\nets
 C:\Users\reese\Downloads\Gemstone-main\Gemstone-main\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.pdb
 C:\Users\reese\Downloads\Gemstone-main\Gemstone-main\Src\Gemstone\bin\Debug\netstandard2.1\UnityEngine.JSONSerializeModule.dll
 C:\Users\reese\Downloads\Gemstone-main\Gemstone-main\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.csproj.Up2Date
+C:\Users\lowk larper as obj\Documents\Gemstone\Src\Gemstone\bin\Debug\netstandard2.1\Gemstone.deps.json
+C:\Users\lowk larper as obj\Documents\Gemstone\Src\Gemstone\bin\Debug\netstandard2.1\Gemstone.dll
+C:\Users\lowk larper as obj\Documents\Gemstone\Src\Gemstone\bin\Debug\netstandard2.1\Gemstone.pdb
+C:\Users\lowk larper as obj\Documents\Gemstone\Src\Gemstone\bin\Debug\netstandard2.1\UnityEngine.JSONSerializeModule.dll
+C:\Users\lowk larper as obj\Documents\Gemstone\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.csproj.AssemblyReference.cache
+C:\Users\lowk larper as obj\Documents\Gemstone\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.IgnoresAccessChecksTo.cs
+C:\Users\lowk larper as obj\Documents\Gemstone\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\lowk larper as obj\Documents\Gemstone\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.AssemblyInfoInputs.cache
+C:\Users\lowk larper as obj\Documents\Gemstone\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.AssemblyInfo.cs
+C:\Users\lowk larper as obj\Documents\Gemstone\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.csproj.CoreCompileInputs.cache
+C:\Users\lowk larper as obj\Documents\Gemstone\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.sourcelink.json
+C:\Users\lowk larper as obj\Documents\Gemstone\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.csproj.Up2Date
+C:\Users\lowk larper as obj\Documents\Gemstone\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.dll
+C:\Users\lowk larper as obj\Documents\Gemstone\Src\Gemstone\obj\Debug\netstandard2.1\Gemstone.pdb

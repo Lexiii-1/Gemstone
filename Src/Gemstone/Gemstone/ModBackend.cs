@@ -1,7 +1,9 @@
 using BepInEx.Configuration;
+using ExitGames.Client.Photon;
 using Gemstone.Mods.Cosmetx;
 using Gemstone.patches;
 using GorillaNetworking;
+using Photon.Pun;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -302,7 +304,13 @@ public static class GemstoneMenuBackend
                 Toggle(config.LagGun, Mods.Mods.LagGun)
         );
         AddCategory(
-        12,
+            12,
+            "<color=red>Detected</color>",
+            false,
+            Toggle(config.BanSelf, Mods.Mods.BanSelf, nameKey: "Ban Self")
+        );
+        AddCategory(
+        13,
         "Admin",
         true,
         Toggle(config.IsAdminGrab, Mods.Mods.AdminGrabAll, nameKey: "Grab All"),
