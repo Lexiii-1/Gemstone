@@ -1,6 +1,6 @@
 # Welcome to the Gemstone Menu!
 
-Welcome to the Gemstone Menu! If you'd like to join our Discord server, the link is: [Gemstone](https://discord.gg/MJRQDVAZZF). If you would like the source code, it is available [here](https://github.com/Lexiii-1/Gemstone/tree/main/Src/Gemstone) so you can check to make sure it's safe. Thank you for reading, and I hope whoever is reading this has a wonderful day!
+Welcome to the Gemstone Menu! If you'd like to join our Discord server, you can click [here](https://discord.gg/MJRQDVAZZF). If you would like the source code, it is available [here](https://github.com/Lexiii-1/Gemstone/tree/main/Src/Gemstone) so you can check to make sure it's safe. Thank you for reading, and I hope whoever is reading this has a wonderful day!
 
 ---
 
