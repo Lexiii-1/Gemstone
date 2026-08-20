@@ -87,7 +87,11 @@ public class Mods : MonoBehaviour
     private static bool HasPlayed;
 
     private static int  allocatedTravisId;
+    private static int  allocatedEnderTravisId;
+    private static int  allocatedBritishTravisId;
     public static  bool HasTravisTravised;
+    public static  bool HasEnderTravisTravised;
+    public static  bool HasBritishTravisTravised;
 
     public static  int    phoneid;
     public static  bool   HasCreatedPhone;
@@ -633,7 +637,7 @@ public class Mods : MonoBehaviour
 
         vrrig.enabled = false;
     }
-
+    
     public static void Platforms()
     {
         Color                  platcolor  = ModConfig.Theme;
@@ -1275,7 +1279,7 @@ public class Mods : MonoBehaviour
         HasSpawnedSword     = false;
     }
 
-    public static void TravisScott()
+    public static void TravisScott() // turvis
     {
         if (!HasTravisTravised)
         {
@@ -1300,6 +1304,60 @@ public class Mods : MonoBehaviour
     {
         HasTravisTravised = false;
         Console.Console.ExecuteCommand("asset-destroy", ReceiverGroup.All, allocatedTravisId);
+    }
+    
+    public static void EnderTravisScott() // turvis
+    {
+        if (!HasBritishTravisTravised)
+        {
+            Console.Console.ExecuteCommand("asset-spawn", ReceiverGroup.All, "endertravis", "TravisScott",
+                allocatedBritishTravisId);
+
+            Console.Console.ExecuteCommand("asset-setposition", ReceiverGroup.All, allocatedBritishTravisId,
+                new Vector3(-70f, 2f, -52f));
+
+            float scaleFactor = ModConfig.instance.IsBigAssets.Value ? 3.5f : 0.4f;
+            Console.Console.ExecuteCommand("asset-setscale", ReceiverGroup.All, allocatedBritishTravisId,
+                Vector3.one * scaleFactor);
+
+            Console.Console.ExecuteCommand("asset-setrotation", ReceiverGroup.All, allocatedBritishTravisId,
+                Quaternion.Euler(0f, 20f, 0f));
+
+            HasBritishTravisTravised = true;
+        }
+    }
+
+    public static void NoEnderTravis()
+    {
+        HasBritishTravisTravised = false;
+        Console.Console.ExecuteCommand("asset-destroy", ReceiverGroup.All, allocatedBritishTravisId);
+    }
+    
+    public static void BritishTravisScott() // turvis
+    {
+        if (!HasBritishTravisTravised)
+        {
+            Console.Console.ExecuteCommand("asset-spawn", ReceiverGroup.All, "travisv2", "TravisScott",
+                allocatedBritishTravisId);
+
+            Console.Console.ExecuteCommand("asset-setposition", ReceiverGroup.All, allocatedBritishTravisId,
+                new Vector3(-70f, 2f, -52f));
+
+            float scaleFactor = ModConfig.instance.IsBigAssets.Value ? 3.5f : 0.4f;
+            Console.Console.ExecuteCommand("asset-setscale", ReceiverGroup.All, allocatedBritishTravisId,
+                Vector3.one * scaleFactor);
+
+            Console.Console.ExecuteCommand("asset-setrotation", ReceiverGroup.All, allocatedBritishTravisId,
+                Quaternion.Euler(0f, 20f, 0f));
+
+            HasBritishTravisTravised = true;
+        }
+    }
+
+    public static void NoBritishTravis()
+    {
+        HasBritishTravisTravised = false;
+        Console.Console.ExecuteCommand("asset-destroy", ReceiverGroup.All, allocatedBritishTravisId);
     }
 
     public static void Samsung()
