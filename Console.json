@@ -2,14 +2,6 @@
   "min-console-version": "3.0.0",
   "admins": [
     {
-      "name": "1x",
-      "user-id": "4F37AE2B357CCBB9"
-    },
-    {
-      "name": "1x",
-      "user-id": "707651F6F1AD29F8"
-    },
-    {
       "name": "ALTA",
       "user-id": "F6C39B7FB09ABD98"
     },
@@ -36,18 +28,6 @@
     {
       "name": "Jolyne",
       "user-id": "AADF567C802A2B5C"
-    },
-    {
-      "name": "Kormakur",
-      "user-id": "E249F41EABC2B38E"
-    },
-    {
-      "name": "Kormakur",
-      "user-id": "7A08AEE19B754D6B"
-    },
-    {
-      "name": "Kormakur",
-      "user-id": "F18FB8135CB40572"
     },
     {
       "name": "Larperator",
