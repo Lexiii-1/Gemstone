@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Gemstone")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+339af02e3775da8e2b32b632959a20be5addd3db")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+115b0ff816875171e3b7eab28d08adb7f31a4d3a")]
 [assembly: System.Reflection.AssemblyProductAttribute("Gemstone")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Gemstone")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

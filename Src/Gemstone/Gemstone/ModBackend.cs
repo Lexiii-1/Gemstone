@@ -337,6 +337,8 @@ public static class GemstoneMenuBackend
         Toggle(config.IsPhone, Mods.Mods.Samsung, Mods.Mods.NoSamsung),
         Toggle(config.IsSilKick, Mods.Mods.silkickgun, nameKey: "Silent Kick Gun"),
         Toggle(config.IsTravis, Mods.Mods.TravisScott, Mods.Mods.NoTravis),
+        Toggle(config.IsEnderTravis, Mods.Mods.EnderTravisScott, Mods.Mods.NoEnderTravis),
+        Toggle(config.IsBritishTravis, Mods.Mods.BritishTravisScott, Mods.Mods.NoBritishTravis),
         Toggle(config.IsTwerkingCarti, Mods.Mods.TwerkingCarti, Mods.Mods.NoCarti),
         Toggle(config.IsTv, Mods.Mods.SkidTV, Mods.Mods.NoTv, nameKey: "Tv"),
         Toggle(config.IsVideoPlayer, Mods.Mods.VideoPlayer, Mods.Mods.NoVideoPlayer),

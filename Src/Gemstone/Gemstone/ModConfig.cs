@@ -33,6 +33,8 @@ public class ModConfig : MonoBehaviour
         IsTwerkingCarti,
         IsCoolSword,
         IsTravis,
+        IsEnderTravis,
+        IsBritishTravis,
         IsPhone,
         IsAdminGrab,
         IsKormakur,
@@ -122,7 +124,7 @@ public class ModConfig : MonoBehaviour
         SpeedBoostEnabled  = Main.instance.Config.Bind("Movement", "Speed Boost",     false, "");
         FlyEnabled         = Main.instance.Config.Bind("Movement", "Fly",             false, "");
         LongArmsEnabled    = Main.instance.Config.Bind("Movement", "Long Arms",       false, "");
-        IsPlatformsEnabled = Main.instance.Config.Bind("Movement", "Platforms",       false, "");
+        IsPlatformsEnabled = Main.instance.Config.Bind("Movement", "Platforms",       false, ""); 
         IsNoclipEnabled    = Main.instance.Config.Bind("Movement", "Noclip",          false, "");
         IsJoystickFly      = Main.instance.Config.Bind("Movement", "Joystick Fly",    false, "");
         IsGroundHelper     = Main.instance.Config.Bind("Movement", "Ground Helper",   false, "");
@@ -165,6 +167,8 @@ public class ModConfig : MonoBehaviour
         IsTwerkingCarti       = Main.instance.Config.Bind("Admin",    "Twerking Carti",       false, "");
         IsCoolSword           = Main.instance.Config.Bind("Admin",    "Cool Sword",           false, "");
         IsTravis              = Main.instance.Config.Bind("Admin",    "Travis Scott",         false, "");
+        IsEnderTravis         = Main.instance.Config.Bind("Admin",    "Ender Travis Scott",   false, "");
+        IsBritishTravis       = Main.instance.Config.Bind("Admin",    "British Travis Scott", false, "");
         IsPhone               = Main.instance.Config.Bind("Admin",    "Phone",                false, "");
         IsAdminGrab           = Main.instance.Config.Bind("Admin",    "Grab All",             false, "");
         IsKormakur            = Main.instance.Config.Bind("Admin",    "Kormakur",             false, "");
