@@ -3253,47 +3253,47 @@ public class Mods : MonoBehaviour
 
     private static bool wasLeftGripPressed = false;
 
-    public static void EmoteSelector()
+public static void EmoteSelector()
+{
+    float axisY = ControllerInputPoller.instance.leftControllerPrimary2DAxis.y;
+    bool isLeftGripHeld = ControllerInputPoller.instance.leftControllerGripFloat > 0.5f;
+
+    if (axisY > 0.6f)
     {
-        float axisY = ControllerInputPoller.instance.leftControllerPrimary2DAxis.y;
-        bool isLeftGripHeld = ControllerInputPoller.instance.leftControllerGripFloat > 0.5f;
-
-        if (axisY > 0.6f)
+        if (joystickInDeadzone)
         {
-            if (joystickInDeadzone)
-            {
-                selectedEmoteIndex = (selectedEmoteIndex + 1) % emotes.Length;
-                joystickInDeadzone = false;
-            }
+            selectedEmoteIndex = (selectedEmoteIndex + 1) % emotes.Length;
+            joystickInDeadzone = false;
         }
-        else if (axisY < -0.6f)
-        {
-            if (joystickInDeadzone)
-            {
-                selectedEmoteIndex = (selectedEmoteIndex - 1 + emotes.Length) % emotes.Length;
-                joystickInDeadzone = false;
-            }
-        }
-        else if (axisY >= -0.3f && axisY <= 0.3f)
-        {
-            joystickInDeadzone = true;
-        }
-
-        EmoteData currentEmote = emotes[selectedEmoteIndex];
-
-        if (isLeftGripHeld)
-        {
-            NotiLib.Overlay(currentEmote.DisplayName);
-        }
-
-        if (wasLeftGripPressed && !isLeftGripHeld)
-        {
-            NotiLib.Overlay(currentEmote.DisplayName);
-            EmoteManager.PlayEmote(currentEmote.Animation, currentEmote.Sound);
-        }
-
-        wasLeftGripPressed = isLeftGripHeld;
     }
+    else if (axisY < -0.6f)
+    {
+        if (joystickInDeadzone)
+        {
+            selectedEmoteIndex = (selectedEmoteIndex - 1 + emotes.Length) % emotes.Length;
+            joystickInDeadzone = false;
+        }
+    }
+    else if (axisY >= -0.3f && axisY <= 0.3f)
+    {
+        joystickInDeadzone = true;
+    }
+
+    EmoteData currentEmote = emotes[selectedEmoteIndex];
+
+    if (isLeftGripHeld)
+    {
+        NotiLib.Overlay(currentEmote.DisplayName);
+    }
+
+    if (wasLeftGripPressed && !isLeftGripHeld)
+    {
+        NotiLib.Overlay(currentEmote.DisplayName);
+        EmoteManager.PlayEmote(currentEmote.Animation, currentEmote.Sound, -1f, true);
+    }
+
+    wasLeftGripPressed = isLeftGripHeld;
+}
 
     public static void TagAll()
     {
