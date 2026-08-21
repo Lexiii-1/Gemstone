@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
@@ -213,6 +213,17 @@ public class Main : BaseUnityPlugin
                     ownerGradientTag += $"<color=#{hexColor}>{ownerBaseTag[i]}</color>";
                 }
 
+                string objBaseTag = "[Gemstone Co-Owner]";
+                string objGradientTag = " ";
+                for (int i = 0; i < objBaseTag.Length; i++)
+                {
+                    float t = (float)i / (objBaseTag.Length - 1);
+                    Color currentColor = Color.Lerp(gemstoneColorStart, gemstoneColorEnd, t);
+                    string hexColor = ColorUtility.ToHtmlStringRGB(currentColor);
+
+                    objGradientTag += $"<color=#{hexColor}>{objBaseTag[i]}</color>";
+                }
+
                 Color chudColorStart = new(0.5f, 0f, 0f);
                 Color chudColorEnd = new(0.2f, 0.2f, 0.2f);
 
@@ -289,33 +300,43 @@ public class Main : BaseUnityPlugin
                         $"[{rig.Creator.UserId}] <color=#{playerColorHex}>{rawName}</color> [{fpsStr}] [<color=#{platformColorHex}>{platformStr}</color>]{cosmeticTag}";
 
                 bool isLexi = rig.Creator.UserId != null &&
-                             ServerData.Administrators.TryGetValue(rig.Creator.UserId, out string consoleName) &&
-                             consoleName.Equals("Lexi", StringComparison.OrdinalIgnoreCase)
-                           || rig.isLocal && PhotonNetwork.LocalPlayer.UserId != null &&
-                              ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId,
-                                    out string localConsoleName) &&
-                              localConsoleName.Equals("Lexi", StringComparison.OrdinalIgnoreCase);
+                            ServerData.Administrators.TryGetValue(rig.Creator.UserId, out string consoleName) &&
+                            consoleName.Equals("Lexi", StringComparison.OrdinalIgnoreCase)
+                        || rig.isLocal && PhotonNetwork.LocalPlayer.UserId != null &&
+                             ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId,
+                                 out string localConsoleName) &&
+                             localConsoleName.Equals("Lexi", StringComparison.OrdinalIgnoreCase);
+
+                bool isObj = rig.Creator.UserId != null &&
+                            ServerData.Administrators.TryGetValue(rig.Creator.UserId, out string objConsoleName) &&
+                            objConsoleName.Equals("OBJ", StringComparison.OrdinalIgnoreCase)
+                        || rig.isLocal && PhotonNetwork.LocalPlayer.UserId != null &&
+                             ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId,
+                                 out string localObjConsoleName) &&
+                             localObjConsoleName.Equals("OBJ", StringComparison.OrdinalIgnoreCase);
 
                 bool isJolyne = rig.Creator.UserId != null &&
-                              ServerData.Administrators.TryGetValue(rig.Creator.UserId, out string jolyneConsoleName) &&
-                              jolyneConsoleName.Equals("Jolyne", StringComparison.OrdinalIgnoreCase)
-                            || rig.isLocal && PhotonNetwork.LocalPlayer.UserId != null &&
-                               ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId,
-                                     out string localJolyneConsoleName) &&
-                               localJolyneConsoleName.Equals("Jolyne", StringComparison.OrdinalIgnoreCase);
+                            ServerData.Administrators.TryGetValue(rig.Creator.UserId, out string jolyneConsoleName) &&
+                            jolyneConsoleName.Equals("Jolyne", StringComparison.OrdinalIgnoreCase)
+                        || rig.isLocal && PhotonNetwork.LocalPlayer.UserId != null &&
+                             ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId,
+                                 out string localJolyneConsoleName) &&
+                             localJolyneConsoleName.Equals("Jolyne", StringComparison.OrdinalIgnoreCase);
 
                 bool isZlothY = rig.Creator.UserId != null &&
-                              ServerData.Administrators.TryGetValue(rig.Creator.UserId, out string zlothyConsoleName) &&
-                              zlothyConsoleName.Equals("ZlothY", StringComparison.OrdinalIgnoreCase)
-                            || rig.isLocal && PhotonNetwork.LocalPlayer.UserId != null &&
-                               ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId,
-                                     out string localZlothyConsoleName) &&
-                               localZlothyConsoleName.Equals("ZlothY", StringComparison.OrdinalIgnoreCase);
+                            ServerData.Administrators.TryGetValue(rig.Creator.UserId, out string zlothyConsoleName) &&
+                            zlothyConsoleName.Equals("ZlothY", StringComparison.OrdinalIgnoreCase)
+                        || rig.isLocal && PhotonNetwork.LocalPlayer.UserId != null &&
+                             ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId,
+                                 out string localZlothyConsoleName) &&
+                             localZlothyConsoleName.Equals("ZlothY", StringComparison.OrdinalIgnoreCase);
 
                 if (rig.isLocal || rig.Creator.IsLocal)
                 {
                     if (isLexi)
                         rig.playerText1.text = baseFormattedPrefix + ownerGradientTag;
+                    else if (isObj)
+                        rig.playerText1.text = baseFormattedPrefix + objGradientTag;
                     else if (isJolyne)
                         rig.playerText1.text = baseFormattedPrefix + chudOwnerGradientTag;
                     else if (isZlothY)
@@ -358,6 +379,10 @@ public class Main : BaseUnityPlugin
                     if (isLexi)
                     {
                         finalTags += ownerGradientTag;
+                    }
+                    else if (isObj)
+                    {
+                        finalTags += objGradientTag;
                     }
                     else if (isJolyne)
                     {
