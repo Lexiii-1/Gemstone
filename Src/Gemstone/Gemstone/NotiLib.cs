@@ -1,5 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using GorillaLocomotion;
 using TMPro;
 using UnityEngine;
@@ -24,15 +26,33 @@ public class NotiLib : MonoBehaviour
 
     private static int lastOverlayFrame = -1;
 
+    private static bool? hasGorillaNotifications;
+    private static GorillaNotifications.Core.NotificationEntry persistentGnEntry;
+
     private void Awake()
     {
         Instance = this;
+    }
+
+    private static bool CheckGorillaNotifications()
+    {
+        if (!hasGorillaNotifications.HasValue)
+        {
+            hasGorillaNotifications = System.AppDomain.CurrentDomain.GetAssemblies()
+                .Any(a => a.GetName().Name == "GorillaNotifications");
+        }
+        return hasGorillaNotifications.Value;
     }
 
     private void LateUpdate()
     {
         if (Time.frameCount > lastOverlayFrame + 1)
         {
+            if (CheckGorillaNotifications())
+            {
+                RemoveGorillaOverlay();
+            }
+
             if (persistentVrOverlay != null)
             {
                 Destroy(persistentVrOverlay);
@@ -49,9 +69,25 @@ public class NotiLib : MonoBehaviour
         }
     }
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void RemoveGorillaOverlay()
+    {
+        if (persistentGnEntry != null)
+        {
+            persistentGnEntry.RemoveNotification();
+            persistentGnEntry = null;
+        }
+    }
+
     public static void Overlay(string message)
     {
         if (Instance == null) return;
+
+        if (CheckGorillaNotifications())
+        {
+            GorillaNotificationOverlay(message);
+            return;
+        }
 
         lastOverlayFrame = Time.frameCount;
 
@@ -120,9 +156,29 @@ public class NotiLib : MonoBehaviour
         UpdatePCZIndices();
     }
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void GorillaNotificationOverlay(string message)
+    {
+        lastOverlayFrame = Time.frameCount;
+        if (persistentGnEntry == null)
+        {
+            persistentGnEntry = GorillaNotifications.Core.NotificationController.SendNotification("Gemstone", message, 999f);
+        }
+        else
+        {
+            persistentGnEntry.UpdateNotification("Gemstone", message, 999f);
+        }
+    }
+
     public static void SendNotification(string message, float time)
     {
         if (Instance == null) return;
+
+        if (CheckGorillaNotifications())
+        {
+            SendGorillaNotification(message, time);
+            return;
+        }
 
         GameObject textNotifacation = new("NotificationLabel");
         textNotifacation.transform.SetParent(GTPlayer.Instance.bodyCollider.transform, false);
@@ -176,6 +232,12 @@ public class NotiLib : MonoBehaviour
         UpdatePCZIndices();
 
         Instance.StartCoroutine(Instance.DestroyAfterTime(textNotifacation, pcNotification, time));
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void SendGorillaNotification(string message, float time)
+    {
+        GorillaNotifications.Core.NotificationController.SendNotification("Gemstone", message, time / 1000f);
     }
 
     private static void ApplyOverlayShader(TMP_Text tmpComponent, string labelId)

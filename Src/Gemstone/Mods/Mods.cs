@@ -380,208 +380,44 @@ public class Mods : MonoBehaviour
 
     public static void WasdFly()
     {
+        float MouseSensitivity = 0.2f;
         Rigidbody rigidbody = GorillaTagger.Instance.rigidbody;
-        Transform body      = rigidbody.transform;
-        Transform head      = GorillaTagger.Instance.headCollider.transform;
-
-        Transform leftHand  = GorillaTagger.Instance.leftHandTransform;
-        Transform rightHand = GorillaTagger.Instance.rightHandTransform;
-
-        leftHand.localPosition  += Vector3.down * 0.5f;
-        rightHand.localPosition += Vector3.down * 0.5f;
-
-        leftHand.localPosition  -= Vector3.right * 0.2f;
-        rightHand.localPosition -= Vector3.left  * 0.2f;
-
-        leftHand.localRotation  = Quaternion.Euler(40f, 0f, 0f);
-        rightHand.localRotation = Quaternion.Euler(40f, 0f, 0f);
-
-        if (UnityInput.Current.GetKey(KeyCode.Q))
-        {
-            leftHand.localPosition += Vector3.forward * 0.2f;
-            leftHand.localPosition += Vector3.up      * 0.4f;
-        }
-
-        if (UnityInput.Current.GetKey(KeyCode.E))
-        {
-            rightHand.localPosition += Vector3.forward * 0.2f;
-            rightHand.localPosition += Vector3.up      * 0.4f;
-        }
-
-        Camera     thirdPersonCam = null;
-        GameObject cameraObj      = GameObject.Find("Player Objects/Third Person Camera/Shoulder Camera");
-
-        if (cameraObj != null)
-            thirdPersonCam = cameraObj.GetComponent<Camera>();
+        Transform body = rigidbody.transform;
+        Transform head = GorillaTagger.Instance.headCollider.transform;
+        Transform turnParent = GTPlayer.Instance.turnParent.transform;
 
         if (Mouse.current.rightButton.isPressed)
         {
             Vector2 mouseDelta = Mouse.current.delta.ReadValue();
-
-            body.Rotate(Vector3.up, mouseDelta.x     * MouseSensitivity, Space.World);
+            turnParent.Rotate(Vector3.up, mouseDelta.x * MouseSensitivity, Space.World);
             head.Rotate(Vector3.right, -mouseDelta.y * MouseSensitivity, Space.Self);
-
-            Cursor.lockState = CursorLockMode.Locked;
-        }
-        else
-        {
-            Cursor.lockState = CursorLockMode.None;
         }
 
-        if (Mouse.current.leftButton.isPressed)
+        if (VRRig.LocalRig.enabled)
         {
-            Camera raycastCamera = Camera.main;
-
-            if (thirdPersonCam != null)
-                raycastCamera = thirdPersonCam;
-
-            if (raycastCamera != null)
-            {
-                Ray ray = raycastCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
-
-                if (Physics.Raycast(
-                            ray,
-                            out RaycastHit hit,
-                            100f,
-                            GTPlayer.Instance.locomotionEnabledLayers,
-                            QueryTriggerInteraction.Ignore))
-                    rightHand.position = hit.point;
-            }
+            VRRig.LocalRig.head.rigTarget.rotation = head.rotation;
         }
 
         Vector3 movementDirection = Vector3.zero;
-
         Vector3 forwardDirection = head.forward;
-        Vector3 rightDirection   = head.right;
+        Vector3 rightDirection = head.right;
 
-        if (UnityInput.Current.GetKey(KeyCode.W))
-            movementDirection += forwardDirection;
-
-        if (UnityInput.Current.GetKey(KeyCode.S))
-            movementDirection -= forwardDirection;
-
-        if (UnityInput.Current.GetKey(KeyCode.A))
-            movementDirection -= rightDirection;
-
-        if (UnityInput.Current.GetKey(KeyCode.D))
-            movementDirection += rightDirection;
-
-        if (UnityInput.Current.GetKey(KeyCode.Space))
-            movementDirection += head.up;
+        if (UnityInput.Current.GetKey(KeyCode.W)) movementDirection += forwardDirection;
+        if (UnityInput.Current.GetKey(KeyCode.S)) movementDirection -= forwardDirection;
+        if (UnityInput.Current.GetKey(KeyCode.A)) movementDirection -= rightDirection;
+        if (UnityInput.Current.GetKey(KeyCode.D)) movementDirection += rightDirection;
+        if (UnityInput.Current.GetKey(KeyCode.Space)) movementDirection += head.up;
 
         float speed = UnityInput.Current.GetKey(KeyCode.LeftShift) ? 40f : 10f;
 
-        if (!DisableMovement && movementDirection != Vector3.zero)
-            body.position += movementDirection.normalized * (Time.deltaTime * speed);
-
-        rigidbody.velocity        = Vector3.zero;
-        rigidbody.angularVelocity = Vector3.zero;
-
-        ResolveHandCollision(leftHand);
-        ResolveHandCollision(rightHand);
-    }
-
-    private static void ResolveHandCollision(Transform hand)
-    {
-        const float handRadius = 0.075f;
-        const float skinWidth  = 0.0025f;
-
-        bool shouldIgnore = Vector3.Distance(hand.position, GorillaTagger.Instance.rigidbody.transform.position) > 2f;
-
-        if (shouldIgnore)
+        if (movementDirection != Vector3.zero)
         {
-            LastHandPositions[hand] = hand.position;
-
-            return;
+            rigidbody.linearVelocity = movementDirection.normalized * speed;
         }
-
-        if (!LastHandPositions.TryGetValue(hand, out Vector3 previousPosition))
-            previousPosition = hand.position;
-
-        Vector3 currentPosition = hand.position;
-        Vector3 moveDelta       = currentPosition - previousPosition;
-
-        float distance = moveDelta.magnitude;
-
-        bool processingJumpRelease = isJumping && Time.time < jumpCooldownTime;
-
-        if (distance > 0.0001f)
+        else
         {
-            Vector3 direction = moveDelta.normalized;
-
-            if (Physics.SphereCast(
-                        previousPosition,
-                        handRadius,
-                        direction,
-                        out RaycastHit hit,
-                        distance + skinWidth,
-                        GTPlayer.Instance.locomotionEnabledLayers,
-                        QueryTriggerInteraction.Ignore))
-            {
-                if (!processingJumpRelease)
-                {
-                    isJumping          = false;
-                    hasTouchedWithHand = true;
-                }
-
-                hand.position = hit.point + hit.normal * (handRadius + skinWidth);
-                Vector3 remainingMovement = currentPosition - hand.position;
-                Vector3 surfaceSlide      = Vector3.ProjectOnPlane(remainingMovement, hit.normal);
-
-                if (!Physics.SphereCast(
-                            hand.position,
-                            handRadius,
-                            surfaceSlide.normalized,
-                            out RaycastHit slideHit,
-                            surfaceSlide.magnitude,
-                            GTPlayer.Instance.locomotionEnabledLayers,
-                            QueryTriggerInteraction.Ignore))
-                    hand.position += surfaceSlide;
-            }
+            rigidbody.linearVelocity = Vector3.zero;
         }
-
-        Collider[] overlaps = Physics.OverlapSphere(
-                hand.position,
-                handRadius,
-                GTPlayer.Instance.locomotionEnabledLayers,
-                QueryTriggerInteraction.Ignore);
-
-        if (overlaps.Length > 0 && !processingJumpRelease)
-        {
-            isJumping          = false;
-            hasTouchedWithHand = true;
-        }
-
-        foreach (Collider col in overlaps)
-            if (Physics.ComputePenetration(
-                        GetHandProbe(handRadius, hand.position),
-                        hand.position,
-                        Quaternion.identity,
-                        col,
-                        col.transform.position,
-                        col.transform.rotation,
-                        out Vector3 direction,
-                        out float penetration))
-                hand.position += direction * (penetration + skinWidth);
-
-        LastHandPositions[hand] = hand.position;
-    }
-
-    private static SphereCollider GetHandProbe(float radius, Vector3 position)
-    {
-        if (_probeCollider == null)
-        {
-            GameObject obj = new("HandCollisionProbe");
-            obj.hideFlags = HideFlags.HideAndDontSave;
-
-            _probeCollider           = obj.AddComponent<SphereCollider>();
-            _probeCollider.isTrigger = true;
-        }
-
-        _probeCollider.radius             = radius;
-        _probeCollider.transform.position = position;
-
-        return _probeCollider;
     }
 
     public static void LongArms()
@@ -1278,7 +1114,7 @@ public class Mods : MonoBehaviour
         allocatedSwordVidId = -1;
         HasSpawnedSword     = false;
     }
-
+    // im travising my scott so hard
     public static void TravisScott() // turvis
     {
         if (!HasTravisTravised)

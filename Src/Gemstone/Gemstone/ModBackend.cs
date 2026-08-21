@@ -164,7 +164,8 @@ public static class GemstoneMenuBackend
                 Button("Lag Cooldown +", () => ChangeLagCooldown(1)),
 
                 Toggle(config.ShowKyleWhileEmoting),
-                Toggle(config.EmoteSounds)
+                Toggle(config.EmoteSounds),
+                Toggle(config.ClientSidedEmoteSounds)
         );
 
         AddCategory(

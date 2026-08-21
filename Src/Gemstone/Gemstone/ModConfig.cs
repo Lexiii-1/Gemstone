@@ -88,6 +88,7 @@ public class ModConfig : MonoBehaviour
         IsBoop,
         ShowKyleWhileEmoting,
         EmoteSounds,
+        ClientSidedEmoteSounds,
         IsAdminTitan,
         IsGhostWalk,
         BlockGun,
@@ -201,6 +202,7 @@ public class ModConfig : MonoBehaviour
         IsBoop               = Main.instance.Config.Bind("Fun",      "Boop",                    false, "");
         ShowKyleWhileEmoting = Main.instance.Config.Bind("Settings", "Show Kyle While Emoting", false, "");
         EmoteSounds          = Main.instance.Config.Bind("Settings", "Emote Sounds",            true,  "");
+        ClientSidedEmoteSounds  = Main.instance.Config.Bind("Settings", "Client Sided Emote Sounds",            true,  "");
         IsAdminTitan         = Main.instance.Config.Bind("Admin",    "Admin Titan",             false, "");
         IsGhostWalk          = Main.instance.Config.Bind("Rig",      "Ghost Walk",              false, "");
         BlockGun          = Main.instance.Config.Bind("OP",      "Block Gun",              false, "");

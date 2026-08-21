@@ -1,11 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "D7cfaPW3RxI=",
+  "dgSpecHash": "qS5TOO7AYvg=",
   "success": true,
-  "projectFilePath": "C:\\Users\\lowk larper as obj\\Documents\\Gemstone\\Src\\Gemstone\\Gemstone.csproj",
+  "projectFilePath": "C:\\Users\\reese\\Downloads\\Gemstone-main(1)\\Gemstone-main\\Src\\Gemstone\\Gemstone.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\lowk larper as obj\\.nuget\\packages\\bepinex.assemblypublicizer.msbuild\\0.4.2\\bepinex.assemblypublicizer.msbuild.0.4.2.nupkg.sha512",
-    "C:\\Users\\lowk larper as obj\\.nuget\\packages\\netstandard.library.ref\\2.1.0\\netstandard.library.ref.2.1.0.nupkg.sha512"
+    "C:\\Users\\reese\\.nuget\\packages\\bepinex.assemblypublicizer.msbuild\\0.4.2\\bepinex.assemblypublicizer.msbuild.0.4.2.nupkg.sha512"
   ],
   "logs": []
 }

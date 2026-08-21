@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using BepInEx;
@@ -114,9 +115,9 @@ public class EmoteManager : MonoBehaviour
         {
             VRRig.LocalRig.transform.Find("rig/head/gorillaface").gameObject.layer = LayerMask.NameToLayer("Default");
             foreach (GameObject Cosmetic in VRRig.LocalRig.cosmetics.Where(Cosmetic => Cosmetic.activeSelf &&
-                                                     Cosmetic.transform.parent ==
-                                                     VRRig.LocalRig.mainCamera.transform.Find(
-                                                          "HeadCosmetics")))
+                                                    Cosmetic.transform.parent ==
+                                                    VRRig.LocalRig.mainCamera.transform.Find(
+                                                        "HeadCosmetics")))
             {
                 portedCosmetics.Add(Cosmetic);
                 Cosmetic.transform.SetParent(VRRig.LocalRig.headMesh.transform, false);
@@ -220,33 +221,38 @@ public class EmoteManager : MonoBehaviour
     {
         Recorder? recorder = NetworkSystem.Instance?.VoiceConnection?.PrimaryRecorder;
 
-        if (IsInLobby())
-        {
-            float timeSinceLastMic = Time.time - lastMicPlayTime;
-            if (timeSinceLastMic < 0.8f)
-            {
-                yield return new WaitForSeconds(0.8f - timeSinceLastMic);
-            }
-            lastMicPlayTime = Time.time;
+        bool clientSided = ModConfig.instance.ClientSidedEmoteSounds != null && ModConfig.instance.ClientSidedEmoteSounds.Value;
 
-            if (recorder != null)
-            {
-                recorder.StopRecording();
-                recorder.SourceType = Recorder.InputSourceType.AudioClip;
-                recorder.AudioClip = sound;
-                recorder.RestartRecording(true);
-                recorder.DebugEchoMode = false;
-            }
-        }
-        else
+        if (!clientSided)
         {
-            if (recorder != null)
+            if (IsInLobby())
             {
-                recorder.StopRecording();
-                recorder.SourceType = Recorder.InputSourceType.Microphone;
-                recorder.AudioClip = null;
-                recorder.RestartRecording(true);
-                recorder.DebugEchoMode = false;
+                float timeSinceLastMic = Time.time - lastMicPlayTime;
+                if (timeSinceLastMic < 0.8f)
+                {
+                    yield return new WaitForSeconds(0.8f - timeSinceLastMic);
+                }
+                lastMicPlayTime = Time.time;
+
+                if (recorder != null)
+                {
+                    recorder.StopRecording();
+                    recorder.SourceType = Recorder.InputSourceType.AudioClip;
+                    recorder.AudioClip = sound;
+                    recorder.RestartRecording(true);
+                    recorder.DebugEchoMode = false;
+                }
+            }
+            else
+            {
+                if (recorder != null)
+                {
+                    recorder.StopRecording();
+                    recorder.SourceType = Recorder.InputSourceType.Microphone;
+                    recorder.AudioClip = null;
+                    recorder.RestartRecording(true);
+                    recorder.DebugEchoMode = false;
+                }
             }
         }
 
