@@ -100,7 +100,9 @@ public class ModConfig : MonoBehaviour
         RoomOverlay,
         EmoteSelector,
         InvisVideoPlayer,
-        BanSelf;
+        BanSelf,
+        ShowAntiCheatReport,
+        DragonRig;
 
     private void Awake()
     {
@@ -214,6 +216,8 @@ public class ModConfig : MonoBehaviour
         RoomOverlay         = Main.instance.Config.Bind("Visual",      "Room Overlay",              false, "");
         EmoteSelector         = Main.instance.Config.Bind("Fun",      "Emote Selector",              false, "");
         BanSelf                  = Main.instance.Config.Bind("Detected", "Ban Self",                 false, "");
+        ShowAntiCheatReport                 = Main.instance.Config.Bind("Important", "Show Anti Cheat Reports",                 true, "");
+        DragonRig                 = Main.instance.Config.Bind("Rig", "Dragon Rig",                 false, "");
     }
 
     private void Update()

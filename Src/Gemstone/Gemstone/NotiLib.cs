@@ -29,6 +29,9 @@ public class NotiLib : MonoBehaviour
     private static bool? hasGorillaNotifications;
     private static GorillaNotifications.Core.NotificationEntry persistentGnEntry;
 
+    private static readonly Color gemstoneColorStart = new(0.6f, 0f, 1f);
+    private static readonly Color gemstoneColorEnd = new(0f, 1f, 1f);
+
     private void Awake()
     {
         Instance = this;
@@ -79,17 +82,60 @@ public class NotiLib : MonoBehaviour
         }
     }
 
-    public static void Overlay(string message)
+    private static string ApplyGemstoneGradient(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return text;
+
+        int firstTagIndex = text.IndexOf('<');
+
+        if (firstTagIndex == -1)
+        {
+            return ApplyPureGradientToSegment(text);
+        }
+
+        if (firstTagIndex == 0)
+        {
+            return text;
+        }
+
+        string plainPrefix = text.Substring(0, firstTagIndex);
+        string remainder = text.Substring(firstTagIndex);
+
+        return ApplyPureGradientToSegment(plainPrefix) + remainder;
+    }
+
+    private static string ApplyPureGradientToSegment(string segment)
+    {
+        if (string.IsNullOrEmpty(segment))
+            return segment;
+
+        string result = "";
+        for (int i = 0; i < segment.Length; i++)
+        {
+            float t = segment.Length > 1 ? (float)i / (segment.Length - 1) : 0f;
+            Color currentColor = Color.Lerp(gemstoneColorStart, gemstoneColorEnd, t);
+            string hexColor = ColorUtility.ToHtmlStringRGB(currentColor);
+            result += $"<color=#{hexColor}>{segment[i]}</color>";
+        }
+        return result;
+    }
+
+    public static void Overlay(string message, string source = "")
     {
         if (Instance == null) return;
 
         if (CheckGorillaNotifications())
         {
-            GorillaNotificationOverlay(message);
+            GorillaNotificationOverlay(message, source);
             return;
         }
 
         lastOverlayFrame = Time.frameCount;
+
+        string resolvedSource = string.IsNullOrEmpty(source) ? "" : source;
+        string finalMessage = string.IsNullOrEmpty(resolvedSource) ? message : $"{resolvedSource}: {message}";
+        string formattedMessage = ApplyGemstoneGradient(finalMessage);
 
         if (persistentVrOverlay == null)
         {
@@ -121,7 +167,7 @@ public class NotiLib : MonoBehaviour
             ApplyOverlayShader(persistentVrText, "PersistentVrOverlay");
         }
 
-        persistentVrText.text = message;
+        persistentVrText.text = formattedMessage;
 
         EnsureCanvasExists();
         if (persistentPcOverlay == null)
@@ -152,33 +198,42 @@ public class NotiLib : MonoBehaviour
             rect.sizeDelta = new Vector2(600f, 60f);
         }
 
-        persistentPcText.text = message;
+        persistentPcText.text = formattedMessage;
         UpdatePCZIndices();
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static void GorillaNotificationOverlay(string message)
+    private static void GorillaNotificationOverlay(string message, string source)
     {
         lastOverlayFrame = Time.frameCount;
+        string resolvedSource = string.IsNullOrEmpty(source) ? "Gemstone" : source;
+        string formattedSource = ApplyGemstoneGradient(resolvedSource);
+        string formattedMessage = ApplyGemstoneGradient(message);
+
         if (persistentGnEntry == null)
         {
-            persistentGnEntry = GorillaNotifications.Core.NotificationController.SendNotification("Gemstone", message, 999f);
+            persistentGnEntry = GorillaNotifications.Core.NotificationController.SendNotification(formattedSource, formattedMessage, 999f);
         }
         else
         {
-            persistentGnEntry.UpdateNotification("Gemstone", message, 999f);
+            persistentGnEntry.UpdateSource(formattedSource);
+            persistentGnEntry.UpdateNotification(formattedMessage);
         }
     }
 
-    public static void SendNotification(string message, float time)
+    public static void SendNotification(string message, float time, string source = "")
     {
         if (Instance == null) return;
 
         if (CheckGorillaNotifications())
         {
-            SendGorillaNotification(message, time);
+            SendGorillaNotification(message, time, source);
             return;
         }
+
+        string resolvedSource = string.IsNullOrEmpty(source) ? "" : source;
+        string finalMessage = string.IsNullOrEmpty(resolvedSource) ? message : $"{resolvedSource}: {message}";
+        string formattedMessage = ApplyGemstoneGradient(finalMessage);
 
         GameObject textNotifacation = new("NotificationLabel");
         textNotifacation.transform.SetParent(GTPlayer.Instance.bodyCollider.transform, false);
@@ -191,7 +246,7 @@ public class NotiLib : MonoBehaviour
         textNotifacation.transform.Rotate(0f, 180f, 0f);
 
         TextMeshPro? text = textNotifacation.AddComponent<TextMeshPro>();
-        text.text = message;
+        text.text = formattedMessage;
         text.font = VRRig.LocalRig.playerText1.font;
         text.fontSize = 15f;
         text.alignment = TextAlignmentOptions.Center;
@@ -213,7 +268,7 @@ public class NotiLib : MonoBehaviour
         if (TMP_Settings.defaultFontAsset != null)
             pcText.font = TMP_Settings.defaultFontAsset;
 
-        pcText.text = message;
+        pcText.text = formattedMessage;
         pcText.font = VRRig.LocalRig.playerText1.font;
         pcText.fontSize = 18f;
         pcText.alignment = TextAlignmentOptions.Center;
@@ -235,9 +290,12 @@ public class NotiLib : MonoBehaviour
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static void SendGorillaNotification(string message, float time)
+    private static void SendGorillaNotification(string message, float time, string source)
     {
-        GorillaNotifications.Core.NotificationController.SendNotification("Gemstone", message, time / 1000f);
+        string resolvedSource = string.IsNullOrEmpty(source) ? "Gemstone" : source;
+        string formattedSource = ApplyGemstoneGradient(resolvedSource);
+        string formattedMessage = ApplyGemstoneGradient(message);
+        GorillaNotifications.Core.NotificationController.SendNotification(formattedSource, formattedMessage, time / 1000f);
     }
 
     private static void ApplyOverlayShader(TMP_Text tmpComponent, string labelId)

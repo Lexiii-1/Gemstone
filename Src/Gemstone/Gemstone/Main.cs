@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
@@ -20,6 +20,8 @@ namespace Gemstone.Gemstone;
 public class Main : BaseUnityPlugin
 {
     public static int Pages;
+    
+    public static List<VRRig> BlockedList = new List<VRRig>();
 
     private static Coroutine activeSoundCoroutine;
     private static AudioClip currentlyPlayingClip;
@@ -85,6 +87,7 @@ public class Main : BaseUnityPlugin
         gameObject.AddComponent<Gui>();
         gameObject.AddComponent<ColoredBoards>();
         gameObject.AddComponent<EmoteManager>();
+        gameObject.AddComponent<BlockStuff>();
         GameObject arsobj = new("ARS");
         DontDestroyOnLoad(arsobj);
         arsobj.AddComponent<ARS.ARS>();
@@ -1162,6 +1165,9 @@ $"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nI
                         if (rig.Creator.UserId == PhotonNetwork.LocalPlayer.UserId)
                             continue;
 
+                        if (BlockedList.Contains(rig))
+                            continue;
+
                         rig.gameObject.SetActive(false);
                     }
 
@@ -1463,6 +1469,14 @@ $"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nI
                 transform.position = target.TransformPoint(position);
                 transform.rotation = target.rotation * rotationOffset;
             }
+        }
+    }
+    public class BlockStuff() : MonoBehaviourPunCallbacks
+    {
+        public override void OnLeftRoom()
+        {
+            base.OnLeftRoom();
+            Main.BlockedList.Clear();
         }
     }
 

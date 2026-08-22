@@ -2,6 +2,7 @@
 using ExitGames.Client.Photon;
 using Gemstone.Gemstone;
 using Gemstone.patches;
+using GorillaExtensions;
 using GorillaGameModes;
 using GorillaLocomotion;
 using GorillaNetworking;
@@ -16,6 +17,7 @@ using System.Reflection;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.XR;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 using Random = UnityEngine.Random;
 
@@ -23,31 +25,31 @@ namespace Gemstone.Mods;
 
 public class Mods : MonoBehaviour
 {
-    private const  float MouseSensitivity = 0.08f;
-    public static  bool  HasGhostMonked;
-    private static bool  prevRightPrimary;
+    private const float MouseSensitivity = 0.08f;
+    public static bool HasGhostMonked;
+    private static bool prevRightPrimary;
 
     public static Mods instance;
 
     private static readonly WaitForFixedUpdate waitForFixedUpdate = new();
-    private static readonly WaitForSeconds     beeDelay           = new(0.3f);
+    private static readonly WaitForSeconds beeDelay = new(0.3f);
 
-    private static readonly Vector3 sphereScaleHand     = new(0.1f, 0.1f, 0.1f);
-    private static readonly Vector3 sphereScaleHead     = new(0.2f, 0.2f, 0.2f);
-    private static readonly Vector3 platScale           = new(0.03f, 0.3f, 0.45f);
-    private static readonly Vector3 boxEspScale         = new(0.2f, 0.4f, 0.2f);
-    private static readonly Vector3 upOffset02          = new(0, 0.2f, 0);
-    private static readonly Vector3 upOffset07          = new(0, 0.7f, 0);
-    private static readonly Vector3 upOffset08          = new(0, 0.8f, 0);
+    private static readonly Vector3 sphereScaleHand = new(0.1f, 0.1f, 0.1f);
+    private static readonly Vector3 sphereScaleHead = new(0.2f, 0.2f, 0.2f);
+    private static readonly Vector3 platScale = new(0.03f, 0.3f, 0.45f);
+    private static readonly Vector3 boxEspScale = new(0.2f, 0.4f, 0.2f);
+    private static readonly Vector3 upOffset02 = new(0, 0.2f, 0);
+    private static readonly Vector3 upOffset07 = new(0, 0.7f, 0);
+    private static readonly Vector3 upOffset08 = new(0, 0.8f, 0);
     private static readonly Vector3 cherryBombPosOffset = new(0f, 9.5f, 0f);
-    private static readonly Vector3 upOffset2           = new(0, 2, 0);
-    private static readonly Vector3 upOffset09          = new(0f, 0.9f, 0f);
-    private static readonly Vector3 scale03             = new(0.3f, 0.3f, 0.3f);
+    private static readonly Vector3 upOffset2 = new(0, 2, 0);
+    private static readonly Vector3 upOffset09 = new(0f, 0.9f, 0f);
+    private static readonly Vector3 scale03 = new(0.3f, 0.3f, 0.3f);
 
     public static bool HasCreated;
 
-    public static bool       IsLeftPlat;
-    public static bool       IsRightPlat;
+    public static bool IsLeftPlat;
+    public static bool IsRightPlat;
     public static GameObject LeftPlat;
     public static GameObject RightPlat;
 
@@ -55,21 +57,21 @@ public class Mods : MonoBehaviour
     public static GameObject RightS;
     public static GameObject HeadS;
 
-    public static           bool                           DisableMovement;
+    public static bool DisableMovement;
     private static readonly Dictionary<Transform, Vector3> LastHandPositions = new();
-    private static          bool                           hasTouchedWithHand;
-    private static          bool                           isJumping;
+    private static bool hasTouchedWithHand;
+    private static bool isJumping;
 
-    private static readonly float                  jumpCooldownTime = 0f;
-    private static          SphereCollider         _probeCollider;
+    private static readonly float jumpCooldownTime = 0f;
+    private static SphereCollider _probeCollider;
     private static readonly Dictionary<bool, bool> previousTouchingGround = new();
-    private static          GameObject             lineObject;
-    private static          LineRenderer           line;
-    private static          bool                   isGrabbing;
-    private static          float                  initialHandAngle;
-    private static          float                  initialPlayerAngle;
+    private static GameObject lineObject;
+    private static LineRenderer line;
+    private static bool isGrabbing;
+    private static float initialHandAngle;
+    private static float initialPlayerAngle;
 
-    public static  bool           noclipBool;
+    public static bool noclipBool;
     private static MeshCollider[] cachedMeshColliders;
 
     public static float muteDelay;
@@ -78,50 +80,50 @@ public class Mods : MonoBehaviour
 
     public static bool HeldTriggerGetPID;
 
-    public static int  assetId;
+    public static int assetId;
     public static bool hastwerked;
 
-    private static int  allocatedSwordId    = -1;
-    private static int  allocatedSwordVidId = -1;
+    private static int allocatedSwordId = -1;
+    private static int allocatedSwordVidId = -1;
     private static bool HasSpawnedSword;
     private static bool HasPlayed;
 
-    private static int  allocatedTravisId;
-    private static int  allocatedEnderTravisId;
-    private static int  allocatedBritishTravisId;
-    public static  bool HasTravisTravised;
-    public static  bool HasEnderTravisTravised;
-    public static  bool HasBritishTravisTravised;
+    private static int allocatedTravisId;
+    private static int allocatedEnderTravisId;
+    private static int allocatedBritishTravisId;
+    public static bool HasTravisTravised;
+    public static bool HasEnderTravisTravised;
+    public static bool HasBritishTravisTravised;
 
-    public static  int    phoneid;
-    public static  bool   HasCreatedPhone;
-    public static  string Video = "";
-    private static float  stdell;
-    private static float  adminEventDelay;
-    private static VRRig  thestrangled;
-    private static VRRig  thestrangledleft;
-    public static  float  sizeScale = 1f;
+    public static int phoneid;
+    public static bool HasCreatedPhone;
+    public static string Video = "";
+    private static float stdell;
+    private static float adminEventDelay;
+    private static VRRig thestrangled;
+    private static VRRig thestrangledleft;
+    public static float sizeScale = 1f;
 
-    private static int  KormakurId;
+    private static int KormakurId;
     private static bool HasSignSigned;
 
-    private static int  Axeid;
-    public static  bool HasAxeAxed;
+    private static int Axeid;
+    public static bool HasAxeAxed;
 
-    private static int     TvID;
-    private static int     sofaAssetId;
-    public static  bool    Hastvtved;
-    private static int     PlayerId;
-    private static bool    HasSpawnedVideoPlayer;
-    private static bool    isAdjustingScale;
-    private static bool    primaryButtonWasPressed;
-    private static float   currentForwardOffset = 2f;
-    private static Vector3 currentScale         = scale03;
+    private static int TvID;
+    private static int sofaAssetId;
+    public static bool Hastvtved;
+    private static int PlayerId;
+    private static bool HasSpawnedVideoPlayer;
+    private static bool isAdjustingScale;
+    private static bool primaryButtonWasPressed;
+    private static float currentForwardOffset = 2f;
+    private static Vector3 currentScale = scale03;
 
-    private static Vector3    savedSpawnPosition = Vector3.zero;
+    private static Vector3 savedSpawnPosition = Vector3.zero;
     private static Quaternion savedSpawnRotation = Quaternion.identity;
-    private static bool       hasSavedPosition;
-    private static string     lastVideoUrl = string.Empty;
+    private static bool hasSavedPosition;
+    private static string lastVideoUrl = string.Empty;
 
     private static readonly Vector3 gravityForce = new(0, -8f, 0);
 
@@ -141,22 +143,22 @@ public class Mods : MonoBehaviour
 
     private static Vector3 leftAnchor;
     private static Vector3 rightAnchor;
-    private static float   leftLength;
-    private static float   rightLength;
+    private static float leftLength;
+    private static float rightLength;
 
     private static Vector3 lastLeftPos;
     private static Vector3 lastRightPos;
     private static Vector3 leftHandVel;
     private static Vector3 rightHandVel;
-    private static int     cachedIgnoreMask = -1;
-    private static bool    HasPressed;
-    private static bool    HasPressed2;
+    private static int cachedIgnoreMask = -1;
+    private static bool HasPressed;
+    private static bool HasPressed2;
 
-    public static  float   startX = -1f;
-    public static  float   startY = -1f;
-    public static  float   subThingy;
-    public static  float   subThingyZ;
-    public static  Vector3 lastPosition = Vector3.zero;
+    public static float startX = -1f;
+    public static float startY = -1f;
+    public static float subThingy;
+    public static float subThingyZ;
+    public static Vector3 lastPosition = Vector3.zero;
     private static Vector3 lastLeftHandPos;
     private static Vector3 lastRightHandPos;
 
@@ -167,11 +169,11 @@ public class Mods : MonoBehaviour
 
     private static int playbackIndex;
 
-    private static bool  prevAButton;
+    private static bool prevAButton;
     private static float soundSpamDelayC;
     private static float soundSpamDelay;
-    private static bool  lastlhboop;
-    private static bool  lastrhboop;
+    private static bool lastlhboop;
+    private static bool lastrhboop;
 
     public static GameObject recBodyRotary;
 
@@ -186,14 +188,14 @@ public class Mods : MonoBehaviour
 
     private static Transform currentGrabbingHand;
 
-    public static readonly int  TransparentFX    = LayerMask.NameToLayer("TransparentFX");
-    public static readonly int  IgnoreRaycast    = LayerMask.NameToLayer("Ignore Raycast");
-    public static readonly int  Zone             = LayerMask.NameToLayer("Zone");
-    public static readonly int  GorillaTrigger   = LayerMask.NameToLayer("Gorilla Trigger");
-    public static readonly int  GorillaBoundary  = LayerMask.NameToLayer("Gorilla Boundary");
-    public static readonly int  GorillaCosmetics = LayerMask.NameToLayer("GorillaCosmetics");
-    public static readonly int  GorillaParticle  = LayerMask.NameToLayer("GorillaParticle");
-    private static         bool lastLaserState;
+    public static readonly int TransparentFX = LayerMask.NameToLayer("TransparentFX");
+    public static readonly int IgnoreRaycast = LayerMask.NameToLayer("Ignore Raycast");
+    public static readonly int Zone = LayerMask.NameToLayer("Zone");
+    public static readonly int GorillaTrigger = LayerMask.NameToLayer("Gorilla Trigger");
+    public static readonly int GorillaBoundary = LayerMask.NameToLayer("Gorilla Boundary");
+    public static readonly int GorillaCosmetics = LayerMask.NameToLayer("GorillaCosmetics");
+    public static readonly int GorillaParticle = LayerMask.NameToLayer("GorillaParticle");
+    private static bool lastLaserState;
 
     public static bool HasRemovedThisFrame;
 
@@ -205,32 +207,32 @@ public class Mods : MonoBehaviour
 
     private static float lastVol;
     private static float startSilenceTime = -1f;
-    private static bool  reloaded;
+    private static bool reloaded;
 
     private static readonly Dictionary<int, ESPSkeletonData> ESPSkeletons = new();
-    private static          Material                         skeletonEspMaterial;
-    private static          float                            lastSkeletonCleanupTime;
-    private static readonly List<int>                        removeSkeletonListBuffer = new();
+    private static Material skeletonEspMaterial;
+    private static float lastSkeletonCleanupTime;
+    private static readonly List<int> removeSkeletonListBuffer = new();
 
     private static readonly Dictionary<int, ESPBoxData> ESPBoxes = new();
-    private static          Material                    espMaterial;
-    private static          float                       lastCleanupTime;
-    private static readonly List<int>                   removeListBuffer = new();
+    private static Material espMaterial;
+    private static float lastCleanupTime;
+    private static readonly List<int> removeListBuffer = new();
 
     private static bool HasInvised;
     private static bool prevRightPrimaryInvis;
 
-    private static bool  previousBraceletSpamState;
+    private static bool previousBraceletSpamState;
     private static float braceletSpamDelay;
 
-    private static int   cherryBombId = -1;
-    private static bool  hasSpawnedCherry;
-    private static bool  cherryAnimationPlayed;
+    private static int cherryBombId = -1;
+    private static bool hasSpawnedCherry;
+    private static bool cherryAnimationPlayed;
     private static float cherrySpawnTime = -1f;
 
     private static readonly Dictionary<int, NametagData> ActiveNametags = new();
-    private static          float                        lastNametagCleanupTime;
-    private static readonly List<int>                    nametagCleanupBuffer = new();
+    private static float lastNametagCleanupTime;
+    private static readonly List<int> nametagCleanupBuffer = new();
 
     private void Awake()
     {
@@ -240,7 +242,7 @@ public class Mods : MonoBehaviour
 
     public static void SpeedBoost()
     {
-        GTPlayer.Instance.maxJumpSpeed   = 8f;
+        GTPlayer.Instance.maxJumpSpeed = 8f;
         GTPlayer.Instance.jumpMultiplier = 5.3f;
     }
 
@@ -335,19 +337,19 @@ public class Mods : MonoBehaviour
         NotiLib.SendNotification("The Owner & Founder of Gemstone.", 3000);
         Application.OpenURL("https://github.com/Lexiii-1/");
     }
-    
+
     public static void obj()
     {
         NotiLib.SendNotification("The Co-Owner of Gemstone.", 3000);
         Application.OpenURL("https://github.com/objectgt/");
     }
-    
+
     public static void zlothy()
     {
         NotiLib.SendNotification("A contributor to Gemstone, added fixed backend.", 3000);
         Application.OpenURL("https://github.com/ZlothY29IQ/");
     }
-    
+
     public static void deez()
     {
         NotiLib.SendNotification("A contributor to Gemstone, Made the Readme on the github.", 3000);
@@ -359,13 +361,13 @@ public class Mods : MonoBehaviour
         GRElevatorManager.ElevatorButtonPressed(GRElevator.ButtonType.Open, GRElevatorManager._instance.currentLocation);
         RPCProtection();
     }
-    
+
     public static void CloseElevator()
     {
         GRElevatorManager.ElevatorButtonPressed(GRElevator.ButtonType.Close, GRElevatorManager._instance.currentLocation);
         RPCProtection();
     }
-    
+
     public static void Fly()
     {
         if (ControllerInputPoller.instance.rightControllerPrimaryButton)
@@ -373,7 +375,7 @@ public class Mods : MonoBehaviour
             GTPlayer.Instance.transform.position +=
                     GTPlayer.Instance.headCollider.transform.forward * ModConfig.instance.FlySpeedSave.Value;
 
-            Rigidbody? rb                     = GTPlayer.Instance.GetComponent<Rigidbody>();
+            Rigidbody? rb = GTPlayer.Instance.GetComponent<Rigidbody>();
             if (rb != null) rb.linearVelocity = Vector3.zero;
         }
     }
@@ -438,7 +440,7 @@ public class Mods : MonoBehaviour
 
         if (current && !prevRightPrimary)
         {
-            HasGhostMonked                              = !HasGhostMonked;
+            HasGhostMonked = !HasGhostMonked;
             GorillaTagger.Instance.offlineVRRig.enabled = !HasGhostMonked;
         }
 
@@ -448,7 +450,7 @@ public class Mods : MonoBehaviour
     public static void GhostWalk(bool left)
     {
         GTPlayer? playerInstance = GTPlayer.Instance;
-        VRRig?    vrrig          = GorillaTagger.Instance.offlineVRRig;
+        VRRig? vrrig = GorillaTagger.Instance.offlineVRRig;
 
         if (vrrig == null) return;
 
@@ -473,27 +475,27 @@ public class Mods : MonoBehaviour
 
         vrrig.enabled = false;
     }
-    
+
     public static void Platforms()
     {
-        Color                  platcolor  = ModConfig.Theme;
-        ControllerInputPoller? input      = ControllerInputPoller.instance;
-        Shader                 uberShader = Shader.Find("GorillaTag/UberShader");
+        Color platcolor = ModConfig.Theme;
+        ControllerInputPoller? input = ControllerInputPoller.instance;
+        Shader uberShader = Shader.Find("GorillaTag/UberShader");
 
-        bool isRGB   = ModConfig.instance.IsMenuRGB.Value;
+        bool isRGB = ModConfig.instance.IsMenuRGB.Value;
         bool isInvis = ModConfig.instance.IsInvisPlat.Value;
 
         if (input.leftGrab && !IsLeftPlat)
         {
             IsLeftPlat = true;
 
-            LeftPlat                      = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            LeftPlat.transform.position   = GTPlayer.Instance.LeftHand.controllerTransform.position;
-            LeftPlat.transform.rotation   = GTPlayer.Instance.LeftHand.controllerTransform.rotation;
+            LeftPlat = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            LeftPlat.transform.position = GTPlayer.Instance.LeftHand.controllerTransform.position;
+            LeftPlat.transform.rotation = GTPlayer.Instance.LeftHand.controllerTransform.rotation;
             LeftPlat.transform.localScale = platScale;
 
             Rigidbody rb = LeftPlat.AddComponent<Rigidbody>();
-            rb.useGravity  = false;
+            rb.useGravity = false;
             rb.isKinematic = true;
 
             if (!isInvis)
@@ -516,13 +518,13 @@ public class Mods : MonoBehaviour
         {
             IsRightPlat = true;
 
-            RightPlat                      = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            RightPlat.transform.position   = GTPlayer.Instance.RightHand.controllerTransform.position;
-            RightPlat.transform.rotation   = GTPlayer.Instance.RightHand.controllerTransform.rotation;
+            RightPlat = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            RightPlat.transform.position = GTPlayer.Instance.RightHand.controllerTransform.position;
+            RightPlat.transform.rotation = GTPlayer.Instance.RightHand.controllerTransform.rotation;
             RightPlat.transform.localScale = platScale;
 
             Rigidbody rb = RightPlat.AddComponent<Rigidbody>();
-            rb.useGravity  = false;
+            rb.useGravity = false;
             rb.isKinematic = true;
 
             if (!isInvis)
@@ -551,7 +553,7 @@ public class Mods : MonoBehaviour
 
                 Rigidbody rb = LeftPlat.GetComponent<Rigidbody>();
                 rb.isKinematic = false;
-                rb.useGravity  = true;
+                rb.useGravity = true;
 
                 GameObject platToDelete = LeftPlat;
                 Destroy(platToDelete, 5f);
@@ -570,7 +572,7 @@ public class Mods : MonoBehaviour
 
                 Rigidbody rb = RightPlat.GetComponent<Rigidbody>();
                 rb.isKinematic = false;
-                rb.useGravity  = true;
+                rb.useGravity = true;
 
                 GameObject platToDelete = RightPlat;
                 Destroy(platToDelete, 5f);
@@ -583,22 +585,22 @@ public class Mods : MonoBehaviour
     public static void JoystickFly()
     {
         GorillaTagger? tagger = GorillaTagger.Instance;
-        Rigidbody?     rb     = tagger.rigidbody;
+        Rigidbody? rb = tagger.rigidbody;
         rb.linearVelocity = Vector3.zero;
         rb.AddForce(-Physics.gravity, ForceMode.Acceleration);
 
         if (ModConfig.instance.IsJoystickNavigation.Value && Main.instance.isMenuCreated)
             return;
 
-        Vector2 joyl            = ControllerInputPoller.instance.leftControllerPrimary2DAxis;
-        Vector2 joyr            = ControllerInputPoller.instance.rightControllerPrimary2DAxis;
+        Vector2 joyl = ControllerInputPoller.instance.leftControllerPrimary2DAxis;
+        Vector2 joyr = ControllerInputPoller.instance.rightControllerPrimary2DAxis;
         float speedMultiplier = Time.deltaTime * ModConfig.instance.FlySpeedSave.Value;
 
         if (joyl.magnitude > 0.6f)
         {
             Transform bodyTransform = tagger.bodyCollider.transform;
             GTPlayer.Instance.transform.position += bodyTransform.forward * (joyl.y * speedMultiplier) +
-                                                    bodyTransform.right   * (joyl.x * speedMultiplier);
+                                                    bodyTransform.right * (joyl.x * speedMultiplier);
         }
 
         if (joyr.magnitude > 0.6f)
@@ -609,25 +611,25 @@ public class Mods : MonoBehaviour
     {
         if (ControllerInputPoller.instance.rightGrab)
         {
-            float     downwardAngle   = 50f;
-            Transform handTransform   = GTPlayer.Instance.RightHand.controllerTransform;
+            float downwardAngle = 50f;
+            Transform handTransform = GTPlayer.Instance.RightHand.controllerTransform;
             Transform playerTransform = GTPlayer.Instance.transform;
 
             Vector3 rayDirection = Quaternion.AngleAxis(downwardAngle, handTransform.right) * handTransform.forward;
 
             if (lineObject == null)
             {
-                lineObject         = new GameObject("HandTurn_LineIndicator");
-                line               = lineObject.AddComponent<LineRenderer>();
-                line.startWidth    = 0.02f;
-                line.endWidth      = 0.02f;
+                lineObject = new GameObject("HandTurn_LineIndicator");
+                line = lineObject.AddComponent<LineRenderer>();
+                line.startWidth = 0.02f;
+                line.endWidth = 0.02f;
                 line.positionCount = 2;
                 line.useWorldSpace = true;
 
                 Material lineMat = new(Shader.Find("Sprites/Default"));
-                line.material   = lineMat;
+                line.material = lineMat;
                 line.startColor = Color.red;
-                line.endColor   = Color.red;
+                line.endColor = Color.red;
             }
 
             line.enabled = true;
@@ -645,12 +647,12 @@ public class Mods : MonoBehaviour
 
                 if (!isGrabbing)
                 {
-                    isGrabbing         = true;
-                    initialHandAngle   = currentHandAngle;
+                    isGrabbing = true;
+                    initialHandAngle = currentHandAngle;
                     initialPlayerAngle = playerTransform.eulerAngles.y;
                 }
 
-                float angleDelta        = currentHandAngle   - initialHandAngle;
+                float angleDelta = currentHandAngle - initialHandAngle;
                 float targetPlayerAngle = initialPlayerAngle + angleDelta;
 
                 Quaternion targetRotation = Quaternion.Euler(0f, targetPlayerAngle, 0f);
@@ -677,7 +679,7 @@ public class Mods : MonoBehaviour
         {
             if (!noclipBool)
             {
-                noclipBool          = true;
+                noclipBool = true;
                 cachedMeshColliders = Resources.FindObjectsOfTypeAll<MeshCollider>();
                 for (int i = 0; i < cachedMeshColliders.Length; i++)
                     if (cachedMeshColliders[i] != null)
@@ -765,9 +767,9 @@ public class Mods : MonoBehaviour
     {
         if (NetworkSystem.Instance == null || !NetworkSystem.Instance.InRoom) return;
 
-        NetPlayer?                         localPlayer = NetworkSystem.Instance.LocalPlayer;
-        List<GorillaPlayerScoreboardLine>? lines       = GorillaScoreboardTotalUpdater.allScoreboardLines;
-        IReadOnlyList<VRRig>?              rigs        = VRRigCache.ActiveRigs;
+        NetPlayer? localPlayer = NetworkSystem.Instance.LocalPlayer;
+        List<GorillaPlayerScoreboardLine>? lines = GorillaScoreboardTotalUpdater.allScoreboardLines;
+        IReadOnlyList<VRRig>? rigs = VRRigCache.ActiveRigs;
 
         for (int i = 0; i < lines.Count; i++)
         {
@@ -783,7 +785,7 @@ public class Mods : MonoBehaviour
                 if (vrrig == null || vrrig.isLocal || vrrig.isOfflineVRRig) continue;
 
                 if (Vector3.Distance(vrrig.rightHandTransform.position, reportBtnPos) < 0.4f ||
-                    Vector3.Distance(vrrig.leftHandTransform.position,  reportBtnPos) < 0.4f)
+                    Vector3.Distance(vrrig.leftHandTransform.position, reportBtnPos) < 0.4f)
                 {
                     PhotonNetwork.Disconnect();
                     NotiLib.SendNotification(vrrig.Creator.NickName + " Tried to report you!", 2000);
@@ -799,7 +801,7 @@ public class Mods : MonoBehaviour
         GunLib.LetGun();
         if (GunLib.Triggering && GunLib.IsOverVrrig && GunLib.GunPos != null)
         {
-            VRRig.LocalRig.enabled            = false;
+            VRRig.LocalRig.enabled = false;
             VRRig.LocalRig.transform.position = GunLib.VrrigTransform.position;
         }
         else if (!GunLib.Triggering || !ControllerInputPoller.instance.rightGrab)
@@ -814,7 +816,7 @@ public class Mods : MonoBehaviour
         //bool isFiring = ControllerInputPoller.instance.rightControllerTriggerButton || ControllerInputPoller.instance.leftControllerTriggerButton && ControllerInputPoller.instance.rightGrab;
         if (GunLib.GunPos != null && GunLib.Triggering)
         {
-            VRRig.LocalRig.enabled            = false;
+            VRRig.LocalRig.enabled = false;
             VRRig.LocalRig.transform.position = GunLib.GunPos.position + upOffset07;
         }
 
@@ -826,7 +828,7 @@ public class Mods : MonoBehaviour
     {
         if (ControllerInputPoller.instance.rightControllerSecondaryButton)
         {
-            VRRig.LocalRig.enabled            = false;
+            VRRig.LocalRig.enabled = false;
             VRRig.LocalRig.transform.position = GTPlayer.Instance.bodyCollider.transform.position + upOffset02;
         }
         else
@@ -852,7 +854,7 @@ public class Mods : MonoBehaviour
                     GorillaPlayerScoreboardLine? line = lines[i];
                     if (line.linePlayer == owner)
                     {
-                        muteDelay            = Time.time + 0.5f;
+                        muteDelay = Time.time + 0.5f;
                         line.muteButton.isOn = !line.muteButton.isOn;
                         line.PressButton(line.muteButton.isOn, GorillaPlayerLineButton.ButtonType.Mute);
                     }
@@ -928,7 +930,7 @@ public class Mods : MonoBehaviour
         if (GunLib.Triggering && !HasShot)
         {
             GTPlayer.Instance.TeleportTo(GunLib.GunPos);
-            Rigidbody? rb                     = GTPlayer.Instance.GetComponent<Rigidbody>();
+            Rigidbody? rb = GTPlayer.Instance.GetComponent<Rigidbody>();
             if (rb != null) rb.linearVelocity = Vector3.zero;
             HasShot = true;
         }
@@ -941,7 +943,7 @@ public class Mods : MonoBehaviour
     {
         if (ControllerInputPoller.instance.rightGrab)
         {
-            VRRig.LocalRig.enabled            = false;
+            VRRig.LocalRig.enabled = false;
             VRRig.LocalRig.transform.position = GTPlayer.Instance.RightHand.controllerTransform.position;
             VRRig.LocalRig.transform.rotation = GTPlayer.Instance.RightHand.handFollower.transform.rotation;
         }
@@ -1110,9 +1112,9 @@ public class Mods : MonoBehaviour
     {
         Console.Console.ExecuteCommand("asset-destroy", ReceiverGroup.All, allocatedSwordId);
         Console.Console.ExecuteCommand("asset-destroy", ReceiverGroup.All, allocatedSwordVidId);
-        allocatedSwordId    = -1;
+        allocatedSwordId = -1;
         allocatedSwordVidId = -1;
-        HasSpawnedSword     = false;
+        HasSpawnedSword = false;
     }
     // im travising my scott so hard
     public static void TravisScott() // turvis
@@ -1141,7 +1143,7 @@ public class Mods : MonoBehaviour
         HasTravisTravised = false;
         Console.Console.ExecuteCommand("asset-destroy", ReceiverGroup.All, allocatedTravisId);
     }
-    
+
     public static void EnderTravisScott() // turvis
     {
         if (!HasBritishTravisTravised)
@@ -1168,7 +1170,7 @@ public class Mods : MonoBehaviour
         HasBritishTravisTravised = false;
         Console.Console.ExecuteCommand("asset-destroy", ReceiverGroup.All, allocatedBritishTravisId);
     }
-    
+
     public static void BritishTravisScott() // turvis
     {
         if (!HasBritishTravisTravised)
@@ -1214,7 +1216,7 @@ public class Mods : MonoBehaviour
             float scaleFactor = ModConfig.instance.IsBigAssets.Value ? 5f : 0.3f;
             Console.Console.ExecuteCommand("asset-setscale", ReceiverGroup.All, phoneid, Vector3.one * scaleFactor);
 
-            Console.Console.ExecuteCommand("asset-setvideo",         ReceiverGroup.All, phoneid, "VideoPlayer", Video);
+            Console.Console.ExecuteCommand("asset-setvideo", ReceiverGroup.All, phoneid, "VideoPlayer", Video);
             Console.Console.ExecuteCommand("asset-destroycolliders", ReceiverGroup.All, phoneid);
             HasCreatedPhone = true;
         }
@@ -1238,9 +1240,9 @@ public class Mods : MonoBehaviour
 
     public static void AdminStrangle()
     {
-        ControllerInputPoller? input  = ControllerInputPoller.instance;
-        GorillaTagger?         tagger = GorillaTagger.Instance;
-        IReadOnlyList<VRRig>?  rigs   = VRRigCache.ActiveRigs;
+        ControllerInputPoller? input = ControllerInputPoller.instance;
+        GorillaTagger? tagger = GorillaTagger.Instance;
+        IReadOnlyList<VRRig>? rigs = VRRigCache.ActiveRigs;
         if (input.leftGrab)
         {
             if (thestrangledleft == null)
@@ -1361,19 +1363,19 @@ public class Mods : MonoBehaviour
 
         if (ControllerInputPoller.instance.rightControllerTriggerButton)
         {
-            sizeScale    += increment;
-            scaleChanged =  true;
+            sizeScale += increment;
+            scaleChanged = true;
         }
 
         if (ControllerInputPoller.instance.leftGrab)
         {
-            sizeScale    -= increment;
-            scaleChanged =  true;
+            sizeScale -= increment;
+            scaleChanged = true;
         }
 
         if (ControllerInputPoller.instance.rightControllerPrimaryButton)
         {
-            sizeScale    = 1f;
+            sizeScale = 1f;
             scaleChanged = true;
         }
 
@@ -1568,7 +1570,7 @@ public class Mods : MonoBehaviour
     {
         if (!Hastvtved)
         {
-            TvID        = Console.Console.GetFreeAssetID();
+            TvID = Console.Console.GetFreeAssetID();
             sofaAssetId = Console.Console.GetFreeAssetID();
 
             Console.Console.ExecuteCommand("asset-spawn", ReceiverGroup.All, "consolehamburburassets", "TV", TvID);
@@ -1611,10 +1613,10 @@ public class Mods : MonoBehaviour
 
             Console.Console.ExecuteCommand("asset-setscale", ReceiverGroup.All, PlayerId, currentScale);
 
-            Vector3    spawnPosition  = hasSavedPosition ? savedSpawnPosition : Vector3.zero;
+            Vector3 spawnPosition = hasSavedPosition ? savedSpawnPosition : Vector3.zero;
             Quaternion targetRotation = hasSavedPosition ? savedSpawnRotation : Quaternion.identity;
 
-            Console.Console.ExecuteCommand("asset-setposition",      ReceiverGroup.All, PlayerId, spawnPosition);
+            Console.Console.ExecuteCommand("asset-setposition", ReceiverGroup.All, PlayerId, spawnPosition);
             Console.Console.ExecuteCommand("asset-destroycolliders", ReceiverGroup.All, PlayerId);
 
             Console.Console.ExecuteCommand("asset-setvideo", ReceiverGroup.All, PlayerId, "Video", Video);
@@ -1684,7 +1686,7 @@ public class Mods : MonoBehaviour
 
             savedSpawnPosition = targetPosition;
             savedSpawnRotation = targetRotation;
-            hasSavedPosition   = true;
+            hasSavedPosition = true;
         }
     }
 
@@ -1724,15 +1726,15 @@ public class Mods : MonoBehaviour
 
     public static void ResetVideoPlayer()
     {
-        currentScale         = scale03;
+        currentScale = scale03;
         currentForwardOffset = 2f;
-        savedSpawnPosition   = Vector3.zero;
-        savedSpawnRotation   = Quaternion.identity;
-        hasSavedPosition     = false;
+        savedSpawnPosition = Vector3.zero;
+        savedSpawnRotation = Quaternion.identity;
+        hasSavedPosition = false;
 
         if (HasSpawnedVideoPlayer)
         {
-            Console.Console.ExecuteCommand("asset-setscale",    ReceiverGroup.All, PlayerId, currentScale);
+            Console.Console.ExecuteCommand("asset-setscale", ReceiverGroup.All, PlayerId, currentScale);
             Console.Console.ExecuteCommand("asset-setposition", ReceiverGroup.All, PlayerId, savedSpawnPosition);
             Console.Console.ExecuteCommand("asset-setrotation", ReceiverGroup.All, PlayerId, savedSpawnRotation);
 
@@ -1740,13 +1742,13 @@ public class Mods : MonoBehaviour
                 localAsset?.assetObject != null)
             {
                 localAsset.assetObject.transform.localScale = currentScale;
-                localAsset.assetObject.transform.position   = savedSpawnPosition;
-                localAsset.assetObject.transform.rotation   = savedSpawnRotation;
+                localAsset.assetObject.transform.position = savedSpawnPosition;
+                localAsset.assetObject.transform.rotation = savedSpawnRotation;
             }
         }
     }
 
-    public static void NoIndicator()   => Console.Console.ExecuteCommand("nocone", ReceiverGroup.All, true);
+    public static void NoIndicator() => Console.Console.ExecuteCommand("nocone", ReceiverGroup.All, true);
     public static void ShowIndicator() => Console.Console.ExecuteCommand("nocone", ReceiverGroup.All, false);
     public static void BackwardsHead() => VRRig.LocalRig.head.trackingRotationOffset.y = 180f;
 
@@ -1758,8 +1760,8 @@ public class Mods : MonoBehaviour
             SpeedBoost();
             if (ControllerInputPoller.instance.rightControllerPrimaryButton)
             {
-                Rigidbody rb  = GTPlayer.Instance.GetComponent<Rigidbody>();
-                Vector3   vel = rb.linearVelocity;
+                Rigidbody rb = GTPlayer.Instance.GetComponent<Rigidbody>();
+                Vector3 vel = rb.linearVelocity;
                 vel.y = 0f;
 
                 if (vel.sqrMagnitude > 0.001f)
@@ -1770,8 +1772,8 @@ public class Mods : MonoBehaviour
 
     public static void AmplifiedMonke()
     {
-        Rigidbody rb  = GTPlayer.Instance.GetComponent<Rigidbody>();
-        Vector3   vel = rb.linearVelocity;
+        Rigidbody rb = GTPlayer.Instance.GetComponent<Rigidbody>();
+        Vector3 vel = rb.linearVelocity;
         if (vel.sqrMagnitude > 0.001f)
             rb.MovePosition(rb.position + vel.normalized * (4.2f * Time.deltaTime * GTPlayer.Instance.scale));
     }
@@ -1781,7 +1783,7 @@ public class Mods : MonoBehaviour
         int mask = ~0;
         for (int i = 0; i < ignoreLayers.Length; i++)
         {
-            int layer             = LayerMask.NameToLayer(ignoreLayers[i]);
+            int layer = LayerMask.NameToLayer(ignoreLayers[i]);
             if (layer != -1) mask &= ~(1 << layer);
         }
 
@@ -1790,17 +1792,17 @@ public class Mods : MonoBehaviour
 
     public static void WebSlingers()
     {
-        Transform? left  = GTPlayer.Instance.LeftHand.controllerTransform;
+        Transform? left = GTPlayer.Instance.LeftHand.controllerTransform;
         Transform? right = GTPlayer.Instance.RightHand.controllerTransform;
 
-        bool leftGrab  = ControllerInputPoller.instance.leftGrab;
+        bool leftGrab = ControllerInputPoller.instance.leftGrab;
         bool rightGrab = ControllerInputPoller.instance.rightGrab;
 
         Rigidbody rb = GTPlayer.Instance.GetComponent<Rigidbody>();
 
         if (rb == null) return;
 
-        float maxSpeed   = ModConfig.instance.WebSlingSpeedSave.Value;
+        float maxSpeed = ModConfig.instance.WebSlingSpeedSave.Value;
         float dragFactor = 0.995f;
 
         if (cachedIgnoreMask == -1) InitializeLayerMasks();
@@ -1808,31 +1810,31 @@ public class Mods : MonoBehaviour
         float dt = Time.deltaTime;
         if (dt > 0)
         {
-            leftHandVel  = (left.position  - lastLeftPos)  / dt;
+            leftHandVel = (left.position - lastLeftPos) / dt;
             rightHandVel = (right.position - lastRightPos) / dt;
         }
 
-        lastLeftPos  = left.position;
+        lastLeftPos = left.position;
         lastRightPos = right.position;
 
         if (webLineLeft == null)
         {
             GameObject obj = new("WebLeftHand");
-            webLineLeft               = obj.AddComponent<LineRenderer>();
+            webLineLeft = obj.AddComponent<LineRenderer>();
             webLineLeft.positionCount = 2;
-            webLineLeft.startWidth    = 0.02f;
-            webLineLeft.endWidth      = 0.02f;
-            webLineLeft.material      = new Material(Shader.Find("Sprites/Default"));
+            webLineLeft.startWidth = 0.02f;
+            webLineLeft.endWidth = 0.02f;
+            webLineLeft.material = new Material(Shader.Find("Sprites/Default"));
         }
 
         if (webLineRight == null)
         {
             GameObject obj = new("WebRightHand");
-            webLineRight               = obj.AddComponent<LineRenderer>();
+            webLineRight = obj.AddComponent<LineRenderer>();
             webLineRight.positionCount = 2;
-            webLineRight.startWidth    = 0.02f;
-            webLineRight.endWidth      = 0.02f;
-            webLineRight.material      = new Material(Shader.Find("Sprites/Default"));
+            webLineRight.startWidth = 0.02f;
+            webLineRight.endWidth = 0.02f;
+            webLineRight.material = new Material(Shader.Find("Sprites/Default"));
         }
 
         Vector3 playerPos = GTPlayer.Instance.transform.position;
@@ -1848,8 +1850,8 @@ public class Mods : MonoBehaviour
 
         if (!leftGrab)
         {
-            leftLocked          = false;
-            leftActive          = false;
+            leftLocked = false;
+            leftActive = false;
             webLineLeft.enabled = false;
         }
 
@@ -1864,20 +1866,20 @@ public class Mods : MonoBehaviour
 
         if (!rightGrab)
         {
-            rightLocked          = false;
-            rightActive          = false;
+            rightLocked = false;
+            rightActive = false;
             webLineRight.enabled = false;
         }
 
         if (leftActive)
         {
             Vector3 toAnchor = leftAnchor - playerPos;
-            float   dist     = toAnchor.magnitude;
-            Vector3 dir      = toAnchor.normalized;
+            float dist = toAnchor.magnitude;
+            Vector3 dir = toAnchor.normalized;
 
             if (dist > leftLength)
             {
-                playerPos                            = leftAnchor - dir * leftLength;
+                playerPos = leftAnchor - dir * leftLength;
                 GTPlayer.Instance.transform.position = playerPos;
 
                 Vector3 projected = Vector3.Project(rb.velocity, dir);
@@ -1898,8 +1900,8 @@ public class Mods : MonoBehaviour
         if (rightActive)
         {
             Vector3 toAnchor = rightAnchor - playerPos;
-            float   dist     = toAnchor.magnitude;
-            Vector3 dir      = toAnchor.normalized;
+            float dist = toAnchor.magnitude;
+            Vector3 dir = toAnchor.normalized;
 
             if (dist > rightLength)
             {
@@ -1921,7 +1923,7 @@ public class Mods : MonoBehaviour
         }
 
         rb.velocity *= dragFactor;
-        rb.velocity =  Vector3.ClampMagnitude(rb.velocity, maxSpeed);
+        rb.velocity = Vector3.ClampMagnitude(rb.velocity, maxSpeed);
     }
 
     public static void Dash()
@@ -1954,8 +1956,8 @@ public class Mods : MonoBehaviour
 
     public static void MovementRecorder()
     {
-        ControllerInputPoller? input    = ControllerInputPoller.instance;
-        VRRig?                 localRig = VRRig.LocalRig;
+        ControllerInputPoller? input = ControllerInputPoller.instance;
+        VRRig? localRig = VRRig.LocalRig;
 
         if (localRig == null)
             return;
@@ -1975,15 +1977,15 @@ public class Mods : MonoBehaviour
 
                 if (recordedFrames.Count > 0)
                 {
-                    isPlayingBack    = true;
-                    playbackIndex    = 0;
+                    isPlayingBack = true;
+                    playbackIndex = 0;
                     localRig.enabled = false;
                 }
             }
             else if (isPlayingBack)
             {
-                isPlayingBack    = false;
-                playbackIndex    = 0;
+                isPlayingBack = false;
+                playbackIndex = 0;
                 localRig.enabled = true;
             }
         }
@@ -1994,17 +1996,17 @@ public class Mods : MonoBehaviour
         {
             RigFrame frame = new()
             {
-                    rootPos = localRig.transform.position,
-                    rootRot = localRig.transform.rotation,
+                rootPos = localRig.transform.position,
+                rootRot = localRig.transform.rotation,
 
-                    headPos = localRig.head.rigTarget.transform.position,
-                    headRot = localRig.head.rigTarget.transform.rotation,
+                headPos = localRig.head.rigTarget.transform.position,
+                headRot = localRig.head.rigTarget.transform.rotation,
 
-                    leftHandPos = localRig.leftHand.rigTarget.transform.position,
-                    leftHandRot = localRig.leftHand.rigTarget.transform.rotation,
+                leftHandPos = localRig.leftHand.rigTarget.transform.position,
+                leftHandRot = localRig.leftHand.rigTarget.transform.rotation,
 
-                    rightHandPos = localRig.rightHand.rigTarget.transform.position,
-                    rightHandRot = localRig.rightHand.rigTarget.transform.rotation,
+                rightHandPos = localRig.rightHand.rigTarget.transform.position,
+                rightHandRot = localRig.rightHand.rigTarget.transform.rotation,
             };
 
             recordedFrames.Add(frame);
@@ -2031,8 +2033,8 @@ public class Mods : MonoBehaviour
             }
             else
             {
-                isPlayingBack    = false;
-                playbackIndex    = 0;
+                isPlayingBack = false;
+                playbackIndex = 0;
                 localRig.enabled = true;
             }
         }
@@ -2049,7 +2051,7 @@ public class Mods : MonoBehaviour
                 if (both)
                 {
                     GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", RpcTarget.All, soundId, false, 999999f);
-                    GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", RpcTarget.All, soundId, true,  999999f);
+                    GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", RpcTarget.All, soundId, true, 999999f);
                 }
                 else
                 {
@@ -2064,7 +2066,7 @@ public class Mods : MonoBehaviour
                 if (both)
                 {
                     VRRig.LocalRig.PlayHandTapLocal(soundId, false, 999999f);
-                    VRRig.LocalRig.PlayHandTapLocal(soundId, true,  999999f);
+                    VRRig.LocalRig.PlayHandTapLocal(soundId, true, 999999f);
                 }
                 else
                 {
@@ -2101,7 +2103,7 @@ public class Mods : MonoBehaviour
         //bool isFiring = ControllerInputPoller.instance.rightControllerTriggerButton || ControllerInputPoller.instance.leftControllerTriggerButton && ControllerInputPoller.instance.rightGrab;
         if (GunLib.Triggering && GunLib.IsOverVrrig)
         {
-            VRRig.LocalRig.enabled            = false;
+            VRRig.LocalRig.enabled = false;
             VRRig.LocalRig.transform.position = GunLib.LockedRig.transform.position;
             VRRig.LocalRig.leftHand.rigTarget.transform.localPosition =
                     new Vector3(Random.Range(0, 1), Random.Range(0, 1), Random.Range(0, 2));
@@ -2122,12 +2124,12 @@ public class Mods : MonoBehaviour
 
     public static void Boop(int sound = 84)
     {
-        GorillaTagger?        tagger       = GorillaTagger.Instance;
-        IReadOnlyList<VRRig>? rigs         = VRRigCache.ActiveRigs;
-        Vector3               leftHandPos  = tagger.leftHandTransform.position;
-        Vector3               rightHandPos = tagger.rightHandTransform.position;
-        bool                  isBoopLeft   = false;
-        bool                  isBoopRight  = false;
+        GorillaTagger? tagger = GorillaTagger.Instance;
+        IReadOnlyList<VRRig>? rigs = VRRigCache.ActiveRigs;
+        Vector3 leftHandPos = tagger.leftHandTransform.position;
+        Vector3 rightHandPos = tagger.rightHandTransform.position;
+        bool isBoopLeft = false;
+        bool isBoopRight = false;
 
         for (int i = 0; i < rigs.Count; i++)
         {
@@ -2135,8 +2137,8 @@ public class Mods : MonoBehaviour
 
             if (vrrig == null || vrrig.isLocal) continue;
 
-            float   threshold = 0.275f;
-            Vector3 headPos   = vrrig.headMesh.transform.position;
+            float threshold = 0.275f;
+            Vector3 headPos = vrrig.headMesh.transform.position;
 
             if (!isBoopLeft)
                 isBoopLeft = Vector3.Distance(leftHandPos, headPos) < threshold;
@@ -2178,9 +2180,9 @@ public class Mods : MonoBehaviour
     public static void MessUpRig()
     {
         VRMap? head = VRRig.LocalRig.head;
-        head.trackingRotationOffset.y                     = 90;
-        head.trackingRotationOffset.x                     = 12;
-        VRRig.LocalRig.leftHand.trackingPositionOffset.z  = 0.2f;
+        head.trackingRotationOffset.y = 90;
+        head.trackingRotationOffset.x = 12;
+        VRRig.LocalRig.leftHand.trackingPositionOffset.z = 0.2f;
         VRRig.LocalRig.rightHand.trackingPositionOffset.z = 0.2f;
         SetBodyPatch(true, 4);
     }
@@ -2220,7 +2222,7 @@ public class Mods : MonoBehaviour
     public static void SetBodyPatch(bool enabled, int mode = 0)
     {
         TorsoPatch.enabled = enabled;
-        TorsoPatch.mode    = mode;
+        TorsoPatch.mode = mode;
 
         if (!enabled && recBodyRotary != null)
             Destroy(recBodyRotary);
@@ -2270,6 +2272,17 @@ public class Mods : MonoBehaviour
     {
         SetBodyPatch(true, 9);
         UpdateRecBodyRotary();
+    }
+
+    public static void PCDragonRig()
+    {
+        if (!XRSettings.isDeviceActive)
+        {
+            GorillaTagger.Instance.leftHandTransform.transform.position = GTPlayer.Instance.bodyCollider.transform.position;
+            GorillaTagger.Instance.rightHandTransform.transform.position = GTPlayer.Instance.bodyCollider.transform.position;
+            Spider();
+            WasdFly();
+        }
     }
 
     public static void Bean()
@@ -2677,14 +2690,14 @@ public class Mods : MonoBehaviour
         );
     }
 
-    public static int NoInvisLayerMask() => ~(1 << TransparentFX  | 1 << IgnoreRaycast   | 1 << Zone             |
+    public static int NoInvisLayerMask() => ~(1 << TransparentFX | 1 << IgnoreRaycast | 1 << Zone |
                                               1 << GorillaTrigger | 1 << GorillaBoundary | 1 << GorillaCosmetics |
                                               1 << GorillaParticle);
 
     public static void AdminLaser()
     {
         bool isRightHandPressed = VRRig.LocalRig.rightThumb.calcT > 0.5;
-        bool isLeftHandPressed  = VRRig.LocalRig.leftThumb.calcT > 0.5;
+        bool isLeftHandPressed = VRRig.LocalRig.leftThumb.calcT > 0.5;
 
         if (isRightHandPressed || isLeftHandPressed)
         {
@@ -2692,7 +2705,7 @@ public class Mods : MonoBehaviour
             Transform handTransform =
                     useRightHand ? VRRig.LocalRig.rightHandTransform : VRRig.LocalRig.leftHandTransform;
 
-            Vector3 dir      = useRightHand ? handTransform.right : -handTransform.right;
+            Vector3 dir = useRightHand ? handTransform.right : -handTransform.right;
             Vector3 startPos = handTransform.position + dir * 0.1f;
 
             try
@@ -2727,7 +2740,7 @@ public class Mods : MonoBehaviour
                 allColliders[i].enabled = false;
 
         float duration = 0.2f;
-        float elapsed  = 0f;
+        float elapsed = 0f;
 
         while (elapsed < duration)
         {
@@ -2763,7 +2776,7 @@ public class Mods : MonoBehaviour
             listBuffer.Clear();
             listBuffer.AddRange(VRRigCache.ActiveRigs);
             BackwardsHead();
-            VRRig.LocalRig.leftHand.rigTarget.transform.position  += upOffset2;
+            VRRig.LocalRig.leftHand.rigTarget.transform.position += upOffset2;
             VRRig.LocalRig.rightHand.rigTarget.transform.position += upOffset2;
 
             for (int i = 0; i < listBuffer.Count; i++)
@@ -2797,12 +2810,12 @@ public class Mods : MonoBehaviour
             HasRemovedThisFrame = true;
 
             MonkeAgent? monke = MonkeAgent.instance;
-            monke.rpcErrorMax  = int.MaxValue;
+            monke.rpcErrorMax = int.MaxValue;
             monke.rpcCallLimit = int.MaxValue;
-            monke.logErrorMax  = int.MaxValue;
+            monke.logErrorMax = int.MaxValue;
 
             PhotonNetwork.MaxResendsBeforeDisconnect = int.MaxValue;
-            PhotonNetwork.QuickResends               = int.MaxValue;
+            PhotonNetwork.QuickResends = int.MaxValue;
             PhotonNetwork.SendAllOutgoingCommands();
 
             instance.StartCoroutine(ResetHasRemovedFlag());
@@ -3089,101 +3102,70 @@ public class Mods : MonoBehaviour
 
     private static bool wasLeftGripPressed = false;
 
-public static void EmoteSelector()
-{
-    float axisY = ControllerInputPoller.instance.leftControllerPrimary2DAxis.y;
-    bool isLeftGripHeld = ControllerInputPoller.instance.leftControllerGripFloat > 0.5f;
-
-    if (axisY > 0.6f)
+    public static void EmoteSelector()
     {
-        if (joystickInDeadzone)
+        float axisY = ControllerInputPoller.instance.leftControllerPrimary2DAxis.y;
+        bool isLeftGripHeld = ControllerInputPoller.instance.leftControllerGripFloat > 0.5f;
+
+        if (axisY > 0.6f)
         {
-            selectedEmoteIndex = (selectedEmoteIndex + 1) % emotes.Length;
-            joystickInDeadzone = false;
+            if (joystickInDeadzone)
+            {
+                selectedEmoteIndex = (selectedEmoteIndex + 1) % emotes.Length;
+                joystickInDeadzone = false;
+            }
         }
-    }
-    else if (axisY < -0.6f)
-    {
-        if (joystickInDeadzone)
+        else if (axisY < -0.6f)
         {
-            selectedEmoteIndex = (selectedEmoteIndex - 1 + emotes.Length) % emotes.Length;
-            joystickInDeadzone = false;
+            if (joystickInDeadzone)
+            {
+                selectedEmoteIndex = (selectedEmoteIndex - 1 + emotes.Length) % emotes.Length;
+                joystickInDeadzone = false;
+            }
         }
-    }
-    else if (axisY >= -0.3f && axisY <= 0.3f)
-    {
-        joystickInDeadzone = true;
-    }
+        else if (axisY >= -0.3f && axisY <= 0.3f)
+        {
+            joystickInDeadzone = true;
+        }
 
-    EmoteData currentEmote = emotes[selectedEmoteIndex];
+        EmoteData currentEmote = emotes[selectedEmoteIndex];
 
-    if (isLeftGripHeld)
-    {
-        NotiLib.Overlay(currentEmote.DisplayName);
+        if (isLeftGripHeld)
+        {
+            NotiLib.Overlay(currentEmote.DisplayName, "Emotes");
+        }
+
+        if (wasLeftGripPressed && !isLeftGripHeld)
+        {
+            NotiLib.Overlay(currentEmote.DisplayName, "Emotes");
+            EmoteManager.PlayEmote(currentEmote.Animation, currentEmote.Sound, -1f, true);
+        }
+
+        wasLeftGripPressed = isLeftGripHeld;
     }
-
-    if (wasLeftGripPressed && !isLeftGripHeld)
-    {
-        NotiLib.Overlay(currentEmote.DisplayName);
-        EmoteManager.PlayEmote(currentEmote.Animation, currentEmote.Sound, -1f, true);
-    }
-
-    wasLeftGripPressed = isLeftGripHeld;
-}
 
     public static void TagAll()
     {
 
-        IReadOnlyList<VRRig>? rigs = VRRigCache.ActiveRigs;
-        if (!GameMode.LocalIsTagged(PhotonNetwork.LocalPlayer))
+        foreach (VRRig rig in VRRigCache.ActiveRigs)
         {
-            VRRig hunterRig = null;
-            for (int i = 0; i < rigs.Count; i++)
-                if (!rigs[i].isLocal && GameMode.LocalIsTagged(rigs[i].Creator))
-                {
-                    hunterRig = rigs[i];
-
-                    break;
-                }
-
-            if (hunterRig != null)
+            if (GameMode.LocalIsTagged(VRRig.LocalRig.creator) && !GameMode.LocalIsTagged(rig.creator))
             {
-                VRRig.LocalRig.enabled            = false;
-                VRRig.LocalRig.transform.position = hunterRig.leftHand.rigTarget.position;
+                VRRig.LocalRig.enabled = false;
+                VRRig.LocalRig.transform.position = rig.syncPos;
+                SendSerialize(VRRig.LocalRig.netView.punView, new RaiseEventOptions { TargetActors = new[] { PhotonNetwork.MasterClient.ActorNumber } });
+                RPCProtection();
+                GameMode.ReportTag(rig.creator);
+                VRRig.LocalRig.enabled = true;
             }
-            else if (!VRRig.LocalRig.enabled)
+            if (!GameMode.LocalIsTagged(VRRig.LocalRig.creator))
             {
                 VRRig.LocalRig.enabled = true;
             }
-
-            return;
-        }
-
-        VRRig targetRig = null;
-        for (int i = 0; i < rigs.Count; i++)
-            if (!rigs[i].isLocal && !GameMode.LocalIsTagged(rigs[i].Creator))
+            if (GameMode.LocalIsTagged(rig.creator))
             {
-                targetRig = rigs[i];
-
-                break;
+                VRRig.LocalRig.enabled = true;
             }
-
-        if (targetRig != null)
-        {
-            VRRig.LocalRig.enabled            = false;
-            VRRig.LocalRig.transform.position = targetRig.transform.position - Vector3.up;
-            SendSerialize(VRRig.LocalRig.netView.punView, new RaiseEventOptions { TargetActors = new[] { PhotonNetwork.MasterClient.ActorNumber } });
-
-            if (Vector3.Distance(VRRig.LocalRig.transform.position, targetRig.transform.position) <= 1f &&
-                Time.time                                                                         > lastTagAllTime + 1f)
-            {
-                GameMode.ReportTag(targetRig.Creator);
-                lastTagAllTime = Time.time;
-            }
-        }
-        else if (!VRRig.LocalRig.enabled)
-        {
-            VRRig.LocalRig.enabled = true;
         }
     }
 
@@ -3213,16 +3195,16 @@ public static void EmoteSelector()
 
         if (mic == null || mic.SourceType == Recorder.InputSourceType.AudioClip) return;
 
-        float                  volume   = 0f;
+        float volume = 0f;
         GorillaSpeakerLoudness recorder = VRRig.LocalRig.GetComponent<GorillaSpeakerLoudness>();
-        if (recorder != null) volume    = recorder.Loudness;
+        if (recorder != null) volume = recorder.Loudness;
 
         if (volume == 0f)
         {
             if (lastVol != 0f)
             {
                 startSilenceTime = Time.time;
-                reloaded         = false;
+                reloaded = false;
             }
 
             if (startSilenceTime > 0f && !reloaded && Time.time - startSilenceTime >= 0.25f)
@@ -3234,7 +3216,7 @@ public static void EmoteSelector()
         else
         {
             startSilenceTime = -1f;
-            reloaded         = false;
+            reloaded = false;
         }
 
         lastVol = volume;
@@ -3254,8 +3236,8 @@ public static void EmoteSelector()
                 ESPSkeletonData data = pair.Value;
                 if (data == null || data.Rig == null || !data.Rig.gameObject.activeInHierarchy)
                 {
-                    if (data?.HeadObj      != null) Destroy(data.HeadObj);
-                    if (data?.LeftHandObj  != null) Destroy(data.LeftHandObj);
+                    if (data?.HeadObj != null) Destroy(data.HeadObj);
+                    if (data?.LeftHandObj != null) Destroy(data.LeftHandObj);
                     if (data?.RightHandObj != null) Destroy(data.RightHandObj);
                     removeSkeletonListBuffer.Add(pair.Key);
                 }
@@ -3275,26 +3257,26 @@ public static void EmoteSelector()
             int id = rig.isLocal ? 999999 : rig.GetInstanceID();
             if (!ESPSkeletons.TryGetValue(id, out ESPSkeletonData data) || data == null)
             {
-                GameObject head     = null;
-                Renderer   headRend = null;
+                GameObject head = null;
+                Renderer headRend = null;
 
                 if (!rig.isLocal)
                 {
-                    head      = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                     head.name = "SkeletonESP_Head";
                     Collider? headCol = head.GetComponent<Collider>();
                     if (headCol != null) Destroy(headCol);
                     Rigidbody? headRb = head.GetComponent<Rigidbody>();
                     if (headRb != null) Destroy(headRb);
                     head.transform.localScale = sphereScaleHead;
-                    headRend                  = head.GetComponent<Renderer>();
-                    headRend.material         = skeletonEspMaterial;
+                    headRend = head.GetComponent<Renderer>();
+                    headRend.material = skeletonEspMaterial;
                 }
 
-                GameObject leftHand  = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                GameObject leftHand = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 GameObject rightHand = GameObject.CreatePrimitive(PrimitiveType.Sphere);
 
-                leftHand.name  = "SkeletonESP_Left";
+                leftHand.name = "SkeletonESP_Left";
                 rightHand.name = "SkeletonESP_Right";
 
                 GameObject[] handParts = { leftHand, rightHand, };
@@ -3307,24 +3289,24 @@ public static void EmoteSelector()
                     if (rb != null) Destroy(rb);
                 }
 
-                leftHand.transform.localScale  = sphereScaleHand;
+                leftHand.transform.localScale = sphereScaleHand;
                 rightHand.transform.localScale = sphereScaleHand;
 
-                Renderer leftRend  = leftHand.GetComponent<Renderer>();
+                Renderer leftRend = leftHand.GetComponent<Renderer>();
                 Renderer rightRend = rightHand.GetComponent<Renderer>();
 
-                leftRend.material  = skeletonEspMaterial;
+                leftRend.material = skeletonEspMaterial;
                 rightRend.material = skeletonEspMaterial;
 
                 data = new ESPSkeletonData
                 {
-                        Rig               = rig,
-                        HeadObj           = head,
-                        LeftHandObj       = leftHand,
-                        RightHandObj      = rightHand,
-                        HeadRenderer      = headRend,
-                        LeftHandRenderer  = leftRend,
-                        RightHandRenderer = rightRend,
+                    Rig = rig,
+                    HeadObj = head,
+                    LeftHandObj = leftHand,
+                    RightHandObj = rightHand,
+                    HeadRenderer = headRend,
+                    LeftHandRenderer = leftRend,
+                    RightHandRenderer = rightRend,
                 };
 
                 ESPSkeletons[id] = data;
@@ -3356,8 +3338,8 @@ public static void EmoteSelector()
             else if (rig.mainSkin != null && rig.mainSkin.sharedMaterial != null)
                 color = rig.mainSkin.sharedMaterial.color;
 
-            if (data.HeadRenderer      != null) data.HeadRenderer.material.color      = color;
-            if (data.LeftHandRenderer  != null) data.LeftHandRenderer.material.color  = color;
+            if (data.HeadRenderer != null) data.HeadRenderer.material.color = color;
+            if (data.LeftHandRenderer != null) data.LeftHandRenderer.material.color = color;
             if (data.RightHandRenderer != null) data.RightHandRenderer.material.color = color;
         }
     }
@@ -3367,8 +3349,8 @@ public static void EmoteSelector()
         foreach (ESPSkeletonData data in ESPSkeletons.Values)
             if (data != null)
             {
-                if (data.HeadObj      != null) Destroy(data.HeadObj);
-                if (data.LeftHandObj  != null) Destroy(data.LeftHandObj);
+                if (data.HeadObj != null) Destroy(data.HeadObj);
+                if (data.LeftHandObj != null) Destroy(data.LeftHandObj);
                 if (data.RightHandObj != null) Destroy(data.RightHandObj);
             }
 
@@ -3441,10 +3423,10 @@ public static void EmoteSelector()
                 if (rb != null) Destroy(rb);
 
                 Renderer renderer = box.GetComponent<Renderer>();
-                renderer.material        = espMaterial;
+                renderer.material = espMaterial;
                 box.transform.localScale = boxEspScale;
 
-                data         = new ESPBoxData { Rig = rig, BoxObject = box, Renderer = renderer, };
+                data = new ESPBoxData { Rig = rig, BoxObject = box, Renderer = renderer, };
                 ESPBoxes[id] = data;
             }
 
@@ -3489,11 +3471,21 @@ public static void EmoteSelector()
             if (HasInvised)
             {
                 GorillaTagger.Instance.offlineVRRig.enabled = false;
-                VRRig.LocalRig.transform.position           = new Vector3(int.MaxValue, int.MaxValue, int.MaxValue);
+                VRRig.LocalRig.transform.position = new Vector3(0, 0, 0);
+                VRRig.LocalRig.transform.rotation = Quaternion.Euler(0, 0, 0);
+                VRRig.LocalRig.leftHand.rigTarget.rotation = Quaternion.identity;
+                VRRig.LocalRig.rightHand.rigTarget.rotation = Quaternion.identity;
+                VRRig.LocalRig.leftHand.rigTarget.position = new Vector3(0, 0, 0);
+                VRRig.LocalRig.rightHand.rigTarget.position = new Vector3(0, 0, 0);
+                VRRig.LocalRig.head.rigTarget.rotation = Quaternion.identity;
+                FpsPatch.enabled = true;
+                FpsPatch.fps = 0;
             }
             else
             {
                 GorillaTagger.Instance.offlineVRRig.enabled = true;
+                FpsPatch.enabled = false;
+                FpsPatch.fps = 0;
             }
         }
 
@@ -3511,7 +3503,7 @@ public static void EmoteSelector()
         if (PhotonNetwork.InRoom)
         {
             ControllerInputPoller? input = ControllerInputPoller.instance;
-            SetBraceletState(input.leftGrab  && state, true);
+            SetBraceletState(input.leftGrab && state, true);
             SetBraceletState(input.rightGrab && state, false);
             RPCProtection();
         }
@@ -3543,7 +3535,7 @@ public static void EmoteSelector()
         string roomName = PhotonNetwork.InRoom && PhotonNetwork.CurrentRoom != null
                           ? PhotonNetwork.CurrentRoom.Name
                           : "Not In Room";
-        NotiLib.Overlay($"\nRoom: {roomName}");
+        NotiLib.Overlay($"\nRoom: {roomName}", "Room");
     }
 
     public static void SpazMonke()
@@ -3551,10 +3543,10 @@ public static void EmoteSelector()
         ControllerInputPoller? input = ControllerInputPoller.instance;
         if (input.leftGrab || input.rightGrab)
         {
-            System.Random random    = new();
-            VRMap?        head      = VRRig.LocalRig.head;
-            VRMap?        leftHand  = VRRig.LocalRig.leftHand;
-            VRMap?        rightHand = VRRig.LocalRig.rightHand;
+            System.Random random = new();
+            VRMap? head = VRRig.LocalRig.head;
+            VRMap? leftHand = VRRig.LocalRig.leftHand;
+            VRMap? rightHand = VRRig.LocalRig.rightHand;
 
             head.trackingRotationOffset += new Vector3(random.Next(0, 360), random.Next(0, 360), random.Next(0, 360));
             leftHand.trackingRotationOffset +=
@@ -3577,7 +3569,7 @@ public static void EmoteSelector()
         GameObject motdHeadingObj = GameObject.Find("Environment Objects/LocalObjects_Prefab/TreeRoom/motdHeadingText");
         if (motdHeadingObj != null)
         {
-            TextMeshPro? heading              = motdHeadingObj.GetComponent<TextMeshPro>();
+            TextMeshPro? heading = motdHeadingObj.GetComponent<TextMeshPro>();
             if (heading != null) heading.text = titleText;
         }
 
@@ -3632,7 +3624,7 @@ public static void EmoteSelector()
             GTPlayer.Instance.TeleportTo(targetPos, GTPlayer.Instance.transform.rotation);
 
             Rigidbody? rb = GorillaTagger.Instance.rigidbody;
-            rb.linearVelocity  = Vector3.zero;
+            rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
         }
     }
@@ -3642,10 +3634,10 @@ public static void EmoteSelector()
         if (cherryBombId >= 0)
             Console.Console.ExecuteCommand("asset-destroy", ReceiverGroup.All, cherryBombId);
 
-        cherryBombId          = -1;
-        hasSpawnedCherry      = false;
+        cherryBombId = -1;
+        hasSpawnedCherry = false;
         cherryAnimationPlayed = false;
-        cherrySpawnTime       = -1f;
+        cherrySpawnTime = -1f;
     }
 
     public static void UpdateCustomProperties()
@@ -3711,22 +3703,22 @@ public static void EmoteSelector()
                 GameObject canvasObj = new("Gemstone_Nametag_Canvas");
 
                 TextMeshPro? textMesh = canvasObj.AddComponent<TextMeshPro>();
-                textMesh.fontSize                = 2f;
-                textMesh.alignment               = TextAlignmentOptions.Center;
+                textMesh.fontSize = 2f;
+                textMesh.alignment = TextAlignmentOptions.Center;
                 textMesh.rectTransform.sizeDelta = new Vector2(4f, 1f);
 
                 data = new NametagData
                 {
-                        Rig           = rig,
-                        CanvasObject  = canvasObj,
-                        TextComponent = textMesh,
+                    Rig = rig,
+                    CanvasObject = canvasObj,
+                    TextComponent = textMesh,
                 };
 
                 ActiveNametags[id] = data;
             }
 
             if (data.CanvasObject == null || data.TextComponent == null || rig.transform == null ||
-                rig.head          == null) continue;
+                rig.head == null) continue;
 
             Transform headTransform = rig.head.rigTarget != null ? rig.head.rigTarget.transform : rig.transform;
             data.CanvasObject.transform.position = headTransform.position + upOffset09;
@@ -3740,7 +3732,7 @@ public static void EmoteSelector()
             }
 
             string photonNick = "Unknown";
-            string playerFps  = "0";
+            string playerFps = "0";
 
             NetPlayer? creator = rig.Creator;
             if (creator != null)
@@ -4049,38 +4041,38 @@ public static void EmoteSelector()
 
     private struct RigFrame
     {
-        public Vector3    rootPos;
+        public Vector3 rootPos;
         public Quaternion rootRot;
-        public Vector3    headPos;
+        public Vector3 headPos;
         public Quaternion headRot;
-        public Vector3    leftHandPos;
+        public Vector3 leftHandPos;
         public Quaternion leftHandRot;
-        public Vector3    rightHandPos;
+        public Vector3 rightHandPos;
         public Quaternion rightHandRot;
     }
 
     private class ESPSkeletonData
     {
         public GameObject HeadObj;
-        public Renderer   HeadRenderer;
+        public Renderer HeadRenderer;
         public GameObject LeftHandObj;
-        public Renderer   LeftHandRenderer;
-        public VRRig      Rig;
+        public Renderer LeftHandRenderer;
+        public VRRig Rig;
         public GameObject RightHandObj;
-        public Renderer   RightHandRenderer;
+        public Renderer RightHandRenderer;
     }
 
     private class ESPBoxData
     {
         public GameObject BoxObject;
-        public Renderer   Renderer;
-        public VRRig      Rig;
+        public Renderer Renderer;
+        public VRRig Rig;
     }
 
     private class NametagData
     {
-        public GameObject  CanvasObject;
-        public VRRig       Rig;
+        public GameObject CanvasObject;
+        public VRRig Rig;
         public TextMeshPro TextComponent;
     }
 }

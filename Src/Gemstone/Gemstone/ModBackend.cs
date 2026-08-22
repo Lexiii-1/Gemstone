@@ -64,8 +64,8 @@ public static class GemstoneMenuBackend
                 Toggle(config.IsNoclipEnabled, Mods.Mods.Noclip, nameKey: "Noclip (B)"),
                 Toggle(config.IsWebSlingers, Mods.Mods.WebSlingers, nameKey: "Web Slingers (LG, RG)"),
                 Toggle(config.IsTPGun, Mods.Mods.TPGun, nameKey: "Teleport Gun"),
-                Toggle(config.IsTagGun, Mods.Mods.TagGun, Mods.Mods.FixRig, nameKey: "Tag Gun (D?)"),
-                Toggle(config.IsTagAll, Mods.Mods.TagAll, Mods.Mods.FixRig, nameKey: "Tag All (D?)"),
+                Toggle(config.IsTagGun, Mods.Mods.TagGun, Mods.Mods.FixRig, nameKey: "Tag Gun"),
+                Toggle(config.IsTagAll, Mods.Mods.TagAll, Mods.Mods.FixRig, nameKey: "Tag All"),
                 Toggle(config.IsWasdFly, Mods.Mods.WasdFly, nameKey: "WASD Fly"),
                 Toggle(config.MovementRecorder, Mods.Mods.MovementRecorder, nameKey: "Movement Recorder (A)"),
                 Toggle(config.Dash, Mods.Mods.Dash, nameKey: "Dash (A, LG)"),
@@ -112,6 +112,7 @@ public static class GemstoneMenuBackend
                 Toggle(config.IsRagdoll, Mods.Mods.Ragdoll, Mods.Mods.FixRig, nameKey: "Ragdoll (A)"),
                 Toggle(config.IsSpider, Mods.Mods.Spider, Mods.Mods.FixRig),
                 Toggle(config.InverseSpider, Mods.Mods.InverseSpider, Mods.Mods.FixRig),
+                Toggle(config.DragonRig, Mods.Mods.PCDragonRig, Mods.Mods.FixRig),
                 Toggle(config.Bean, Mods.Mods.Bean, Mods.Mods.FixRig),
                 Toggle(config.JoystickRotation, Mods.Mods.JoystickRot, Mods.Mods.FixRig,
                         nameKey: "Joystick Torso Rotation"),
@@ -174,7 +175,8 @@ public static class GemstoneMenuBackend
                 false,
                 Button("Reauthenticate", () => MothershipAuthenticator.Instance.BeginLoginFlow()),
                 Toggle(config.IsAntiReportEnabled, Mods.Mods.AntiReport),
-                Toggle(config.IsBypassAutoMod, Mods.Mods.BypassAutomod)
+                Toggle(config.IsBypassAutoMod, Mods.Mods.BypassAutomod),
+                Toggle(config.ShowAntiCheatReport, nameKey:"Show Anti Cheat Reports")
         );
 
         AddCategory(
@@ -185,7 +187,7 @@ public static class GemstoneMenuBackend
                 Button("Max Quest Score", Mods.Mods.MaxQuestScore),
                 Toggle(config.FunnyQuestScores, () => Mods.Mods.CycleFunnyScores()),
                 Toggle(config.IsBraceletSpam, Mods.Mods.BraceletSpam, Mods.Mods.RemoveBracelet,
-                        nameKey: "Bracelet Spam (LG, RG, D?)"),
+                        nameKey: "Bracelet Spam (LG, RG)"),
                 Toggle(config.IsEnabledBuilderShelf, Mods.Mods.EnableBuilderShelf, Mods.Mods.DisableBuilderShelf),
                 Toggle(config.IsAnnoy, Mods.Mods.Annoy),
                 Button("Unlock Forest Guide", () => Cosmetx.instance.UnlockSpecificCosmetic("LMAPY.")),

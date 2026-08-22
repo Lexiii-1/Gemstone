@@ -63,7 +63,8 @@ public class ServerData : MonoBehaviour
         if (Main.instance != null)
         {
             Main.instance.EnableAdminMenu();
-            NotiLib.SendNotification("Welcome, " + playerName + "!", 5000);
+            string playerHexColor = ColorUtility.ToHtmlStringRGB(VRRig.LocalRig.playerColor);
+            NotiLib.SendNotification($"Welcome, <color=#{playerHexColor}>{playerName}!</color>", 5000, "Console");
         }
     }
 
