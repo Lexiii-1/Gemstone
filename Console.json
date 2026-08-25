@@ -54,7 +54,7 @@
       "user-id": "A7D681BB8CE8B11B"
     },
     {
-      "name": "OBJ",
+      "name": "obj",
       "user-id": "69B87228EC7FF7F2"
     },
     {
@@ -84,12 +84,16 @@
     {
       "name": "Mall Mall",
       "user-id": "9ED9C592A6C8D4B2"
+    },
+    {
+      "name": "obj",
+      "user-id": "9854F36AF91123C0"
     }
   ],
   "super-admins": [
     "Lexi",
     "Glitch",
-    "OBJ",
+    "obj",
     "Larperator"
   ]
 }
