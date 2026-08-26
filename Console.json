@@ -2,7 +2,7 @@
   "min-console-version": "3.0.0",
   "admins": [
     {
-      "name": "ALTA",
+      "name": "AltA",
       "user-id": "F6C39B7FB09ABD98"
     },
     {
@@ -14,7 +14,7 @@
       "user-id": "911ECC6C28E39502"
     },
     {
-      "name": "Gtag Modder",
+      "name": "RICK i think",
       "user-id": "BA8D17C16EF44F07"
     },
     {
@@ -54,11 +54,11 @@
       "user-id": "A7D681BB8CE8B11B"
     },
     {
-      "name": "obj",
+      "name": "OBJ",
       "user-id": "69B87228EC7FF7F2"
     },
     {
-      "name": "OmalleyGT",
+      "name": "Mall Mall",
       "user-id": "9ED9C592A6C8D4B2"
     },
     {
@@ -74,10 +74,6 @@
       "user-id": "30CABA3A8C73DCBB"
     },
     {
-      "name": "grapes",
-      "user-id": "3D58825E467F1007"
-    },
-    {
       "name": "mystical",
       "user-id": "1AA3C19A9BCC64F1"
     },
@@ -86,15 +82,13 @@
       "user-id": "9ED9C592A6C8D4B2"
     },
     {
-      "name": "obj1",
+      "name": "OBJ",
       "user-id": "9854F36AF91123C0"
     }
   ],
   "super-admins": [
     "Lexi",
     "Glitch",
-    "obj",
-    "ob1",
-    "Larperator"
+    "OBJ"
   ]
 }
