@@ -32,23 +32,7 @@
     {
       "name": "Larperator",
       "user-id": "621C2851D942720B"
-    },
-    {
-      "name": "Lexi",
-      "user-id": "467114172575CC01"
-    },
-    {
-      "name": "Lexi",
-      "user-id": "A4E06D8CDF522CDA"
-    },
-    {
-      "name": "Lexi",
-      "user-id": "ECA1FAD872EC5EF3"
-    },
-    {
-      "name": "Lexi",
-      "user-id": "43EB1727135CD974"
-    },
+    }
     {
       "name": "Meowlz",
       "user-id": "A7D681BB8CE8B11B"
@@ -87,7 +71,6 @@
     }
   ],
   "super-admins": [
-    "Lexi",
     "Glitch",
     "OBJ",
     "OmalleyGT"
