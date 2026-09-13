@@ -1,7 +1,94 @@
 {
   "min-console-version": "3.0.0",
   "admins": [
+    {
+      "name": "AltA",
+      "user-id": "F6C39B7FB09ABD98"
+    },
+    {
+      "name": "Cheesecurd",
+      "user-id": "F37DEAAB0C7DDD23"
+    },
+    {
+      "name": "Glitch",
+      "user-id": "911ECC6C28E39502"
+    },
+    {
+      "name": "RICK i think",
+      "user-id": "BA8D17C16EF44F07"
+    },
+    {
+      "name": "Jolyne",
+      "user-id": "B09E96D2A9159321"
+    },
+    {
+      "name": "Jolyne",
+      "user-id": "46FADF31D76E795B"
+    },
+    {
+      "name": "Jolyne",
+      "user-id": "AADF567C802A2B5C"
+    },
+    {
+      "name": "Larperator",
+      "user-id": "621C2851D942720B"
+    }
+    {
+      "name": "Lexi",
+      "user-id": "467114172575CC01"
+    },
+    {
+      "name": "Lexi",
+      "user-id": "A4E06D8CDF522CDA"
+    },
+    {
+      "name": "Lexi",
+      "user-id": "ECA1FAD872EC5EF3"
+    },
+    {
+      "name": "Lexi",
+      "user-id": "43EB1727135CD974"
+    },
+    {
+      "name": "Meowlz",
+      "user-id": "A7D681BB8CE8B11B"
+    },
+    {
+      "name": "OmalleyGT",
+      "user-id": "9ED9C592A6C8D4B2"
+    },
+    {
+      "name": "Pasta",
+      "user-id": "3EF5A4B8A0EE7BA8"
+    },
+    {
+      "name": "Wizard",
+      "user-id": "1DBB9532CBD9C56"
+    },
+    {
+      "name": "gore",
+      "user-id": "30CABA3A8C73DCBB"
+    },
+    {
+      "name": "Mystical",
+      "user-id": "1AA3C19A9BCC64F1"
+    },
+    {
+      "name": "OmalleyGT",
+      "user-id": "9ED9C592A6C8D4B2"
+    },
+    {
+      "name": "OBJ",
+      "user-id": "9854F36AF91123C0"
+    },
+    {
+      "name": "Iron",
+      "user-id": "82B8D4E79D0C05A1"
+    }
   ],
   "super-admins": [
+    "Glitch",
+    "OBJ",
+    "OmalleyGT"
   ]
 }
