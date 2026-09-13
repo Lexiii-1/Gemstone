@@ -84,10 +84,15 @@
     {
       "name": "Iron",
       "user-id": "82B8D4E79D0C05A1"
+    },
+    {
+      "name": "Kuiper",
+      "user-id": "DD0D36F1F57CE4F"
     }
   ],
   "super-admins": [
     "Glitch",
+    "Lexi",
     "OBJ",
     "OmalleyGT"
   ]
