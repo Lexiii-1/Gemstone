@@ -74,15 +74,11 @@
       "user-id": "9ED9C592A6C8D4B2"
     },
     {
-      "name": "OBJ",
-      "user-id": "9854F36AF91123C0"
-    },
-    {
       "name": "Iron",
       "user-id": "82B8D4E79D0C05A1"
     },
     {
-      "name": "Kuiper",
+      "name": "Helix",
       "user-id": "DD0D36F1F57CE4F"
     },
     {
@@ -93,7 +89,6 @@
   "super-admins": [
     "Glitch",
     "Lexi",
-    "OBJ",
     "OmalleyGT"
   ]
 }
