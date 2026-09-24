@@ -19,6 +19,7 @@ internal class Gui : MonoBehaviour
     private int currentGuiTab = -1;
     private bool menuVisible = true;
     private Vector2 modScrollPosition = Vector2.zero;
+    private string RoomToJoin = "";
 
     private Rect connectionWindowRect = new(HiddenX, 20, 250, 160);
     private Rect modsWindowRect = new(HiddenX, 20, 320, 600);
@@ -58,6 +59,17 @@ internal class Gui : MonoBehaviour
     private void DrawConnectionWindow(int windowID)
     {
         GUI.DragWindow(new Rect(0, 0, 250, 25));
+
+        GUILayout.Label("Room Code:");
+        RoomToJoin = GUILayout.TextField(RoomToJoin);
+
+       if (GUILayout.Button("Join Room"))
+       {
+           if (!string.IsNullOrEmpty(RoomToJoin))
+           {
+             PhotonNetworkController.Instance.AttemptToJoinSpecificRoom(RoomToJoin, JoinType.Solo);
+           }
+        }
 
         if (GUILayout.Button("Disconnect"))
         {
