@@ -21,7 +21,7 @@ internal class Gui : MonoBehaviour
     private Vector2 modScrollPosition = Vector2.zero;
     private string RoomToJoin = "";
 
-    private Rect connectionWindowRect = new(HiddenX, 20, 250, 160);
+    private Rect connectionWindowRect = new(HiddenX, 20, 250, 220);
     private Rect modsWindowRect = new(HiddenX, 20, 320, 600);
 
     private void Update()
