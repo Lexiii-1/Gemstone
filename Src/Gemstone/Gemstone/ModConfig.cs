@@ -1,4 +1,4 @@
-﻿using BepInEx.Configuration;
+using BepInEx.Configuration;
 using UnityEngine;
 
 namespace Gemstone.Gemstone;
@@ -8,101 +8,110 @@ public class ModConfig : MonoBehaviour
     public static ModConfig instance;
     public static Color     Theme;
 
-    public ConfigEntry<float> FlySpeedSave, WebSlingSpeedSave, R, G, B, GunSmoothness;
-    public ConfigEntry<int> Language, GunType, MenuType, LagStrength, LagCooldown;
+    public ConfigEntry<float> FlySpeedSave, WebSlingSpeedSave, R, G, B, GunSmoothness,
+                              SteamIconSpinSpeed, SteamIconGlowMult, SteamIconFollowDist, SteamIconParticleMult;
+    public ConfigEntry<int>   Language,     GunType,           MenuType,
+                              SteamIconAnchorMode, SteamIconColorTheme, SteamIconSizeMode;
+    public ConfigEntry<bool>  SteamIconSparksOn;
 
     public ConfigEntry<bool> SpeedBoostEnabled,
-        FlyEnabled,
-        LongArmsEnabled,
-        IsPlatformsEnabled,
-        IsNoclipEnabled,
-        IsJoystickFly,
-        IsGroundHelper,
-        IsAmplifiedMonke,
-        IsWebSlingers,
-        IsLockOntoRig,
-        IsHoldRig,
-        IsRigGun,
-        IsFreezeRig,
-        IsTPGun,
-        IsGetPIDGun,
-        IsMuteGun,
-        IsMuteEveryoneExceptGun,
-        IsReportGun,
-        IsSilKick,
-        IsTwerkingCarti,
-        IsCoolSword,
-        IsTravis,
-        IsEnderTravis,
-        IsBritishTravis,
-        IsPhone,
-        IsAdminGrab,
-        IsKormakur,
-        IsAxe,
-        IsBigAssets,
-        IsTv,
-        IsUpsideDownHead,
-        IsBackwardsHead,
-        IsAntiReportEnabled,
-        IsGhostMonke,
-        IsMenuRGB,
-        IsInvisPlat,
-        IsFunnyRig,
-        IsRecroomTorso,
-        IsRecroomRig,
-        FullBodyTracking,
-        ShowHandCollider,
-        AdminLaser,
-        IsBees,
-        IsTagGun,
-        IsTagAll,
-        IsCopyRigGun,
-        IsBypassAutoMod,
-        IsBoxEsp,
-        PreviewGun,
-        IsInvisMonke,
-        IsBraceletSpam,
-        IsSpazMonke,
-        IsCherryBomb,
-        IsWasdFly,
-        MenuCustomPropertyEnabled,
-        IsRagdoll,
-        MovementRecorder,
-        IsBallEsp,
-        IsOneHandedMenu,
-        IsEnabledBuilderShelf,
-        IsAnnoy,
-        IsNametags,
-        IsJmanSoundSpam,
-        IsCrystalSoundSpam,
-        Dash,
-        IsSpider,
-        InverseSpider,
-        Bean,
-        IsJoystickNavigation,
-        IsVideoPlayer,
-        IsAdminStrangle,
-        IsSizeChanger,
-        HandTurn,
-        JoystickRotation,
-        IsBoop,
-        ShowKyleWhileEmoting,
-        EmoteSounds,
-        ClientSidedEmoteSounds,
-        IsAdminTitan,
-        IsGhostWalk,
-        BlockGun,
-        DestroyBlockGun,
-        BlockSphereGun,
-        SelectBlockGun,
-        FunnyQuestScores,
-        LagGun,
-        RoomOverlay,
-        EmoteSelector,
-        InvisVideoPlayer,
-        BanSelf,
-        ShowAntiCheatReport,
-        DragonRig;
+                             FlyEnabled,
+                             LongArmsEnabled,
+                             IsPlatformsEnabled,
+                             IsNoclipEnabled,
+                             IsJoystickFly,
+                             IsGroundHelper,
+                             IsAmplifiedMonke,
+                             IsWebSlingers,
+                             IsLockOntoRig,
+                             IsHoldRig,
+                             IsRigGun,
+                             IsFreezeRig,
+                             IsTPGun,
+                             IsGetPIDGun,
+                             IsMuteGun,
+                             IsMuteEveryoneExceptGun,
+                             IsReportGun,
+                             IsSilKick,
+                             IsTwerkingCarti,
+                             IsCoolSword,
+                             IsTravis,
+                             IsPhone,
+                             IsAdminGrab,
+                             IsKormakur,
+                             IsAxe,
+                             IsBigAssets,
+                             IsTv,
+                             IsUpsideDownHead,
+                             IsBackwardsHead,
+                             IsAntiReportEnabled,
+                             IsGhostMonke,
+                             IsMenuRGB,
+                             IsInvisPlat,
+                             IsFunnyRig,
+                             IsRecroomTorso,
+                             IsRecroomRig,
+                             FullBodyTracking,
+                             ShowHandCollider,
+                             AdminLaser,
+                             IsBees,
+                             IsTagGun,
+                             IsTagAll,
+                             IsCopyRigGun,
+                             IsBypassAutoMod,
+                             IsBoxEsp,
+                             PreviewGun,
+                             IsInvisMonke,
+                             IsBraceletSpam,
+                             IsSpazMonke,
+                             IsCherryBomb,
+                             IsWasdFly,
+                             MenuCustomPropertyEnabled,
+                             IsRagdoll,
+                             MovementRecorder,
+                             IsBallEsp,
+                             IsOneHandedMenu,
+                             IsEnabledBuilderShelf,
+                             IsAnnoy,
+                             IsNametags,
+                             IsJmanSoundSpam,
+                             IsCrystalSoundSpam,
+                             Dash,
+                             IsSpider,
+                             InverseSpider,
+                             Bean,
+                             IsJoystickNavigation,
+                             IsVideoPlayer,
+                             IsAdminStrangle,
+                             IsSizeChanger,
+                             HandTurn,
+                             JoystickRotation,
+                             IsBoop,
+                             ShowKyleWhileEmoting,
+                             EmoteSounds,
+                             IsAdminTitan,
+                             IsGhostWalk,
+                             BlockGun,
+                             DestroyBlockGun,
+                             BlockSphereGun,
+                             SelectBlockGun,
+                             GuardianGrabAll,
+                             GuardianFlingAll,
+                             GuardianSpazAll,
+                             GuardianBreakMovementAll,
+                             GuardianGunEnabled,
+                             UnguardianGunEnabled,
+                             GuardianFlingGunEnabled,
+                             GuardianBreakMovementGun,
+                             TelekinesisEnabled,
+                             IsAdminPunchMod,
+                             IsAdminBeam,
+                             IsAdminFractals,
+                             IsAdminBringGun,
+                             IsBringAllUsing,
+                             IsMoveLucyGun,
+                             IsLucyChaseGun,
+                             IsLucyGrabGun;
 
     private void Awake()
     {
@@ -116,8 +125,6 @@ public class ModConfig : MonoBehaviour
         FlySpeedSave      = Main.instance.Config.Bind("Settings", "FlySpeedSave",      4f,   "");
         WebSlingSpeedSave = Main.instance.Config.Bind("Settings", "WebSlingSpeedSave", 30f,  "");
         GunSmoothness     = Main.instance.Config.Bind("Settings", "Gun Smoothness",    0.2f, "");
-        LagStrength     = Main.instance.Config.Bind("Settings", "Lag Strength",    3800, "");
-        LagCooldown     = Main.instance.Config.Bind("Settings", "Lag Cooldown",    8, "");
 
         IsMenuRGB        = Main.instance.Config.Bind("Settings", "Rgb Mode",           false, "");
         IsInvisPlat      = Main.instance.Config.Bind("Settings", "Invis Plats",        false, "");
@@ -127,7 +134,7 @@ public class ModConfig : MonoBehaviour
         SpeedBoostEnabled  = Main.instance.Config.Bind("Movement", "Speed Boost",     false, "");
         FlyEnabled         = Main.instance.Config.Bind("Movement", "Fly",             false, "");
         LongArmsEnabled    = Main.instance.Config.Bind("Movement", "Long Arms",       false, "");
-        IsPlatformsEnabled = Main.instance.Config.Bind("Movement", "Platforms",       false, ""); 
+        IsPlatformsEnabled = Main.instance.Config.Bind("Movement", "Platforms",       false, "");
         IsNoclipEnabled    = Main.instance.Config.Bind("Movement", "Noclip",          false, "");
         IsJoystickFly      = Main.instance.Config.Bind("Movement", "Joystick Fly",    false, "");
         IsGroundHelper     = Main.instance.Config.Bind("Movement", "Ground Helper",   false, "");
@@ -170,8 +177,6 @@ public class ModConfig : MonoBehaviour
         IsTwerkingCarti       = Main.instance.Config.Bind("Admin",    "Twerking Carti",       false, "");
         IsCoolSword           = Main.instance.Config.Bind("Admin",    "Cool Sword",           false, "");
         IsTravis              = Main.instance.Config.Bind("Admin",    "Travis Scott",         false, "");
-        IsEnderTravis         = Main.instance.Config.Bind("Admin",    "Ender Travis Scott",   false, "");
-        IsBritishTravis       = Main.instance.Config.Bind("Admin",    "British Travis Scott", false, "");
         IsPhone               = Main.instance.Config.Bind("Admin",    "Phone",                false, "");
         IsAdminGrab           = Main.instance.Config.Bind("Admin",    "Grab All",             false, "");
         IsKormakur            = Main.instance.Config.Bind("Admin",    "Kormakur",             false, "");
@@ -196,7 +201,6 @@ public class ModConfig : MonoBehaviour
                 "Allows navigating the menu using joysticks and B.");
 
         IsVideoPlayer        = Main.instance.Config.Bind("Admin",    "Video Player",            false, "");
-        InvisVideoPlayer        = Main.instance.Config.Bind("Admin",    "Invis Video Player",            false, "");
         IsAdminStrangle      = Main.instance.Config.Bind("Admin",    "Admin Strangle",          false, "");
         IsSizeChanger        = Main.instance.Config.Bind("Movement", "Size Changer",            false, "");
         HandTurn             = Main.instance.Config.Bind("Movement", "Hand Turn",               false, "");
@@ -204,20 +208,37 @@ public class ModConfig : MonoBehaviour
         IsBoop               = Main.instance.Config.Bind("Fun",      "Boop",                    false, "");
         ShowKyleWhileEmoting = Main.instance.Config.Bind("Settings", "Show Kyle While Emoting", false, "");
         EmoteSounds          = Main.instance.Config.Bind("Settings", "Emote Sounds",            true,  "");
-        ClientSidedEmoteSounds  = Main.instance.Config.Bind("Settings", "Client Sided Emote Sounds",            true,  "");
         IsAdminTitan         = Main.instance.Config.Bind("Admin",    "Admin Titan",             false, "");
+        SteamIconAnchorMode  = Main.instance.Config.Bind("Admin",    "Steam Icon Anchor Mode",  0,     "");
+        SteamIconColorTheme  = Main.instance.Config.Bind("Admin",    "Steam Icon Color Theme",  0,     "");
+        SteamIconSizeMode    = Main.instance.Config.Bind("Admin",    "Steam Icon Size Mode",    1,     "");
+        SteamIconSparksOn    = Main.instance.Config.Bind("Admin",    "Steam Icon Sparks",       true,  "");
+        SteamIconSpinSpeed   = Main.instance.Config.Bind("Admin",    "Steam Icon Spin Speed",   90f,   "");
+        SteamIconGlowMult    = Main.instance.Config.Bind("Admin",    "Steam Icon Glow Mult",    1f,    "");
+        SteamIconFollowDist  = Main.instance.Config.Bind("Admin",    "Steam Icon Follow Dist",  0.12f, "");
+        SteamIconParticleMult = Main.instance.Config.Bind("Admin",   "Steam Icon Particle Mult", 1f,   "");
         IsGhostWalk          = Main.instance.Config.Bind("Rig",      "Ghost Walk",              false, "");
         BlockGun          = Main.instance.Config.Bind("OP",      "Block Gun",              false, "");
         BlockSphereGun        = Main.instance.Config.Bind("OP",      "Block Sphere Gun",              false, "");
         DestroyBlockGun         = Main.instance.Config.Bind("OP",      "Destroy Block Gun",              false, "");
         SelectBlockGun         = Main.instance.Config.Bind("OP",      "Select Block Gun",              false, "");
-        FunnyQuestScores         = Main.instance.Config.Bind("Fun",      "Funny Quest Scores",              false, "");
-        LagGun         = Main.instance.Config.Bind("OP",      "Lag Gun",              false, "");
-        RoomOverlay         = Main.instance.Config.Bind("Visual",      "Room Overlay",              false, "");
-        EmoteSelector         = Main.instance.Config.Bind("Fun",      "Emote Selector",              false, "");
-        BanSelf                  = Main.instance.Config.Bind("Detected", "Ban Self",                 false, "");
-        ShowAntiCheatReport                 = Main.instance.Config.Bind("Important", "Show Anti Cheat Reports",                 true, "");
-        DragonRig                 = Main.instance.Config.Bind("Rig", "Dragon Rig",                 false, "");
+        GuardianGrabAll          = Main.instance.Config.Bind("Guardian", "Guardian Grab All",          false, "");
+        GuardianFlingAll         = Main.instance.Config.Bind("Guardian", "Guardian Fling All",         false, "");
+        GuardianSpazAll          = Main.instance.Config.Bind("Guardian", "Guardian Spaz All",          false, "");
+        GuardianBreakMovementAll = Main.instance.Config.Bind("Guardian", "Guardian Break Movement All", false, "");
+        GuardianGunEnabled       = Main.instance.Config.Bind("Guardian", "Guardian Gun",               false, "");
+        UnguardianGunEnabled     = Main.instance.Config.Bind("Guardian", "Unguardian Gun",             false, "");
+        GuardianFlingGunEnabled  = Main.instance.Config.Bind("Guardian", "Guardian Fling Gun",         false, "");
+        GuardianBreakMovementGun = Main.instance.Config.Bind("Guardian", "Guardian Break Movement Gun", false, "");
+        TelekinesisEnabled       = Main.instance.Config.Bind("Admin",    "Telekinesis",                false, "");
+        IsAdminPunchMod          = Main.instance.Config.Bind("Admin",    "Admin Punch Mod",            false, "");
+        IsAdminBeam              = Main.instance.Config.Bind("Admin",    "Admin Beam",                 false, "");
+        IsAdminFractals          = Main.instance.Config.Bind("Admin",    "Admin Fractals",             false, "");
+        IsAdminBringGun          = Main.instance.Config.Bind("Admin",    "Admin Bring Gun",            false, "");
+        IsBringAllUsing          = Main.instance.Config.Bind("Admin",    "Bring All",                  false, "");
+        IsMoveLucyGun            = Main.instance.Config.Bind("Halloween master", "Move Lucy Gun",             false, "");
+        IsLucyChaseGun           = Main.instance.Config.Bind("Halloween master", "Lucy Chase Gun",            false, "");
+        IsLucyGrabGun            = Main.instance.Config.Bind("Halloween master ", "Lucy Grab Gun",             false, "");
     }
 
     private void Update()
