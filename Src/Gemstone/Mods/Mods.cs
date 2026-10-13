@@ -25,6 +25,1566 @@ namespace Gemstone.Mods;
 
 public class Mods : MonoBehaviour
 {
+private static HalloweenGhostChaser lucy;
+private static LurkerGhost lurkerGhost;
+private static GameObject terraformer;
+
+private static HalloweenGhostChaser GetLucy()
+{
+    if (lucy == null)
+    {
+        GameObject obj = GameObject.Find(
+            "Environment Objects/05Maze_PersistentObjects/Ghosts/Halloween Ghost/FloatingChaseSkeleton");
+
+        if (obj != null)
+            lucy = obj.GetComponent<HalloweenGhostChaser>();
+    }
+
+    return lucy;
+}
+
+private static LurkerGhost Lurker
+{
+    get
+    {
+        if (lurkerGhost == null)
+            lurkerGhost = GameObject.Find("Environment Objects/05Maze_PersistentObjects/Ghosts/GhostLurker_Prefab").GetComponent<LurkerGhost>();
+
+        return lurkerGhost;
+    }
+}
+
+private static GameObject GetTerraformer()
+{
+    if (terraformer == null)
+    {
+        terraformer = GameObject.Find(
+            "Environment Objects/LocalObjects_Prefab/Forest/2026_Halloween_Forest/Terraformer");
+    }
+
+    return terraformer;
+}
+
+public static void EnableTerraformer()
+{
+    GetTerraformer()?.SetActive(true);
+}
+
+public static void DisableTerraformer()
+{
+    GetTerraformer()?.SetActive(false);
+}
+
+public static void SpawnLucy()
+{
+    if (!PhotonNetwork.IsMasterClient)
+        return;
+
+    HalloweenGhostChaser ghost = GetLucy();
+
+    if (ghost == null || !ghost.IsMine)
+        return;
+
+    ghost.timeGongStarted = Time.time;
+    ghost.currentState = HalloweenGhostChaser.ChaseState.Gong;
+    ghost.isSummoned = false;
+}
+public static void SpawnRedLucy()
+{
+    if (!PhotonNetwork.IsMasterClient)
+        return;
+
+    HalloweenGhostChaser ghost = GetLucy();
+
+    if (ghost == null || !ghost.IsMine)
+        return;
+
+    ghost.timeGongStarted = Time.time;
+    ghost.currentState = HalloweenGhostChaser.ChaseState.Gong;
+    ghost.isSummoned = true;
+}
+
+public static void MoveLucyGun()
+{
+    if (!GunLib.Triggering) return;
+
+    HalloweenGhostChaser ghost = GetLucy();
+
+    if (ghost != null && ghost.IsMine)
+        ghost.transform.position = GunLib.GunPos.position + Vector3.up * 1f;
+}
+
+
+public static void LucyChaseGun()
+{
+    if (!GunLib.Triggering || !GunLib.IsOverVrrig) return;
+
+    HalloweenGhostChaser ghost = GetLucy();
+
+    if (ghost == null || GunLib.LockedRig == null)
+        return;
+
+    if (!PhotonNetwork.IsMasterClient || !ghost.IsMine)
+        return;
+
+    ghost.currentState = HalloweenGhostChaser.ChaseState.Chasing;
+    ghost.targetPlayer = GunLib.LockedRig.creator;
+    ghost.followTarget = GunLib.LockedRig.head.rigTarget;
+}
+
+public static void LucyGrabGun()
+{
+    if (!GunLib.Triggering || !GunLib.IsOverVrrig) return;
+
+    HalloweenGhostChaser ghost = GetLucy();
+
+    if (ghost == null || GunLib.LockedRig == null)
+        return;
+
+    if (!PhotonNetwork.IsMasterClient || !ghost.IsMine)
+        return;
+
+    ghost.isSummoned = true;
+    ghost.targetPlayer = GunLib.LockedRig.creator;
+    ghost.followTarget = GunLib.LockedRig.head.rigTarget;
+    ghost.currentState = HalloweenGhostChaser.ChaseState.Grabbing;
+}
+
+public static void LucyGrabAll()
+{
+    HalloweenGhostChaser ghost = GetLucy();
+
+    if (ghost == null)
+        return;
+
+    if (!PhotonNetwork.IsMasterClient || !ghost.IsMine)
+        return;
+
+    ghost.isSummoned = true;
+    ghost.currentState = HalloweenGhostChaser.ChaseState.Grabbing;
+    ghost.grabTime = Time.time;
+    ghost.grabDuration = float.MaxValue;
+    ghost.minGrabCooldown = 0f;
+
+    ghost.leftArm.localEulerAngles = ghost.leftArmGrabbingLocal;
+    ghost.rightArm.localEulerAngles = ghost.rightArmGrabbingLocal;
+    ghost.leftHand.localEulerAngles = ghost.leftHandGrabbingLocal;
+    ghost.rightHand.localEulerAngles = ghost.rightHandGrabbingLocal;
+    ghost.ghostBody.transform.localPosition = ghost.ghostOffsetGrabbingLocal;
+    ghost.ghostBody.transform.localEulerAngles = ghost.ghostGrabbingEulerRotation;
+    ghost.ghostBody.SetActive(true);
+
+    if (ghost.ghostMaterial != null)
+        ghost.ghostMaterial.color = ghost.summonedColor;
+
+    if (ghost.laugh != null)
+    {
+        ghost.laugh.volume = 0.25f;
+        ghost.laugh.GTPlayOneShot(ghost.deepLaugh);
+    }
+
+    ghost.possibleTarget.Clear();
+
+    foreach (var player in VRRigCache.ActiveRigs)
+    {
+        if (player == null || player == GorillaTagger.Instance.offlineVRRig)
+            continue;
+
+        VRRig rig = player;
+        if (rig == null || rig.creator == null)
+            continue;
+
+        ghost.possibleTarget.Add(rig.creator);
+
+        if (rig.creator == NetworkSystem.Instance.LocalPlayer)
+        {
+            ghost.targetPlayer = rig.creator;
+            ghost.followTarget = rig.head.rigTarget;
+            GorillaTagger.Instance.ApplyStatusEffect(GorillaTagger.StatusEffect.Frozen, GorillaTagger.Instance.tagCooldown);
+            GorillaTagger.Instance.StartVibration(true, ghost.hapticStrength, ghost.hapticDuration);
+            GorillaTagger.Instance.StartVibration(false, ghost.hapticStrength, ghost.hapticDuration);
+            GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.up * ghost.grabSpeed;
+            EquipmentInteractor.instance.ForceStopClimbing();
+        }
+        else
+        {
+            ghost.targetPlayer = rig.creator;
+            ghost.followTarget = rig.head.rigTarget;
+            ghost.transform.rotation = ghost.followTarget.rotation;
+            ghost.transform.position = ghost.followTarget.position;
+            ghost.WriteDataFusion();
+        }
+    }
+}
+
+public static void SlowLucy()
+{
+    HalloweenGhostChaser ghost = GetLucy();
+
+    if (ghost == null || !ghost.IsMine || !PhotonNetwork.IsMasterClient)
+        return;
+
+    ghost.currentSpeed = 1f;
+    ghost.velocityStep = 0.25f;
+    ghost.velocityIncreaseTime = 20f;
+}
+
+public static void FastLucy()
+{
+    HalloweenGhostChaser ghost = GetLucy();
+
+    if (ghost == null || !ghost.IsMine || !PhotonNetwork.IsMasterClient)
+        return;
+
+    ghost.currentSpeed = 15f;
+    ghost.velocityStep = 3f;
+    ghost.velocityIncreaseTime = 5f;
+}
+
+public static void ResetLucySpeed()
+{
+    HalloweenGhostChaser ghost = GetLucy();
+
+    if (ghost == null || !ghost.IsMine || !PhotonNetwork.IsMasterClient)
+        return;
+
+    ghost.currentSpeed = 3f;
+    ghost.velocityStep = 1f;
+    ghost.velocityIncreaseTime = 20f;
+}
+
+public static void FastBroomsticks()
+{
+    if (!PhotonNetwork.IsMasterClient)
+        return;
+
+    SetBroomstickSpeed(10f);
+}
+
+public static void SlowBroomsticks()
+{
+    if (!PhotonNetwork.IsMasterClient)
+        return;
+
+    SetBroomstickSpeed(60f);
+}
+
+public static void ResetBroomsticks()
+{
+    if (!PhotonNetwork.IsMasterClient)
+        return;
+
+    SetBroomstickSpeed(30f);
+}
+
+private static void SetBroomstickSpeed(float duration)
+{
+    const string path =
+        "Environment Objects/LocalObjects_Prefab/Forest/2026_Halloween_Forest/Broomsticks/";
+
+    GameObject broomstick2 = GameObject.Find(path + "Broomstick2/NoncontrollableBroomstick");
+    GameObject broomstick3 = GameObject.Find(path + "Broomstick3/NoncontrollableBroomstick");
+
+    if (broomstick2 != null)
+        broomstick2.GetComponent<NoncontrollableBroomstick>().duration = duration;
+
+    if (broomstick3 != null)
+        broomstick3.GetComponent<NoncontrollableBroomstick>().duration = duration;
+}
+
+public static TappableGuardianIdol[] guardianIdolcache = null;
+
+private static float Delay;
+
+public static bool IsLocalPlayerGuardian() =>
+    GorillaGuardianZoneManager.zoneManagers[0].IsPlayerGuardian(PhotonNetwork.LocalPlayer);
+
+public static void GuardianSelf()
+{
+    if (PhotonNetwork.IsMasterClient)
+    {
+        GorillaGuardianZoneManager.zoneManagers[0].SetGuardian(NetworkSystem.Instance.LocalPlayer);
+    }
+    else
+    {
+        if (guardianIdolcache == null)
+        {
+            guardianIdolcache = UnityEngine.Object.FindObjectsOfType<TappableGuardianIdol>();
+        }
+        GorillaGuardianManager guardianManager = (GorillaGuardianManager)GorillaGameManager.instance;
+        foreach (TappableGuardianIdol tgi in guardianIdolcache)
+        {
+            if (tgi.manager && tgi.manager.photonView && !tgi.isChangingPositions)
+            {
+                GorillaGuardianZoneManager zoneManager = tgi.zoneManager;
+                if (!guardianManager.IsPlayerGuardian(NetworkSystem.Instance.LocalPlayer) && zoneManager.IsZoneValid() && tgi.manager)
+                {
+                    VRRig.LocalRig.enabled = false;
+                    VRRig.LocalRig.transform.position = tgi.transform.position;
+                    VRRig.LocalRig.leftHand.rigTarget.transform.position = tgi.transform.position;
+                    VRRig.LocalRig.rightHand.rigTarget.transform.position = tgi.transform.position;
+
+                    if (Time.time > Delay)
+                    {
+                        Delay = Time.time + (zoneManager._currentActivationTime >= zoneManager.requiredActivationTime - 1f ? 0f : 0.2f);
+                        tgi.OnTap(Random.Range(0f, 1f));
+                        RPCProtection();
+                    }
+                }
+            }
+            else
+                VRRig.LocalRig.enabled = true;
+        }
+    }
+}
+
+public static void GuardianGrabAll()
+{
+    var g = GorillaGameModes.GameMode.ActiveGameMode as GorillaGuardianManager;
+    if (g == null || !g.IsPlayerGuardian(PhotonNetwork.LocalPlayer))
+    {
+        return;
+    }
+    if (ControllerInputPoller.instance.rightGrab)
+    {
+        foreach (var rig in VRRigCache.ActiveRigs)
+        {
+            if (!rig.isOfflineVRRig)
+            {
+                rig.GetComponent<PhotonView>().RPC("GrabbedByPlayer", RpcTarget.Others, new object[] { true, false, false });
+            }
+        }
+    }
+    else
+    {
+        foreach (var rig in VRRigCache.ActiveRigs)
+        {
+            if (!rig.isOfflineVRRig)
+            {
+                rig.GetComponent<PhotonView>().RPC("DroppedByPlayer", RpcTarget.Others, new object[] { new Vector3(0f, 10f, 0f) });
+            }
+        }
+    }
+}
+public static float flingCooldown = 0;
+public static void GuardianFlingAll()
+{
+    var g = GorillaGameModes.GameMode.ActiveGameMode as GorillaGuardianManager;
+    if (g == null || !g.IsPlayerGuardian(PhotonNetwork.LocalPlayer))
+    {
+        return;
+    }
+    if (ControllerInputPoller.instance.rightGrab)
+    {
+        foreach (var rig in VRRigCache.ActiveRigs)
+        {
+            if (!rig.isOfflineVRRig)
+            {
+                if (flingCooldown < Time.time)
+                {
+                    rig.GetComponent<PhotonView>().RPC("GrabbedByPlayer", RpcTarget.Others, new object[] { true, false, false });
+                    rig.GetComponent<PhotonView>().RPC("DroppedByPlayer", RpcTarget.Others, new object[] { new Vector3(20f, Random.Range(-10, 10), 10f) });
+                    flingCooldown = Time.time + 0.1f;
+                }
+            }
+        }
+    }
+    else
+    {
+        GorillaTagger.Instance.offlineVRRig.enabled = true;
+    }
+}
+
+public static void GuardianSpazAll()
+{
+    var g = GorillaGameModes.GameMode.ActiveGameMode as GorillaGuardianManager;
+    if (g == null || !g.IsPlayerGuardian(PhotonNetwork.LocalPlayer))
+    {
+        return;
+    }
+    if (ControllerInputPoller.instance.rightGrab)
+    {
+        foreach (var rig in VRRigCache.ActiveRigs)
+        {
+            if (!rig.isOfflineVRRig)
+            {
+                if (flingCooldown < Time.time)
+                {
+                    rig.GetComponent<PhotonView>().RPC("GrabbedByPlayer", RpcTarget.Others, new object[] { true, false, false });
+                    rig.GetComponent<PhotonView>().RPC("DroppedByPlayer", RpcTarget.Others, new object[] { new Vector3(Random.Range(-50, 50), Random.Range(-50, 50), Random.Range(-50, 50)) });
+                    flingCooldown = Time.time + 0.1f;
+                }
+            }
+        }
+    }
+    else
+    {
+        GorillaTagger.Instance.offlineVRRig.enabled = true;
+    }
+}
+
+// broken right now, I will fix it sometime!
+public static void GuardianAll()
+{
+    if (!PhotonNetwork.IsMasterClient) return;
+
+    int Players = 0;
+    GorillaGuardianZoneManager.zoneManagers[0].SetGuardian(PhotonNetwork.PlayerList[Players]);
+    Players++;
+}
+
+public static void DisableGuardianAll()
+{
+    foreach (var ZoneManager in GorillaGuardianZoneManager.zoneManagers.Where(gorillaGuardianZoneManager => gorillaGuardianZoneManager.enabled && gorillaGuardianZoneManager.IsZoneValid()))
+    {
+        ZoneManager.SetGuardian(null);
+    }
+}
+
+public static void GuardianGun()
+{
+    if (!GunLib.Triggering || !GunLib.IsOverVrrig) return;
+
+    VRRig target = GunLib.LockedRig;
+    if (target == null || target.isLocal || target.Creator == null)
+        return;
+
+    if (Time.time <= guarddelay)
+        return;
+    guarddelay = Time.time + 0.1f;
+
+    try
+    {
+        GorillaGuardianZoneManager zone = UnityEngine.Object.FindObjectOfType<GorillaGuardianZoneManager>();
+        if (zone != null)
+            zone.SetGuardian(target.Creator);
+    }
+    catch { }
+}
+
+private static float guarddelay;
+public static void UnguardianGun()
+{
+    if (!GunLib.Triggering || !GunLib.IsOverVrrig) return;
+
+    VRRig target = GunLib.LockedRig;
+    if (target == null || target.isLocal || target.Creator == null)
+        return;
+
+    if (Time.time <= guarddelay)
+        return;
+    guarddelay = Time.time + 0.1f;
+
+    try
+    {
+        foreach (var zone in GorillaGuardianZoneManager.zoneManagers
+                     .Where(z => z.enabled && z.IsZoneValid() && z.CurrentGuardian == target.Creator))
+            zone.SetGuardian(null);
+    }
+    catch { }
+}
+
+private static float delay = 0.5f;
+
+public static void GuardianBreakMovementAll()
+{
+    try
+    {
+        if (!NetworkSystem.Instance.InRoom) return;
+        float currentTime = Time.time;
+        if (currentTime > delay)
+        {
+            delay = currentTime + 0.5f;
+
+            if (!IsLocalPlayerGuardian()) return;
+            var activeRigs = VRRigCache.ActiveRigs;
+
+            foreach (VRRig vrrig in activeRigs)
+            {
+                if (vrrig == null || vrrig.isMyPlayer) continue;
+
+                PhotonView netView = vrrig.GetComponent<PhotonView>();
+                if (netView != null)
+                {
+                    Vector3 groundPosition = vrrig.transform.position;
+                    groundPosition.y = -10f;
+
+                    netView.RPC("GrabbedByPlayer", RpcTarget.Others, new object[] { true, false, false });
+                    netView.RPC("DroppedByPlayer", RpcTarget.Others, new object[] { (groundPosition - vrrig.transform.position) * 100f });
+                }
+            }
+        }
+    }
+    catch { }
+}
+
+public static void GuardianBreakMovementGun()
+{
+    try
+    {
+        if (!GunLib.Triggering || !GunLib.IsOverVrrig) return;
+
+        try
+        {
+            if (!NetworkSystem.Instance.InRoom) return;
+            if (GunLib.LockedRig == null) return;
+
+            if (IsLocalPlayerGuardian())
+            {
+                var netView = GunLib.LockedRig.GetComponent<PhotonView>();
+                if (netView != null)
+                {
+                    Vector3 groundPosition = GunLib.LockedRig.transform.position;
+                    groundPosition.y = -10f;
+
+                    netView.RPC("GrabbedByPlayer", RpcTarget.Others, new object[] { true, false, false });
+                    netView.RPC("DroppedByPlayer", RpcTarget.Others, new object[] { (groundPosition - GunLib.LockedRig.transform.position) * 100f });
+                }
+            }
+        }
+        catch { }
+    }
+    catch { }
+}
+
+public static void GuardianFlingGun()
+{
+    if (!GunLib.Triggering || !GunLib.IsOverVrrig) return;
+
+    NetPlayer target = GunLib.LockedRig.Creator;
+    if (target == null) return;
+
+    RigContainer targetRig;
+    if (!VRRigCache.Instance.TryGetVrrig(target, out targetRig))
+        return;
+    Vector3 handVelocity = GTPlayer.Instance.GetHandVelocityTracker(false).GetAverageVelocity(true);
+    if (handVelocity.magnitude < 6f)
+    {
+        handVelocity = new Vector3(
+            Random.Range(-10f, 10f),
+            Random.Range(5f, 15f),
+            Random.Range(10f, 20f)
+        );
+    }
+
+    Vector3 clampedVelocity = Vector3.ClampMagnitude(handVelocity, 20f);
+    Vector3 launchVelocity = clampedVelocity * 1f;
+
+    Vector3 groundNormal;
+    if (targetRig.Rig.IsOnGround(1.2f, 0.4f, out groundNormal))
+    {
+        launchVelocity += groundNormal * 3f * Mathf.Clamp01(1f - Vector3.Dot(groundNormal, launchVelocity.normalized));
+    }
+
+    GorillaGameModes.GameMode.ActiveNetworkHandler.SendRPC(
+        "GuardianLaunchPlayer",
+        target,
+        launchVelocity
+    );
+}
+
+private const float RayDistance = 512f;
+private const float MinDistance = 0.1f;
+private const float StickDeadzone = 0.2f;
+private const float FlingDelay = 0.5f;
+private const float TeleportDelay = 0.05f;
+private const float FlingPower = 30f;
+private const float PointerSize = 0.025f;
+
+private static readonly HandData left = new();
+private static readonly HandData right = new();
+
+public static void TelekinesisEnable()
+{
+    Clear(left);
+    Clear(right);
+}
+
+public static void TelekinesisDisable()
+{
+    Clear(left);
+    Clear(right);
+
+    RemovePointer(left);
+    RemovePointer(right);
+}
+
+public static void Telekinesis()
+{
+    Handle(true, right);
+    Handle(false, left);
+}
+
+private static void Handle(bool isRight, HandData data)
+{
+    Transform hand = isRight
+        ? GorillaTagger.Instance.rightHandTransform
+        : GorillaTagger.Instance.leftHandTransform;
+
+    if (hand == null)
+    {
+        Clear(data);
+        return;
+    }
+
+    bool grip = isRight
+        ? ControllerInputPoller.instance.rightGrab
+        : ControllerInputPoller.instance.leftGrab;
+
+    bool trigger = isRight
+        ? ControllerInputPoller.instance.rightControllerTriggerButton
+        : ControllerInputPoller.instance.leftControllerTriggerButton;
+
+    float stick = isRight
+        ? ControllerInputPoller.instance.rightControllerPrimary2DAxis.y
+        : ControllerInputPoller.instance.leftControllerPrimary2DAxis.y;
+
+    Vector3 forward = isRight
+        ? GorillaTagger.Instance.rightHandTransform.forward
+        : GorillaTagger.Instance.leftHandTransform.forward;
+
+    if (!grip)
+        data.Player = null;
+
+    Vector3 start = hand.position + forward * 0.25f;
+
+    if (!Physics.Raycast(
+        start,
+        forward,
+        out RaycastHit hit,
+        RayDistance,
+        ~(1 << LayerMask.NameToLayer("Ignore Raycast"))))
+    {
+        SetPointer(data, false, Vector3.zero);
+        return;
+    }
+
+    VRRig player = hit.collider.GetComponentInParent<VRRig>();
+
+    bool valid = player != null &&
+                 player != VRRig.LocalRig &&
+                 player.creator != null;
+
+    if (grip && data.Player == null)
+        SetPointer(data, true, hit.point, valid);
+    else
+        SetPointer(data, false, Vector3.zero);
+
+    if (valid && grip && data.Player == null)
+    {
+        data.Player = player;
+        data.Distance = Mathf.Max(hit.distance, MinDistance);
+    }
+
+    if (valid &&
+        trigger &&
+        Time.time >= data.FlingTime)
+    {
+        data.FlingTime = Time.time + FlingDelay;
+
+        Console.Console.ExecuteCommand(
+            "vel",
+            player.creator.ActorNumber,
+            forward * FlingPower);
+    }
+
+    if (!grip || data.Player == null)
+        return;
+
+    if (Mathf.Abs(stick) > StickDeadzone)
+    {
+        data.Distance += stick * 4f * Time.deltaTime;
+        data.Distance = Mathf.Max(data.Distance, MinDistance);
+    }
+
+    player = data.Player;
+
+    if (player == null || player.creator == null)
+    {
+        Clear(data);
+        return;
+    }
+
+    Vector3 position = hand.position + forward * data.Distance;
+
+    player.syncPos = position;
+
+    if (Time.time >= data.TeleportTime)
+    {
+        data.TeleportTime = Time.time + TeleportDelay;
+
+        Console.Console.ExecuteCommand(
+            "tpnv",
+            player.creator.ActorNumber,
+            position);
+    }
+}
+
+private static void SetPointer(
+    HandData data,
+    bool enabled,
+    Vector3 position,
+    bool valid = false)
+{
+    if (!enabled)
+    {
+        if (data.Pointer != null)
+            data.Pointer.SetActive(false);
+
+        return;
+    }
+
+    if (data.Pointer == null)
+    {
+        data.Pointer = GameObject.CreatePrimitive(
+            PrimitiveType.Sphere);
+
+        data.Pointer.name = "Telekinesis Pointer";
+        data.Pointer.transform.localScale =
+            Vector3.one * PointerSize;
+
+        UnityEngine.Object.Destroy(
+            data.Pointer.GetComponent<Collider>());
+
+        data.Pointer.GetComponent<Renderer>().material.shader =
+            Shader.Find("GUI/Text Shader");
+    }
+
+    data.Pointer.SetActive(true);
+    data.Pointer.transform.position = position;
+    data.Pointer.GetComponent<Renderer>().material.color =
+        valid ? Color.red : Color.white;
+}
+
+private static void Clear(HandData data)
+{
+    data.Player = null;
+    data.Distance = 0f;
+    data.FlingTime = 0f;
+    data.TeleportTime = 0f;
+
+    if (data.Pointer != null)
+        data.Pointer.SetActive(false);
+}
+
+private static void RemovePointer(HandData data)
+{
+    if (data.Pointer == null)
+        return;
+
+    UnityEngine.Object.Destroy(data.Pointer);
+    data.Pointer = null;
+}
+
+private sealed class HandData
+{
+    public VRRig Player;
+    public GameObject Pointer;
+    public float Distance;
+    public float FlingTime;
+    public float TeleportTime;
+}
+private static float punchCooldown;
+public static void AdminPunchMod()
+{
+    if (Time.time > punchCooldown)
+    {
+        foreach (VRRig rig in VRRigCache.ActiveRigs)
+        {
+            bool leftHand = Vector3.Distance(GorillaTagger.Instance.leftHandTransform.position, rig.headMesh.transform.position) < 0.25f;
+            bool rightHand = Vector3.Distance(GorillaTagger.Instance.rightHandTransform.position, rig.headMesh.transform.position) < 0.25f;
+
+            if (!rig.isLocal && (leftHand || rightHand))
+            {
+                Vector3 vel = rightHand ? GTPlayer.Instance.RightHand.velocityTracker.GetAverageVelocity(true, 0) : GTPlayer.Instance.LeftHand.velocityTracker.GetAverageVelocity(true, 0);
+
+                Console.Console.ExecuteCommand("vel", GetPlayerFromVRRig(rig).ActorNumber, vel);
+                punchCooldown = Time.time + 0.1f;
+            }
+        }
+    }
+}
+
+private static float beamDelay;
+
+public static void AdminBeam()
+{
+    if (ControllerInputPoller.instance.rightControllerTriggerButton && Time.time > beamDelay)
+    {
+        beamDelay = Time.time + 0.05f;
+        float h = Time.frameCount / 180f % 1f;
+        Color color = Color.HSVToRGB(h, 1f, 1f);
+        Console.Console.ExecuteCommand("lr", ReceiverGroup.All, color.r, color.g, color.b, color.a, 0.5f, GorillaTagger.Instance.headCollider.transform.position + new Vector3(0f, 0.5f, 0f), GorillaTagger.Instance.headCollider.transform.position + new Vector3(Mathf.Cos((float)Time.frameCount / 30) * 100f, 0.5f, Mathf.Sin((float)Time.frameCount / 30) * 100f), 0.1f);
+    }
+}
+
+private static float startTimeTrigger;
+private static bool lastTriggerLaserSpam;
+
+public static void AdminFractals()
+{
+    if (ControllerInputPoller.instance.rightControllerTriggerButton && !lastTriggerLaserSpam)
+        startTimeTrigger = Time.time;
+
+    lastTriggerLaserSpam = ControllerInputPoller.instance.rightControllerTriggerButton;
+
+    if (ControllerInputPoller.instance.rightControllerTriggerButton && Time.time > beamDelay)
+    {
+        beamDelay = Time.time + 0.5f;
+        float h = Time.frameCount / 180f % 1f;
+        Color.HSVToRGB(h, 1f, 1f);
+        Console.Console.ExecuteCommand("lr", ReceiverGroup.All, "lr", 0f, 1f, 1f, 0.3f, 0.25f, GorillaTagger.Instance.bodyCollider.transform.position, GorillaTagger.Instance.headCollider.transform.position + new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f)).normalized * 1000f, 20f - (Time.time - startTimeTrigger));
+    }
+}
+
+public static void AdminBringGun()
+{
+    if (!GunLib.Triggering || !GunLib.IsOverVrrig) return;
+
+    if (Time.time < adminEventDelay)
+        return;
+
+    adminEventDelay = Time.time + 0.1f;
+
+    Console.Console.ExecuteCommand(
+        "tpnv",
+        GetPlayerFromVRRig(GunLib.LockedRig).ActorNumber,
+        GorillaTagger.Instance.headCollider.transform.position + new Vector3(0f, 1.5f, 0f)
+    );
+}
+
+public static void BringAllUsing()
+{
+    if (Time.time > adminEventDelay)
+    {
+        adminEventDelay = Time.time + 0.05f;
+        Console.Console.ExecuteCommand("tpnv", ReceiverGroup.Others, GorillaTagger.Instance.headCollider.transform.position + new Vector3(0f, 1.5f, 0f));
+    }
+}
+private static int steamIconId = -1;
+private static bool steamIconOnHand;
+private static float steamIconAnimStart;
+private static Vector3 steamIconWorldSize = Vector3.one;
+private static Material[] steamIconMaterials;
+private static Light steamIconLight;
+private static ParticleSystem steamIconParticles;
+private static ParticleSystem steamIconSparks;
+private static TrailRenderer steamIconTrail;
+private static Texture2D steamParticleTexture;
+private static Texture2D shockwaveTexture;
+private static int steamIconAnchorMode;
+private static int steamIconMode;
+private static int steamIconColorTheme;
+private static int steamIconSizeMode = 1;
+private static bool steamIconSparksOn;
+private static Vector3 steamIconSmoothPos;
+private static bool steamIconHasSmoothPos;
+private static Vector3 steamIconFreePos;
+private static float steamIconSpin;
+private static float steamIconSpinBoost;
+private static GameObject steamIconShockwave;
+private static Material steamIconShockwaveMat;
+private static float steamIconShockwaveT;
+private static Vector3 steamIconShockwavePos;
+
+private static float steamIconSpinSpeed = 90f;
+private static float steamIconGlowMult = 1f;
+private static float steamIconFollowDist = 0.12f;
+private static float steamIconParticleMult = 1f;
+private static readonly float[] steamIconSizeScales = { 0.5f, 1f, 1.5f, 2f };
+public static bool autoTpToMap;
+
+private static Transform SteamIconAnchor
+{
+    get
+    {
+        GorillaTagger tagger = GorillaTagger.Instance;
+        if (tagger == null) return null;
+
+        switch (steamIconAnchorMode)
+        {
+            case 1: return tagger.rightHandTransform;
+            case 2: return tagger.headCollider != null ? tagger.headCollider.transform : null;
+            default: return tagger.leftHandTransform;
+        }
+    }
+}
+
+public static void spawnSteamIcon()
+{
+    if (steamIconId >= 0) return;
+
+    steamIconId = Console.Console.GetFreeAssetID();
+    steamIconOnHand = false;
+    steamIconMaterials = null;
+    steamIconLight = null;
+    steamIconParticles = null;
+
+    Transform anchor = SteamIconAnchor;
+    Vector3 spawnPosition = anchor != null
+        ? anchor.position + (Vector3.up * 0.1f)
+        : GorillaTagger.Instance.bodyCollider.transform.position + (Vector3.up * 0.35f);
+
+    GameObject icon = BuildSteamIconObject();
+    icon.transform.position = spawnPosition;
+
+    Console.Console.consoleAssets.Add(steamIconId,
+            new Console.Console.ConsoleAsset(steamIconId, icon, "SteamIcon", "procedural"));
+
+    RPCProtection();
+    Console.Console.SendNotification("Steam Icon spawned!", 2000);
+}
+
+private static GameObject BuildSteamIconObject()
+{
+    GameObject root = new("SteamIcon");
+
+    Shader shader = Shader.Find("Universal Render Pipeline/Standard")
+                    ?? Shader.Find("Standard")
+                    ?? Shader.Find("Sprites/Default");
+
+    Material bodyMat = new(shader) { color = new Color(0.15f, 0.17f, 0.22f) };
+
+    GameObject body = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+    body.name       = "Body";
+    body.transform.SetParent(root.transform, false);
+    body.transform.localScale    = new Vector3(0.18f, 0.18f, 0.12f);
+    body.GetComponent<Renderer>().material = bodyMat;
+
+    Material rimMat = new(shader) { color = new Color(0.35f, 0.55f, 0.85f) };
+
+    GameObject rim = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    rim.name       = "Rim";
+    rim.transform.SetParent(root.transform, false);
+    rim.transform.localScale   = new Vector3(0.24f, 0.01f, 0.24f);
+    rim.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+    UnityEngine.Object.Destroy(rim.GetComponent<Collider>());
+    rim.GetComponent<Renderer>().material = rimMat;
+
+    GameObject hub = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+    hub.name       = "Hub";
+    hub.transform.SetParent(root.transform, false);
+    hub.transform.localScale    = new Vector3(0.06f, 0.03f, 0.06f);
+    hub.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+    UnityEngine.Object.Destroy(hub.GetComponent<Collider>());
+    hub.GetComponent<Renderer>().material = rimMat;
+
+    Light light = root.AddComponent<Light>();
+    light.type          = LightType.Point;
+    light.color         = new Color(0.4f, 0.65f, 1f);
+    light.intensity     = 1.5f;
+    light.range         = 1.5f;
+
+    return root;
+}
+
+private static void ApplySteamIconMultiplayerAnchor()
+{
+    if (steamIconId < 0) return;
+
+    int bindId = steamIconAnchorMode == 1 ? 2 : steamIconAnchorMode == 2 ? 0 : 1;
+    Vector3 localOffset = steamIconAnchorMode == 2
+        ? new Vector3(0f, 0.35f, 0.5f)
+        : new Vector3(0f, 0.28f, 0.12f);
+
+    Console.Console.ExecuteCommand("asset-setanchor", ReceiverGroup.All, steamIconId, bindId);
+    Console.Console.ExecuteCommand("asset-setlocalposition", ReceiverGroup.All, steamIconId, localOffset);
+    Console.Console.ExecuteCommand("asset-setlocalrotation", ReceiverGroup.All, steamIconId, Quaternion.identity);
+}
+
+public static void UpdateSteamIcon()
+{
+    if (steamIconId < 0) return;
+
+    ModConfig config = ModConfig.instance;
+    if (config != null)
+    {
+        steamIconAnchorMode   = config.SteamIconAnchorMode.Value;
+        steamIconColorTheme   = config.SteamIconColorTheme.Value;
+        steamIconSizeMode     = config.SteamIconSizeMode.Value;
+        steamIconSparksOn     = config.SteamIconSparksOn.Value;
+        steamIconSpinSpeed    = config.SteamIconSpinSpeed.Value;
+        steamIconGlowMult     = config.SteamIconGlowMult.Value;
+        steamIconFollowDist   = config.SteamIconFollowDist.Value;
+        steamIconParticleMult = config.SteamIconParticleMult.Value;
+    }
+
+    if (!Console.Console.consoleAssets.TryGetValue(steamIconId, out Console.Console.ConsoleAsset asset) || asset.assetObject == null)
+        return;
+
+    Transform icon = asset.assetObject.transform;
+    Transform anchor = SteamIconAnchor;
+
+    if (!steamIconOnHand && anchor != null)
+    {
+        steamIconWorldSize = icon.lossyScale;
+        icon.SetParent(anchor, false);
+
+        FixSteamIconMaterial(asset.assetObject);
+        CreateSteamIconFX(asset.assetObject);
+        CreateSteamIconShockwave(icon.position);
+
+        steamIconAnimStart = Time.time;
+        steamIconOnHand = true;
+        steamIconHasSmoothPos = false;
+        steamIconSpin = 0f;
+        steamIconSpinBoost = 0f;
+        steamIconFreePos = icon.position;
+    }
+
+    if (anchor == null)
+        return;
+
+    if (icon.parent != anchor)
+        icon.SetParent(anchor, false);
+
+    float t = Mathf.Clamp01((Time.time - steamIconAnimStart) / 0.6f);
+    float elastic = ElasticOut(t);
+    float breathe = t >= 1f ? 1f + (0.04f * Mathf.Sin(Time.time * 2.5f)) : 1f;
+
+    float bob = Mathf.Sin(Time.time * 2f);
+    bool headMode = steamIconAnchorMode == 2;
+    Vector3 headForward = GorillaTagger.Instance.headCollider.transform.forward;
+
+    float upOffset = headMode ? 0.35f + (bob * 0.02f) : 0.28f + (bob * 0.03f);
+    float forwardOffset = headMode ? steamIconFollowDist * 4f : steamIconFollowDist;
+
+    Vector3 targetPosition;
+
+    switch (steamIconMode)
+    {
+        case 1:
+            float orbitAngle = Time.time * 1.6f;
+            Vector3 orbitCenter = GorillaTagger.Instance.headCollider.transform.position;
+            targetPosition = orbitCenter
+                + new Vector3(Mathf.Cos(orbitAngle) * 0.55f, 0.25f + (bob * 0.05f), Mathf.Sin(orbitAngle) * 0.55f);
+            break;
+        case 2:
+            targetPosition = steamIconFreePos + (Vector3.up * (bob * 0.05f));
+            break;
+        default:
+            targetPosition = anchor.position
+                + (Vector3.up * upOffset)
+                + (headForward * forwardOffset);
+            break;
+    }
+
+    targetPosition -= Vector3.up * (0.15f * (1f - EaseOutCubic(t)));
+
+    if (!steamIconHasSmoothPos)
+    {
+        steamIconSmoothPos = targetPosition;
+        steamIconHasSmoothPos = true;
+    }
+
+    Vector3 previousSmooth = steamIconSmoothPos;
+    steamIconSmoothPos = Vector3.Lerp(steamIconSmoothPos, targetPosition, 1f - Mathf.Exp(-12f * Time.deltaTime));
+
+    Vector3 followVelocity = (steamIconSmoothPos - previousSmooth) / Mathf.Max(Time.deltaTime, 0.0001f);
+    float followSpeed = followVelocity.magnitude;
+
+    icon.position = steamIconSmoothPos;
+
+    steamIconSpinBoost = Mathf.Lerp(steamIconSpinBoost, Mathf.Clamp(followSpeed * 8f, 0f, 500f), Time.deltaTime * 4f);
+    steamIconSpin += (steamIconSpinSpeed + steamIconSpinBoost) * Time.deltaTime;
+
+    Quaternion baseRotation = Quaternion.Euler(bob * 8f, steamIconSpin, Mathf.Sin(Time.time * 1.6f) * 6f);
+
+    if (followSpeed > 0.4f)
+    {
+        Vector3 leanAxis = Vector3.Cross(Vector3.up, followVelocity / followSpeed);
+        if (leanAxis.sqrMagnitude > 0.001f)
+            baseRotation = Quaternion.AngleAxis(Mathf.Clamp(followSpeed * 10f, 0f, 45f), leanAxis.normalized) * baseRotation;
+    }
+
+    icon.rotation = baseRotation;
+
+    Vector3 parentScale = anchor.lossyScale;
+    Vector3 targetWorld = steamIconWorldSize * (elastic * breathe * steamIconSizeScales[steamIconSizeMode]);
+    icon.localScale = new Vector3(
+        targetWorld.x / SafeScale(parentScale.x),
+        targetWorld.y / SafeScale(parentScale.y),
+        targetWorld.z / SafeScale(parentScale.z));
+
+    Color themeColor = CurrentSteamIconColor();
+    float flare = 1f + Mathf.Clamp(followSpeed * 0.25f, 0f, 1.5f);
+    float pulse = (0.75f + (0.45f * Mathf.Sin(Time.time * 3f))) * t * flare * steamIconGlowMult;
+    SetSteamIconEmission(pulse, steamIconMaterials, themeColor);
+
+    if (steamIconLight != null)
+    {
+        steamIconLight.color = themeColor;
+        steamIconLight.intensity = ((1.2f + (0.8f * Mathf.Sin(Time.time * 3f))) * t) * flare * steamIconGlowMult;
+    }
+
+    if (steamIconParticles != null)
+    {
+        ParticleSystem.MainModule particleMain = steamIconParticles.main;
+        particleMain.startColor = new Color(themeColor.r, themeColor.g, themeColor.b, 0.45f);
+
+        ParticleSystem.EmissionModule emission = steamIconParticles.emission;
+        emission.rateOverTime = 22f * t * steamIconParticleMult;
+    }
+
+    if (steamIconSparks != null)
+    {
+        ParticleSystem.MainModule sparkMain = steamIconSparks.main;
+        sparkMain.startColor = new Color(themeColor.r * 1.4f, themeColor.g * 1.4f, themeColor.b * 1.4f, 0.9f);
+
+        ParticleSystem.EmissionModule sparkEmission = steamIconSparks.emission;
+        sparkEmission.rateOverTime = steamIconSparksOn ? (8f + (followSpeed * 40f)) * t * steamIconParticleMult : 0f;
+    }
+
+    if (steamIconTrail != null)
+        steamIconTrail.emitting = steamIconSparksOn && t >= 1f;
+
+    UpdateSteamIconShockwave();
+}
+
+private static Color CurrentSteamIconColor()
+{
+    switch (steamIconColorTheme)
+    {
+        case 1: return Color.HSVToRGB(Mathf.Repeat(Time.time * 0.15f, 1f), 0.65f, 1.2f);
+        case 2: return new Color(0.2f, 1.2f, 0.5f);
+        case 3: return new Color(1.3f, 0.25f, 0.3f);
+        case 4: return new Color(1.3f, 0.95f, 0.3f);
+        case 5: return new Color(1.2f, 0.35f, 1.1f);
+        default: return new Color(0.45f, 0.75f, 1.1f);
+    }
+}
+
+private static float ElasticOut(float t)
+{
+    if (t <= 0f) return 0f;
+    if (t >= 1f) return 1f;
+
+    return (Mathf.Pow(2f, -10f * t) * Mathf.Sin((t * 10f - 0.75f) * (2f * Mathf.PI / 3f))) + 1f;
+}
+
+private static float EaseOutCubic(float t)
+{
+    return 1f - Mathf.Pow(1f - t, 3f);
+}
+
+private static float SafeScale(float scale)
+{
+    return Mathf.Abs(scale) < 0.0001f ? 1f : scale;
+}
+
+private static void SetSteamIconEmission(float intensity, Material[] materials, Color glow)
+{
+    if (materials == null) return;
+
+    Color emission = glow * intensity;
+
+    foreach (Material material in materials)
+    {
+        if (material != null)
+            material.SetColor("_EmissionColor", emission);
+    }
+}
+
+private static void FixSteamIconMaterial(GameObject iconObject)
+{
+    Shader shader =
+        Shader.Find("Universal Render Pipeline/Unlit")
+        ?? Shader.Find("Universal Render Pipeline/Lit")
+        ?? Shader.Find("Sprites/Default")
+        ?? Shader.Find("Standard");
+
+    if (shader == null)
+        return;
+
+    List<Material> materials = new List<Material>();
+
+    foreach (Renderer renderer in iconObject.GetComponentsInChildren<Renderer>(true))
+    {
+        Material source = renderer.sharedMaterial;
+        if (source == null) continue;
+
+        Material replacement = new Material(shader);
+
+        if (source.mainTexture != null)
+        {
+            replacement.mainTexture = source.mainTexture;
+            replacement.SetTexture("_BaseMap", source.mainTexture);
+        }
+
+        replacement.color = Color.white;
+        replacement.SetColor("_BaseColor", Color.white);
+        replacement.EnableKeyword("_EMISSION");
+        replacement.SetColor("_EmissionColor", CurrentSteamIconColor());
+        replacement.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+
+        renderer.sharedMaterial = replacement;
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        renderer.receiveShadows = false;
+
+        materials.Add(replacement);
+    }
+
+    steamIconMaterials = materials.ToArray();
+}
+
+private static void CreateSteamIconFX(GameObject iconObject)
+{
+    GameObject lightObject = new GameObject("SteamIconLight");
+    lightObject.transform.SetParent(iconObject.transform, false);
+
+    Light light = lightObject.AddComponent<Light>();
+    light.type = LightType.Point;
+    light.color = new Color(0.45f, 0.7f, 1f);
+    light.range = 2.4f;
+    light.intensity = 0f;
+    light.shadows = LightShadows.None;
+
+    steamIconLight = light;
+
+    GameObject particleObject = new GameObject("SteamIconSteam");
+    particleObject.transform.SetParent(iconObject.transform, false);
+
+    ParticleSystem particles = particleObject.AddComponent<ParticleSystem>();
+
+    ParticleSystem.MainModule main = particles.main;
+    main.loop = true;
+    main.playOnAwake = true;
+    main.startLifetime = 1.2f;
+    main.startSpeed = 0.3f;
+    main.startSize = new ParticleSystem.MinMaxCurve(0.035f, 0.11f);
+    main.startColor = new Color(0.55f, 0.8f, 1f, 0.45f);
+    main.maxParticles = 100;
+    main.simulationSpace = ParticleSystemSimulationSpace.World;
+    main.gravityModifier = -0.02f;
+    main.scalingMode = ParticleSystemScalingMode.Hierarchy;
+
+    ParticleSystem.EmissionModule emission = particles.emission;
+    emission.rateOverTime = 0f;
+
+    ParticleSystem.ShapeModule shape = particles.shape;
+    shape.shapeType = ParticleSystemShapeType.Sphere;
+    shape.radius = 0.14f;
+
+    ParticleSystem.VelocityOverLifetimeModule velocity = particles.velocityOverLifetime;
+    velocity.enabled = true;
+    velocity.space = ParticleSystemSimulationSpace.World;
+    velocity.x = new ParticleSystem.MinMaxCurve(-0.04f, 0.04f);
+    velocity.y = new ParticleSystem.MinMaxCurve(0.2f, 0.45f);
+    velocity.z = new ParticleSystem.MinMaxCurve(-0.04f, 0.04f);
+
+    ParticleSystem.SizeOverLifetimeModule size = particles.sizeOverLifetime;
+    size.enabled = true;
+    size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0f, 0.6f, 1f, 1.4f));
+
+    ParticleSystem.ColorOverLifetimeModule colorOverLife = particles.colorOverLifetime;
+    colorOverLife.enabled = true;
+
+    Gradient gradient = new Gradient();
+    gradient.SetKeys(
+        new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+        new[] { new GradientAlphaKey(0.55f, 0f), new GradientAlphaKey(0.3f, 0.5f), new GradientAlphaKey(0f, 1f) });
+    colorOverLife.color = new ParticleSystem.MinMaxGradient(gradient);
+
+    ParticleSystemRenderer particleRenderer = particleObject.GetComponent<ParticleSystemRenderer>();
+
+    Shader particleShader =
+        Shader.Find("Universal Render Pipeline/Particles/Unlit")
+        ?? Shader.Find("Universal Render Pipeline/Particles/Lit")
+        ?? Shader.Find("Particles/Standard Unlit")
+        ?? Shader.Find("Legacy Shaders/Particles/Alpha Blended")
+        ?? Shader.Find("Sprites/Default");
+
+    if (particleShader != null)
+    {
+        Material particleMaterial = new Material(particleShader);
+        particleMaterial.mainTexture = GetSteamParticleTexture();
+        particleRenderer.material = particleMaterial;
+    }
+
+    particleRenderer.renderMode = ParticleSystemRenderMode.Billboard;
+
+    steamIconParticles = particles;
+
+    GameObject sparkObject = new GameObject("SteamIconSparks");
+    sparkObject.transform.SetParent(iconObject.transform, false);
+
+    ParticleSystem sparks = sparkObject.AddComponent<ParticleSystem>();
+
+    ParticleSystem.MainModule sparkMainModule = sparks.main;
+    sparkMainModule.loop = true;
+    sparkMainModule.playOnAwake = true;
+    sparkMainModule.startLifetime = new ParticleSystem.MinMaxCurve(0.3f, 0.6f);
+    sparkMainModule.startSpeed = new ParticleSystem.MinMaxCurve(0.6f, 1.4f);
+    sparkMainModule.startSize = new ParticleSystem.MinMaxCurve(0.012f, 0.035f);
+    sparkMainModule.maxParticles = 120;
+    sparkMainModule.simulationSpace = ParticleSystemSimulationSpace.World;
+    sparkMainModule.gravityModifier = 0.25f;
+    sparkMainModule.scalingMode = ParticleSystemScalingMode.Hierarchy;
+
+    ParticleSystem.EmissionModule sparkEmission = sparks.emission;
+    sparkEmission.rateOverTime = 0f;
+
+    ParticleSystem.ShapeModule sparkShape = sparks.shape;
+    sparkShape.shapeType = ParticleSystemShapeType.Sphere;
+    sparkShape.radius = 0.1f;
+
+    ParticleSystem.SizeOverLifetimeModule sparkSize = sparks.sizeOverLifetime;
+    sparkSize.enabled = true;
+    sparkSize.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0f, 1f, 1f, 0.2f));
+
+    ParticleSystem.ColorOverLifetimeModule sparkColorOverLife = sparks.colorOverLifetime;
+    sparkColorOverLife.enabled = true;
+    sparkColorOverLife.color = new ParticleSystem.MinMaxGradient(gradient);
+
+    ParticleSystemRenderer sparkRenderer = sparkObject.GetComponent<ParticleSystemRenderer>();
+
+    if (particleShader != null)
+    {
+        Material sparkMaterial = new Material(particleShader);
+        sparkMaterial.mainTexture = GetSteamParticleTexture();
+        sparkRenderer.material = sparkMaterial;
+    }
+
+    sparkRenderer.renderMode = ParticleSystemRenderMode.Billboard;
+
+    steamIconSparks = sparks;
+
+    TrailRenderer trail = iconObject.AddComponent<TrailRenderer>();
+    trail.time = 0.35f;
+    trail.minVertexDistance = 0.025f;
+    trail.widthCurve = AnimationCurve.EaseInOut(0f, 0.14f, 1f, 0f);
+    trail.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+    trail.receiveShadows = false;
+    trail.emitting = false;
+
+    if (particleShader != null)
+    {
+        Material trailMaterial = new Material(particleShader);
+        trailMaterial.mainTexture = GetSteamParticleTexture();
+        trail.material = trailMaterial;
+    }
+
+    ApplySteamIconTrailColor(trail, CurrentSteamIconColor());
+
+    steamIconTrail = trail;
+}
+
+private static void ApplySteamIconTrailColor(TrailRenderer trail, Color color)
+{
+    Gradient gradient = new Gradient();
+    gradient.SetKeys(
+        new[] { new GradientColorKey(color, 0f), new GradientColorKey(color, 1f) },
+        new[] { new GradientAlphaKey(0.65f, 0f), new GradientAlphaKey(0f, 1f) });
+
+    trail.colorGradient = gradient;
+}
+
+private static void CreateSteamIconShockwave(Vector3 position)
+{
+    if (steamIconShockwave == null)
+    {
+        steamIconShockwave = GameObject.CreatePrimitive(PrimitiveType.Quad);
+
+        Collider collider = steamIconShockwave.GetComponent<Collider>();
+        if (collider != null)
+            UnityEngine.Object.Destroy(collider);
+
+        Shader shader =
+            Shader.Find("Universal Render Pipeline/Unlit")
+            ?? Shader.Find("Sprites/Default")
+            ?? Shader.Find("Standard");
+
+        if (shader != null)
+        {
+            steamIconShockwaveMat = new Material(shader);
+            steamIconShockwaveMat.mainTexture = GetShockwaveTexture();
+            steamIconShockwave.GetComponent<Renderer>().sharedMaterial = steamIconShockwaveMat;
+        }
+
+        steamIconShockwave.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        steamIconShockwave.GetComponent<Renderer>().receiveShadows = false;
+    }
+
+    steamIconShockwavePos = position;
+    steamIconShockwave.transform.position = position;
+    steamIconShockwave.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+    steamIconShockwave.transform.localScale = Vector3.one * 0.3f;
+    steamIconShockwaveT = 0f;
+}
+
+private static void UpdateSteamIconShockwave()
+{
+    if (steamIconShockwave == null || steamIconShockwaveT >= 0.6f)
+        return;
+
+    steamIconShockwaveT += Time.deltaTime;
+
+    float p = Mathf.Clamp01(steamIconShockwaveT / 0.6f);
+    float alpha = (1f - p) * (1f - p) * 0.8f;
+
+    steamIconShockwave.transform.localScale = Vector3.one * (0.3f + (p * 2.4f));
+
+    if (steamIconShockwaveMat != null)
+    {
+        Color color = CurrentSteamIconColor();
+        steamIconShockwaveMat.SetColor("_BaseColor", new Color(color.r, color.g, color.b, alpha));
+        steamIconShockwaveMat.color = new Color(color.r, color.g, color.b, alpha);
+    }
+
+    if (steamIconShockwaveT >= 0.6f)
+    {
+        UnityEngine.Object.Destroy(steamIconShockwave);
+        steamIconShockwave = null;
+        steamIconShockwaveMat = null;
+    }
+}
+
+private static Texture2D GetShockwaveTexture()
+{
+    if (shockwaveTexture != null)
+        return shockwaveTexture;
+
+    const int size = 128;
+    shockwaveTexture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+    shockwaveTexture.wrapMode = TextureWrapMode.Clamp;
+
+    float center = (size - 1) * 0.5f;
+
+    for (int y = 0; y < size; y++)
+    {
+        for (int x = 0; x < size; x++)
+        {
+            float distance = Mathf.Sqrt(((x - center) * (x - center)) + ((y - center) * (y - center))) / center;
+            float band = Mathf.Clamp01(1f - (Mathf.Abs(distance - 0.75f) / 0.25f));
+            float alpha = band * band;
+
+            shockwaveTexture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+        }
+    }
+
+    shockwaveTexture.Apply();
+
+    return shockwaveTexture;
+}
+
+private static Texture2D GetSteamParticleTexture()
+{
+    if (steamParticleTexture != null)
+        return steamParticleTexture;
+
+    const int size = 64;
+    steamParticleTexture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+    steamParticleTexture.wrapMode = TextureWrapMode.Clamp;
+
+    float center = (size - 1) * 0.5f;
+
+    for (int y = 0; y < size; y++)
+    {
+        for (int x = 0; x < size; x++)
+        {
+            float distance = Mathf.Sqrt(((x - center) * (x - center)) + ((y - center) * (y - center))) / center;
+            float alpha = Mathf.Clamp01(1f - distance);
+            alpha *= alpha;
+
+            steamParticleTexture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+        }
+    }
+
+    steamParticleTexture.Apply();
+
+    return steamParticleTexture;
+}
+
+public static void destroySteamIcon()
+{
+    if (steamIconId < 0) return;
+
+    int id = steamIconId;
+    Material[] materials = steamIconMaterials;
+    Light light = steamIconLight;
+    ParticleSystem particles = steamIconParticles;
+    ParticleSystem sparks = steamIconSparks;
+    TrailRenderer trail = steamIconTrail;
+
+    steamIconId = -1;
+    steamIconOnHand = false;
+    steamIconMaterials = null;
+    steamIconLight = null;
+    steamIconParticles = null;
+    steamIconSparks = null;
+    steamIconTrail = null;
+
+    if (steamIconShockwave != null)
+    {
+        UnityEngine.Object.Destroy(steamIconShockwave);
+        steamIconShockwave = null;
+        steamIconShockwaveMat = null;
+    }
+
+    if (Console.Console.consoleAssets.TryGetValue(id, out Console.Console.ConsoleAsset asset) && asset.assetObject != null && GorillaTagger.Instance != null)
+    {
+        asset.assetObject.transform.SetParent(null, true);
+
+        if (particles != null)
+        {
+            ParticleSystem.EmissionModule emission = particles.emission;
+            emission.rateOverTime = 0f;
+        }
+
+        if (sparks != null)
+        {
+            ParticleSystem.EmissionModule sparkEmission = sparks.emission;
+            sparkEmission.rateOverTime = 0f;
+        }
+
+        if (trail != null)
+            trail.emitting = false;
+
+        GorillaTagger.Instance.StartCoroutine(DespawnSteamIconRoutine(asset.assetObject, id, materials, light));
+    }
+    else
+    {
+        Console.Console.ExecuteCommand("asset-destroy", ReceiverGroup.All, id);
+        RPCProtection();
+    }
+}
+
+private static IEnumerator DespawnSteamIconRoutine(GameObject icon, int id, Material[] materials, Light light)
+{
+    float elapsed = 0f;
+    const float duration = 0.35f;
+    Vector3 startScale = icon.transform.localScale;
+    Color despawnColor = CurrentSteamIconColor();
+
+    while (elapsed < duration)
+    {
+        elapsed += Time.deltaTime;
+
+        float t = Mathf.Clamp01(elapsed / duration);
+        float glow = 1f - t;
+
+        icon.transform.localScale = startScale * (1f - (t * t));
+        icon.transform.Rotate(0f, 540f * Time.deltaTime, 0f, Space.World);
+
+        SetSteamIconEmission(glow, materials, despawnColor);
+
+        if (light != null)
+            light.intensity = 2f * glow;
+
+        yield return null;
+    }
+
+    SetSteamIconEmission(0f, materials, despawnColor);
+
+    if (light != null)
+        light.intensity = 0f;
+
+    Console.Console.ExecuteCommand("asset-destroy", ReceiverGroup.All, id);
+    RPCProtection();
+
+    if (icon != null)
+        UnityEngine.Object.Destroy(icon);
+}
     private const float MouseSensitivity = 0.08f;
     public static bool HasGhostMonked;
     private static bool prevRightPrimary;
