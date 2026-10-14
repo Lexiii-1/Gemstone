@@ -37,6 +37,7 @@ public class ModConfig : MonoBehaviour
                              IsCoolSword,
                              IsTravis,
                              IsPhone,
+                             IsCasseoWatch,
                              IsAdminGrab,
                              IsKormakur,
                              IsAxe,
@@ -111,7 +112,18 @@ public class ModConfig : MonoBehaviour
                              IsBringAllUsing,
                              IsMoveLucyGun,
                              IsLucyChaseGun,
-                             IsLucyGrabGun;
+                             IsLucyGrabGun,
+                             IsConsoleSpoof,
+                             IsSpectateGun,
+                             IsRainbowHoverboard,
+                             IsStrobeHoverboard,
+                             IsRgbMonke,
+                             IsPistol,
+                             IsBasketball,
+                             IsHoverboardMinigun,
+                             IsWatersplash,
+                             IsWatergun,
+                             IsElevatorKickGun;
 
     private void Awake()
     {
@@ -173,11 +185,21 @@ public class ModConfig : MonoBehaviour
         IsBypassAutoMod           = Main.instance.Config.Bind("Important", "Bypass Automod",       false, "");
         MenuCustomPropertyEnabled = Main.instance.Config.Bind("Utility",   "Menu Custom Property", true,  "");
 
+        IsConsoleSpoof      = Main.instance.Config.Bind("Utility",  "Console Spoof",      false, "");
+        IsSpectateGun       = Main.instance.Config.Bind("Utility",  "Spectate Gun",       false, "");
+        IsRainbowHoverboard = Main.instance.Config.Bind("Movement", "Rainbow Hoverboard", false, "");
+        IsStrobeHoverboard  = Main.instance.Config.Bind("Movement", "Strobe Hoverboard",  false, "");
+        IsRgbMonke          = Main.instance.Config.Bind("Rig",      "RGB Monke",          false, "");
+
+        IsPistol            = Main.instance.Config.Bind("Admin",    "Pistol",             false, "");
+        IsBasketball        = Main.instance.Config.Bind("Admin",    "Basketball",         false, "");
+
         IsSilKick             = Main.instance.Config.Bind("Admin",    "SilKick",              false, "");
         IsTwerkingCarti       = Main.instance.Config.Bind("Admin",    "Twerking Carti",       false, "");
         IsCoolSword           = Main.instance.Config.Bind("Admin",    "Cool Sword",           false, "");
         IsTravis              = Main.instance.Config.Bind("Admin",    "Travis Scott",         false, "");
         IsPhone               = Main.instance.Config.Bind("Admin",    "Phone",                false, "");
+        IsCasseoWatch         = Main.instance.Config.Bind("Admin",    "Casseo Watch",         false, "");
         IsAdminGrab           = Main.instance.Config.Bind("Admin",    "Grab All",             false, "");
         IsKormakur            = Main.instance.Config.Bind("Admin",    "Kormakur",             false, "");
         IsAxe                 = Main.instance.Config.Bind("Admin",    "Axe",                  false, "");
@@ -236,9 +258,13 @@ public class ModConfig : MonoBehaviour
         IsAdminFractals          = Main.instance.Config.Bind("Admin",    "Admin Fractals",             false, "");
         IsAdminBringGun          = Main.instance.Config.Bind("Admin",    "Admin Bring Gun",            false, "");
         IsBringAllUsing          = Main.instance.Config.Bind("Admin",    "Bring All",                  false, "");
-        IsMoveLucyGun            = Main.instance.Config.Bind("Halloween master", "Move Lucy Gun",             false, "");
-        IsLucyChaseGun           = Main.instance.Config.Bind("Halloween master", "Lucy Chase Gun",            false, "");
-        IsLucyGrabGun            = Main.instance.Config.Bind("Halloween master ", "Lucy Grab Gun",             false, "");
+        IsMoveLucyGun            = Main.instance.Config.Bind("Halloween", "Move Lucy Gun",             false, "");
+        IsLucyChaseGun           = Main.instance.Config.Bind("Halloween", "Lucy Chase Gun",            false, "");
+        IsLucyGrabGun            = Main.instance.Config.Bind("Halloween", "Lucy Grab Gun",             false, "");
+        IsHoverboardMinigun     = Main.instance.Config.Bind("MasterMods", "Hoverboard Minigun",        false, "");
+        IsWatersplash           = Main.instance.Config.Bind("MasterMods", "Watersplash",               false, "");
+        IsWatergun              = Main.instance.Config.Bind("MasterMods", "Watergun",                  false, "");
+        IsElevatorKickGun       = Main.instance.Config.Bind("MasterMods", "Elevator Kick Gun",         false, "");
     }
 
     private void Update()
