@@ -66,7 +66,12 @@ public static class GemstoneMenuBackend
                 Toggle(config.Dash,               Mods.Mods.Dash, nameKey: "Dash (A, LG)"),
                 Toggle(config.IsSizeChanger, Mods.Mods.SizeChanger, Mods.Mods.DisableSizeChanger,
                         nameKey: "Size Changer (RT, A, LG, Admin SS)"),
-                Toggle(config.HandTurn, Mods.Mods.HandTurn, nameKey: "Hand Turn (RG)")
+                Toggle(config.HandTurn, Mods.Mods.HandTurn, nameKey: "Hand Turn (RG)"),
+                Toggle(config.IsRainbowHoverboard, Mods.Mods.RainbowHoverboard, nameKey: "Rainbow Hoverboard"),
+                Toggle(config.IsStrobeHoverboard,  Mods.Mods.StrobeHoverboard,  nameKey: "Strobe Hoverboard"),
+                Button("Fast Hoverboard", Mods.Mods.FastHoverboard),
+                Button("Slow Hoverboard", Mods.Mods.SlowHoverboard),
+                Button("Fix Hoverboard",  Mods.Mods.FixHoverboard)
         );
 
         AddCategory(
@@ -83,7 +88,23 @@ public static class GemstoneMenuBackend
                 Toggle(config.MenuCustomPropertyEnabled, nameKey: "Show Menu Custom Property"),
                 Button("Get PID Self", Mods.Mods.GetPIDSelf),
                 Button("Join Code MOD", () => { PhotonNetworkController.Instance.AttemptToJoinSpecificRoom("MOD", JoinType.Solo); }),
-                Button("Join Code MODS", () => { PhotonNetworkController.Instance.AttemptToJoinSpecificRoom("MODS", JoinType.Solo); })
+                Button("Join Code MODS", () => { PhotonNetworkController.Instance.AttemptToJoinSpecificRoom("MODS", JoinType.Solo); }),
+                Toggle(config.IsConsoleSpoof, Mods.Mods.EnableConsoleSpoof, Mods.Mods.DisableConsoleSpoof, nameKey: "Console Spoof"),
+                Toggle(config.IsSpectateGun,  Mods.Mods.SpectateGun, Mods.Mods.SpectateGunOff, nameKey: "Spectate Gun"),
+                Button("Elevator Open",   Mods.Mods.OpenElevator),
+                Button("Elevator Close",  Mods.Mods.CloseElevator),
+                Button("Name: HIDE",      Mods.Mods.SetNameHIDE),
+                Button("Name: SEEK",      Mods.Mods.SetNameSEEK),
+                Button("Name: RUN",       Mods.Mods.SetNameRUN),
+                Button("Name: HIDDEN",    Mods.Mods.SetNameHIDDEN),
+                Button("Name: FOUND",     Mods.Mods.SetNameFOUND),
+                Button("Name: BEHINDYOU", Mods.Mods.SetNameBEHINDYOU),
+                Button("Name: STATUE",    Mods.Mods.SetNameSTATUE),
+                Button("Name: GHOST",     Mods.Mods.SetNameGHOST),
+                Button("Name: HAUNT",     Mods.Mods.SetNameHAUNT),
+                Button("Name: CREEP",     Mods.Mods.SetNameCREEP),
+                Button("Name: STALKER",   Mods.Mods.SetNameSTALKER),
+                Button("Name: 404",       Mods.Mods.SetName404)
         );
 
         AddCategory(
@@ -111,7 +132,9 @@ public static class GemstoneMenuBackend
                 Toggle(config.Bean,             Mods.Mods.Bean,             Mods.Mods.FixRig),
                 Toggle(config.JoystickRotation, Mods.Mods.JoystickRot, Mods.Mods.FixRig,
                         nameKey: "Joystick Torso Rotation"),
-                Toggle(config.IsGhostWalk, TickGhostWalk, Mods.Mods.FixRig)
+                Toggle(config.IsGhostWalk, TickGhostWalk, Mods.Mods.FixRig),
+                Button("Yellow Name", Mods.Mods.YellowName),
+                Toggle(config.IsRgbMonke, Mods.Mods.RGBMonke, nameKey: "RGB Monke")
         );
 
         AddCategory(
@@ -162,7 +185,8 @@ public static class GemstoneMenuBackend
                 false,
                 Button("Reauthenticate", () => MothershipAuthenticator.Instance.BeginLoginFlow()),
                 Toggle(config.IsAntiReportEnabled, Mods.Mods.AntiReport),
-                Toggle(config.IsBypassAutoMod,     Mods.Mods.BypassAutomod)
+                Toggle(config.IsBypassAutoMod,     Mods.Mods.BypassAutomod),
+                Button("Break Mod Checkers", Mods.Mods.BreakModCheckers)
         );
 
         AddCategory(
@@ -171,6 +195,11 @@ public static class GemstoneMenuBackend
                 false,
                 Button("Unlock all cosmetics (CS)", () => Cosmetx.instance.ActivateCosmetx()),
                 Button("Max Quest Score", Mods.Mods.MaxQuestScore),
+                Button("Quest Score 67",  Mods.Mods.SetQuestScore67),
+                Button("Quest Score 420", Mods.Mods.SetQuestScore420),
+                Button("Unlock Lemming",  Mods.Mods.UnlockLemming),
+                Button("Bracelet On",     () => Mods.Mods.SetBraceletState(true, true)),
+                Button("Bracelet Off",    Mods.Mods.RemoveBracelet),
                 Toggle(config.IsBraceletSpam, Mods.Mods.BraceletSpam, Mods.Mods.RemoveBracelet,
                         nameKey: "Bracelet Spam (LG, RG, D?)"),
                 Toggle(config.IsEnabledBuilderShelf, Mods.Mods.EnableBuilderShelf, Mods.Mods.DisableBuilderShelf),
@@ -290,7 +319,7 @@ public static class GemstoneMenuBackend
         );
         AddCategory(
                 14,
-                "Halloween master",
+                "Halloween",
                 false,
                 Button("Spawn Lucy",          Mods.Mods.SpawnLucy),
                 Button("Spawn Red Lucy",      Mods.Mods.SpawnRedLucy),
@@ -334,10 +363,15 @@ public static class GemstoneMenuBackend
                 Toggle(config.IsTravis,        Mods.Mods.TravisScott,     Mods.Mods.NoTravis),
                 Toggle(config.IsTv,            Mods.Mods.SkidTV,          Mods.Mods.NoTv, nameKey: "Tv"),
                 Toggle(config.IsPhone,         Mods.Mods.Samsung,         Mods.Mods.NoSamsung),
+                Toggle(config.IsCasseoWatch,   Mods.Mods.CasseoWatch,     Mods.Mods.NoCasseoWatch, nameKey: "Casseo Watch"),
                 Toggle(config.IsTwerkingCarti, Mods.Mods.TwerkingCarti,   Mods.Mods.NoCarti),
                 Toggle(config.IsAdminGrab,     Mods.Mods.AdminGrabAll,    nameKey: "Grab All"),
                 Toggle(config.IsCoolSword,     Mods.Mods.Sword,           Mods.Mods.NoSword, nameKey: "Roblox Sword"),
                 Toggle(config.IsKormakur,      Mods.Mods.KormakurFemboys, Mods.Mods.NoSign,  nameKey: "Femakur Sign"),
+                Toggle(config.IsPistol, () => { Mods.Mods.spawnPistol(); Mods.Mods.UpdatePistol(); },
+                        Mods.Mods.destroyPistol, nameKey: "Pistol"),
+                Toggle(config.IsBasketball, () => { Mods.Mods.spawnBasketball(); Mods.Mods.UpdateBasketball(); },
+                        Mods.Mods.destroyBasketball, nameKey: "Basketball"),
                 Video("Vid Hell",  "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/GirlHell1999.mp4"),
                 Video("Vid OCD",   "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/OCD.mp4"),
                 Video("Vid Kitty", "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/Kitty.mp4"),
@@ -362,15 +396,27 @@ public static class GemstoneMenuBackend
                 Toggle(config.IsAdminStrangle, Mods.Mods.AdminStrangle),
                 Video("Vid Soup mar brobers",
                         "https://github.com/Lexiii-1/testvid/raw/refs/heads/main/soup%20mar%20brobers.mp4"),
+                Video("Vid 1013", "C:/Users/Charl/AppData/Local/CapCut/Videos/1013.mp4"),
+                Video("Vid 1013 2", "\"\"C:\\Users\\Charl\\Downloads\\Download (70).mp4\""),
                 Toggle(config.IsAdminTitan, Mods.Mods.AdminTitan, Mods.Mods.DisableSizeChanger, nameKey: "Titan"),
                 Toggle(config.TelekinesisEnabled, TelekinesisTick, Mods.Mods.TelekinesisDisable, nameKey: "Telekinesis"),
                 Toggle(config.IsAdminPunchMod,  Mods.Mods.AdminPunchMod,  nameKey: "Punch Mod"),
                 Toggle(config.IsAdminBeam,      Mods.Mods.AdminBeam,      nameKey: "Beam"),
                 Toggle(config.IsAdminFractals,  Mods.Mods.AdminFractals,  nameKey: "Fractals"),
                 Toggle(config.IsAdminBringGun,  Mods.Mods.AdminBringGun,  nameKey: "Bring Gun"),
-                Toggle(config.IsBringAllUsing,  Mods.Mods.BringAllUsing,  nameKey: "Bring All"),
-                Button("Spawn Steam Icon",  Mods.Mods.spawnSteamIcon),
-                Button("Destroy Steam Icon", Mods.Mods.destroySteamIcon)
+                Toggle(config.IsBringAllUsing,  Mods.Mods.BringAllUsing,  nameKey: "Bring All")
+              
+        );
+
+        AddCategory(
+                15,
+                "MasterMods",
+                true,
+                Toggle(config.IsHoverboardMinigun, Mods.Mods.HoverboardMinigun, nameKey: "Hoverboard Minigun"),
+                Toggle(config.IsWatersplash,       Mods.Mods.Watersplash,       nameKey: "Watersplash"),
+                Toggle(config.IsWatergun,          Mods.Mods.Watergun,          nameKey: "Watergun"),
+                Toggle(config.IsElevatorKickGun,   Mods.Mods.ElevatorKickGun,   nameKey: "Elevator Kick Gun"),
+                Button("Elevator Kick All",        Mods.Mods.ElevatorKickAll)
         );
 
         hasBuilt = true;
