@@ -8,6 +8,9 @@ public class ModConfig : MonoBehaviour
     public static ModConfig instance;
     public static Color     Theme;
 
+    public static bool IsHalloween =>
+            instance != null && instance.IsHalloweenTheme != null && instance.IsHalloweenTheme.Value;
+
     public ConfigEntry<float> FlySpeedSave, WebSlingSpeedSave, R, G, B, GunSmoothness,
                               SteamIconSpinSpeed, SteamIconGlowMult, SteamIconFollowDist, SteamIconParticleMult;
     public ConfigEntry<int>   Language,     GunType,           MenuType,
@@ -48,6 +51,17 @@ public class ModConfig : MonoBehaviour
                              IsAntiReportEnabled,
                              IsGhostMonke,
                              IsMenuRGB,
+                             IsHalloweenTheme,
+                             IsFullbright,
+                             IsFpsBoost,
+                             IsMoonGravity,
+                             IsJetpack,
+                             IsRocket,
+                             IsPlatformGun,
+                             IsRainbowPlatforms,
+                             IsFreezeSelf,
+                             IsBigHead,
+                             IsTracers,
                              IsInvisPlat,
                              IsFunnyRig,
                              IsRecroomTorso,
@@ -123,7 +137,12 @@ public class ModConfig : MonoBehaviour
                              IsHoverboardMinigun,
                              IsWatersplash,
                              IsWatergun,
-                             IsElevatorKickGun;
+                             IsElevatorKickGun,
+                             IsTornado;
+    private ConfigEntry<bool> IsSpawnYellowLucy;
+
+    [SerializeField] private ConfigEntry<bool> IsSpawnBlueLucy;
+
 
     private void Awake()
     {
@@ -139,6 +158,17 @@ public class ModConfig : MonoBehaviour
         GunSmoothness     = Main.instance.Config.Bind("Settings", "Gun Smoothness",    0.2f, "");
 
         IsMenuRGB        = Main.instance.Config.Bind("Settings", "Rgb Mode",           false, "");
+        IsHalloweenTheme = Main.instance.Config.Bind("Settings", "Halloween Theme",    false, "");
+        IsFullbright     = Main.instance.Config.Bind("Settings", "Fullbright",         false, "");
+        IsFpsBoost       = Main.instance.Config.Bind("Settings", "FPS Boost",          false, "");
+        IsMoonGravity    = Main.instance.Config.Bind("Settings", "Moon Gravity",       false, "");
+        IsJetpack        = Main.instance.Config.Bind("Settings", "Jetpack",            false, "");
+        IsRocket         = Main.instance.Config.Bind("Settings", "Rocket",             false, "");
+        IsPlatformGun    = Main.instance.Config.Bind("Settings", "Platform Gun",       false, "");
+        IsRainbowPlatforms = Main.instance.Config.Bind("Settings", "Rainbow Platforms", false, "");
+        IsFreezeSelf     = Main.instance.Config.Bind("Settings", "Freeze Self",        false, "");
+        IsBigHead        = Main.instance.Config.Bind("Settings", "Big Head",           false, "");
+        IsTracers        = Main.instance.Config.Bind("Settings", "Tracers",            false, "");
         IsInvisPlat      = Main.instance.Config.Bind("Settings", "Invis Plats",        false, "");
         ShowHandCollider = Main.instance.Config.Bind("Settings", "Show Hand Collider", true,  "");
 
@@ -265,10 +295,14 @@ public class ModConfig : MonoBehaviour
         IsWatersplash           = Main.instance.Config.Bind("MasterMods", "Watersplash",               false, "");
         IsWatergun              = Main.instance.Config.Bind("MasterMods", "Watergun",                  false, "");
         IsElevatorKickGun       = Main.instance.Config.Bind("MasterMods", "Elevator Kick Gun",         false, "");
+        IsTornado               = Main.instance.Config.Bind("MasterMods", "Tornado",                   false, "");
+        IsSpawnYellowLucy       = Main.instance.Config.Bind("Helloween", "Spawn Yellow Lucy",           false, "");
+        IsSpawnBlueLucy         = Main.instance.Config.Bind("Helloween", "Spawn Blue Lucy",           false, "");
     }
 
     private void Update()
     {
-        Theme = new Color(R.Value / 10f, G.Value / 10f, B.Value / 10f);
+        Theme = IsHalloween ? new Color(1f, 0.42f, 0.05f)
+                : new Color(R.Value / 10f, G.Value / 10f, B.Value / 10f);
     }
 }
