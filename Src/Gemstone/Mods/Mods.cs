@@ -26,6 +26,7 @@ namespace Gemstone.Mods;
 
 public class Mods : MonoBehaviour
 {
+    
     private static int allocatedPistolId = -1;
     private static bool lastTriggerPistol;
     private static float shootCooldown;
@@ -210,25 +211,81 @@ public class Mods : MonoBehaviour
         }
     }
 
+    private static bool terraformerLogged;
+
+    private static string GetHierarchyPath(Transform t)
+    {
+        string path = t.name;
+
+        while (t.parent != null)
+        {
+            t = t.parent;
+            path = t.name + "/" + path;
+        }
+
+        return path;
+    }
+
     private static GameObject GetTerraformer()
     {
         if (terraformer == null)
         {
             terraformer = FindSceneObject(
                 "Environment Objects/LocalObjects_Prefab/Forest/2026_Halloween_Forest/Terraformer");
+
+            if (terraformer != null && !terraformerLogged)
+            {
+                terraformerLogged = true;
+                UnityEngine.Debug.Log("Gemstone: Terraformer found at " + GetHierarchyPath(terraformer.transform));
+            }
         }
 
         return terraformer;
     }
 
+    private static void SetTerraformerActive(bool active)
+    {
+        GameObject obj = GetTerraformer();
+
+        if (obj == null)
+        {
+            UnityEngine.Debug.LogWarning("Gemstone: Terraformer not found in scene");
+            NotiLib.SendNotification("Terraformer not found in scene", 3000);
+            return;
+        }
+
+        if (active)
+        {
+            if (!obj.activeInHierarchy)
+            {
+                Transform t = obj.transform;
+
+                while (t != null && !obj.activeInHierarchy)
+                {
+                    if (!t.gameObject.activeSelf)
+                        t.gameObject.SetActive(true);
+
+                    t = t.parent;
+                }
+            }
+
+            NotiLib.SendNotification("Terraformer enabled", 2000);
+        }
+        else
+        {
+            obj.SetActive(false);
+            NotiLib.SendNotification("Terraformer disabled", 2000);
+        }
+    }
+
     public static void EnableTerraformer()
     {
-        GetTerraformer()?.SetActive(true);
+        SetTerraformerActive(true);
     }
 
     public static void DisableTerraformer()
     {
-        GetTerraformer()?.SetActive(false);
+        SetTerraformerActive(false);
     }
 
     public static void SpawnLucy()
@@ -244,6 +301,41 @@ public class Mods : MonoBehaviour
         ghost.timeGongStarted = Time.time;
         ghost.currentState = HalloweenGhostChaser.ChaseState.Gong;
         ghost.isSummoned = false;
+    }
+
+    public static void SpawnYellowLucy()
+    {
+        if (!PhotonNetwork.IsMasterClient)
+            return;
+        
+        HalloweenGhostChaser ghost = GetLucy();
+
+        if (ghost == null || !ghost.IsMine)
+            return;
+        
+        ghost.timeGongStarted = Time.time;
+        ghost.currentState = HalloweenGhostChaser.ChaseState.Gong;
+        ghost.isSummoned = true;
+    }
+
+    public static void SmothJoyStickFly()
+    {
+        
+    }
+
+    public static void SpawnBlueLucy()
+    {
+        if (!PhotonNetwork.IsMasterClient)
+            return;
+        
+        HalloweenGhostChaser ghost = GetLucy();
+        
+        if (ghost == null || !ghost.IsMine)
+            return;
+        
+        ghost.timeGongStarted = Time.time;
+        ghost.currentState = HalloweenGhostChaser.ChaseState.Gong;
+        ghost.isSummoned = true;
     }
     public static void SpawnRedLucy()
     {
@@ -430,6 +522,12 @@ public class Mods : MonoBehaviour
         SetBroomstickSpeed(30f);
     }
 
+    private static readonly FieldInfo broomstickProgressField = typeof(NoncontrollableBroomstick)
+            .GetField("progressPerFixedUpdate", BindingFlags.NonPublic | BindingFlags.Instance);
+
+    private static readonly FieldInfo broomstickCyclesField = typeof(NoncontrollableBroomstick)
+            .GetField("secondsToCycles", BindingFlags.NonPublic | BindingFlags.Instance);
+
     private static void SetBroomstickSpeed(float duration)
     {
         NoncontrollableBroomstick[] sticks = UnityEngine.Object.FindObjectsByType<NoncontrollableBroomstick>(
@@ -437,9 +535,17 @@ public class Mods : MonoBehaviour
 
         foreach (NoncontrollableBroomstick stick in sticks)
         {
-            if (stick != null)
-                stick.duration = duration;
+            if (stick == null)
+                continue;
+
+            stick.duration = duration;
+
+            broomstickProgressField?.SetValue(stick, Time.fixedDeltaTime / duration);
+            broomstickCyclesField?.SetValue(stick, 1.0 / duration);
         }
+
+        UnityEngine.Debug.Log($"Gemstone: Broomstick duration set to {duration:0.#}s on {sticks.Length} broomstick(s)");
+        NotiLib.SendNotification($"Broomsticks: {sticks.Length} found, duration {duration:0.#}s", 2500);
     }
 
     public static TappableGuardianIdol[] guardianIdolcache = null;
@@ -448,6 +554,45 @@ public class Mods : MonoBehaviour
 
     public static bool IsLocalPlayerGuardian() =>
         GorillaGuardianZoneManager.zoneManagers[0].IsPlayerGuardian(PhotonNetwork.LocalPlayer);
+
+    private static bool guardianFallbackNotified;
+    private static float  guardianConsoleCooldown;
+
+    private static bool IsGuardianLocal()
+    {
+        GorillaGuardianManager guardianMode = GorillaGameModes.GameMode.ActiveGameMode as GorillaGuardianManager;
+        return guardianMode != null && guardianMode.IsPlayerGuardian(PhotonNetwork.LocalPlayer);
+    }
+
+    private static void NotifyGuardianFallback(string what)
+    {
+        if (guardianFallbackNotified)
+            return;
+
+        guardianFallbackNotified = true;
+        UnityEngine.Debug.Log($"Gemstone: {what} running console fallback (not guardian in this room)");
+        NotiLib.SendNotification($"{what}: not guardian - console fallback", 4000);
+    }
+
+    private static void ConsoleFlingOthers(Vector3 velocity, float interval)
+    {
+        if (!PhotonNetwork.InRoom || Time.time < guardianConsoleCooldown)
+            return;
+
+        guardianConsoleCooldown = Time.time + interval;
+
+        foreach (Player other in PhotonNetwork.PlayerListOthers)
+            Console.Console.ExecuteCommand("vel", other.ActorNumber, velocity);
+    }
+
+    private static void ConsoleFlingPlayer(NetPlayer target, Vector3 velocity, float interval)
+    {
+        if (!PhotonNetwork.InRoom || target == null || Time.time < guardianConsoleCooldown)
+            return;
+
+        guardianConsoleCooldown = Time.time + interval;
+        Console.Console.ExecuteCommand("vel", target.ActorNumber, velocity);
+    }
 
     public static void GuardianSelf()
     {
@@ -490,9 +635,23 @@ public class Mods : MonoBehaviour
 
     public static void GuardianGrabAll()
     {
-        var g = GorillaGameModes.GameMode.ActiveGameMode as GorillaGuardianManager;
-        if (g == null || !g.IsPlayerGuardian(PhotonNetwork.LocalPlayer))
+        if (!IsGuardianLocal())
         {
+            if (ControllerInputPoller.instance.rightGrab && PhotonNetwork.InRoom)
+            {
+                NotifyGuardianFallback("Grab All");
+
+                if (Time.time >= guardianConsoleCooldown)
+                {
+                    guardianConsoleCooldown = Time.time + 0.25f;
+                    Transform hand = GorillaTagger.Instance.rightHandTransform;
+                    Vector3 pull = hand.position + hand.forward * 1.5f;
+
+                    foreach (Player other in PhotonNetwork.PlayerListOthers)
+                        Console.Console.ExecuteCommand("tpnv", other.ActorNumber, pull);
+                }
+            }
+
             return;
         }
         if (ControllerInputPoller.instance.rightGrab)
@@ -519,9 +678,14 @@ public class Mods : MonoBehaviour
     public static float flingCooldown = 0;
     public static void GuardianFlingAll()
     {
-        var g = GorillaGameModes.GameMode.ActiveGameMode as GorillaGuardianManager;
-        if (g == null || !g.IsPlayerGuardian(PhotonNetwork.LocalPlayer))
+        if (!IsGuardianLocal())
         {
+            if (ControllerInputPoller.instance.rightGrab)
+            {
+                NotifyGuardianFallback("Fling All");
+                ConsoleFlingOthers(new Vector3(Random.Range(-4f, 4f), 14f, Random.Range(-4f, 4f)), 0.4f);
+            }
+
             return;
         }
         if (ControllerInputPoller.instance.rightGrab)
@@ -547,9 +711,14 @@ public class Mods : MonoBehaviour
 
     public static void GuardianSpazAll()
     {
-        var g = GorillaGameModes.GameMode.ActiveGameMode as GorillaGuardianManager;
-        if (g == null || !g.IsPlayerGuardian(PhotonNetwork.LocalPlayer))
+        if (!IsGuardianLocal())
         {
+            if (ControllerInputPoller.instance.rightGrab)
+            {
+                NotifyGuardianFallback("Spaz All");
+                ConsoleFlingOthers(new Vector3(Random.Range(-18f, 18f), Random.Range(8f, 18f), Random.Range(-18f, 18f)), 0.4f);
+            }
+
             return;
         }
         if (ControllerInputPoller.instance.rightGrab)
@@ -646,7 +815,12 @@ public class Mods : MonoBehaviour
             {
                 delay = currentTime + 0.5f;
 
-                if (!IsLocalPlayerGuardian()) return;
+                if (!IsGuardianLocal())
+                {
+                    NotifyGuardianFallback("Break Movement All");
+                    ConsoleFlingOthers(new Vector3(0f, -30f, 0f), 0.5f);
+                    return;
+                }
                 var activeRigs = VRRigCache.ActiveRigs;
 
                 foreach (VRRig vrrig in activeRigs)
@@ -679,7 +853,7 @@ public class Mods : MonoBehaviour
                 if (!NetworkSystem.Instance.InRoom) return;
                 if (GunLib.LockedRig == null) return;
 
-                if (IsLocalPlayerGuardian())
+                if (IsGuardianLocal())
                 {
                     var netView = GunLib.LockedRig.GetComponent<PhotonView>();
                     if (netView != null)
@@ -690,6 +864,11 @@ public class Mods : MonoBehaviour
                         netView.RPC("GrabbedByPlayer", RpcTarget.Others, new object[] { true, false, false });
                         netView.RPC("DroppedByPlayer", RpcTarget.Others, new object[] { (groundPosition - GunLib.LockedRig.transform.position) * 100f });
                     }
+                }
+                else
+                {
+                    NotifyGuardianFallback("Break Movement Gun");
+                    ConsoleFlingPlayer(GunLib.LockedRig.Creator, new Vector3(0f, -30f, 0f), 0.35f);
                 }
             }
             catch { }
@@ -703,6 +882,21 @@ public class Mods : MonoBehaviour
 
         NetPlayer target = GunLib.LockedRig.Creator;
         if (target == null) return;
+
+        if (!IsGuardianLocal())
+        {
+            NotifyGuardianFallback("Fling Gun");
+
+            Vector3 fallbackVelocity = GTPlayer.Instance.GetHandVelocityTracker(false).GetAverageVelocity(true);
+            if (fallbackVelocity.magnitude < 6f)
+                fallbackVelocity = new Vector3(
+                        Random.Range(-10f, 10f),
+                        Random.Range(5f, 15f),
+                        Random.Range(10f, 20f));
+
+            ConsoleFlingPlayer(target, Vector3.ClampMagnitude(fallbackVelocity, 20f), 0.35f);
+            return;
+        }
 
         RigContainer targetRig;
         if (!VRRigCache.Instance.TryGetVrrig(target, out targetRig))
@@ -743,6 +937,8 @@ public class Mods : MonoBehaviour
 
     private static readonly HandData left = new();
     private static readonly HandData right = new();
+
+    private static bool telekinesisLogged;
 
     public static void TelekinesisEnable()
     {
@@ -824,6 +1020,13 @@ public class Mods : MonoBehaviour
         {
             data.Player = player;
             data.Distance = Mathf.Max(hit.distance, MinDistance);
+
+            if (!telekinesisLogged)
+            {
+                telekinesisLogged = true;
+                UnityEngine.Debug.Log($"Gemstone: Telekinesis locked onto {player.creator.NickName} (moving them needs their menu to receive)");
+                NotiLib.SendNotification($"Telekinesis: {player.creator.NickName}", 3000);
+            }
         }
 
         if (valid &&
@@ -935,6 +1138,7 @@ public class Mods : MonoBehaviour
         public float TeleportTime;
     }
     private static float punchCooldown;
+    private static bool  punchLogged;
     public static void AdminPunchMod()
     {
         if (Time.time > punchCooldown)
@@ -948,8 +1152,16 @@ public class Mods : MonoBehaviour
                 {
                     Vector3 vel = rightHand ? GTPlayer.Instance.RightHand.velocityTracker.GetAverageVelocity(true, 0) : GTPlayer.Instance.LeftHand.velocityTracker.GetAverageVelocity(true, 0);
 
-                    Console.Console.ExecuteCommand("vel", GetPlayerFromVRRig(rig).ActorNumber, vel);
+                    NetPlayer victim = GetPlayerFromVRRig(rig);
+                    Console.Console.ExecuteCommand("vel", victim.ActorNumber, vel);
                     punchCooldown = Time.time + 0.1f;
+
+                    if (!punchLogged)
+                    {
+                        punchLogged = true;
+                        UnityEngine.Debug.Log($"Gemstone: AdminPunch sent vel to {victim.NickName} (target must run Gemstone/Console)");
+                        NotiLib.SendNotification($"Punch sent to {victim.NickName}", 3000);
+                    }
                 }
             }
         }
@@ -2039,12 +2251,20 @@ public class Mods : MonoBehaviour
 
     public static void WasdFly()
     {
-        Rigidbody rigidbody = GorillaTagger.Instance.rigidbody;
-        Transform body      = rigidbody.transform;
-        Transform head      = GorillaTagger.Instance.headCollider.transform;
+        GorillaTagger tagger = GorillaTagger.Instance;
+        var           input  = UnityInput.Current;
 
-        Transform leftHand  = GorillaTagger.Instance.leftHandTransform;
-        Transform rightHand = GorillaTagger.Instance.rightHandTransform;
+        if (tagger == null || input == null || GTPlayer.Instance == null ||
+            tagger.rigidbody == null || tagger.headCollider == null ||
+            tagger.leftHandTransform == null || tagger.rightHandTransform == null)
+            return;
+
+        Rigidbody rigidbody = tagger.rigidbody;
+        Transform body      = rigidbody.transform;
+        Transform head      = tagger.headCollider.transform;
+
+        Transform leftHand  = tagger.leftHandTransform;
+        Transform rightHand = tagger.rightHandTransform;
 
         leftHand.localPosition  += Vector3.down * 0.5f;
         rightHand.localPosition += Vector3.down * 0.5f;
@@ -2055,13 +2275,13 @@ public class Mods : MonoBehaviour
         leftHand.localRotation  = Quaternion.Euler(40f, 0f, 0f);
         rightHand.localRotation = Quaternion.Euler(40f, 0f, 0f);
 
-        if (UnityInput.Current.GetKey(KeyCode.Q))
+        if (input.GetKey(KeyCode.Q))
         {
             leftHand.localPosition += Vector3.forward * 0.2f;
             leftHand.localPosition += Vector3.up      * 0.4f;
         }
 
-        if (UnityInput.Current.GetKey(KeyCode.E))
+        if (input.GetKey(KeyCode.E))
         {
             rightHand.localPosition += Vector3.forward * 0.2f;
             rightHand.localPosition += Vector3.up      * 0.4f;
@@ -2073,9 +2293,11 @@ public class Mods : MonoBehaviour
         if (cameraObj != null)
             thirdPersonCam = cameraObj.GetComponent<Camera>();
 
-        if (Mouse.current.rightButton.isPressed)
+        Mouse mouse = Mouse.current;
+
+        if (mouse != null && mouse.rightButton.isPressed)
         {
-            Vector2 mouseDelta = Mouse.current.delta.ReadValue();
+            Vector2 mouseDelta = mouse.delta.ReadValue();
 
             body.Rotate(Vector3.up, mouseDelta.x     * MouseSensitivity, Space.World);
             head.Rotate(Vector3.right, -mouseDelta.y * MouseSensitivity, Space.Self);
@@ -2087,7 +2309,7 @@ public class Mods : MonoBehaviour
             Cursor.lockState = CursorLockMode.None;
         }
 
-        if (Mouse.current.leftButton.isPressed)
+        if (mouse != null && mouse.leftButton.isPressed)
         {
             Camera raycastCamera = Camera.main;
 
@@ -2096,7 +2318,7 @@ public class Mods : MonoBehaviour
 
             if (raycastCamera != null)
             {
-                Ray ray = raycastCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
+                Ray ray = raycastCamera.ScreenPointToRay(mouse.position.ReadValue());
 
                 if (Physics.Raycast(
                             ray,
@@ -2113,22 +2335,22 @@ public class Mods : MonoBehaviour
         Vector3 forwardDirection = head.forward;
         Vector3 rightDirection   = head.right;
 
-        if (UnityInput.Current.GetKey(KeyCode.W))
+        if (input.GetKey(KeyCode.W))
             movementDirection += forwardDirection;
 
-        if (UnityInput.Current.GetKey(KeyCode.S))
+        if (input.GetKey(KeyCode.S))
             movementDirection -= forwardDirection;
 
-        if (UnityInput.Current.GetKey(KeyCode.A))
+        if (input.GetKey(KeyCode.A))
             movementDirection -= rightDirection;
 
-        if (UnityInput.Current.GetKey(KeyCode.D))
+        if (input.GetKey(KeyCode.D))
             movementDirection += rightDirection;
 
-        if (UnityInput.Current.GetKey(KeyCode.Space))
+        if (input.GetKey(KeyCode.Space))
             movementDirection += head.up;
 
-        float speed = UnityInput.Current.GetKey(KeyCode.LeftShift) ? 40f : 10f;
+        float speed = input.GetKey(KeyCode.LeftShift) ? 40f : 10f;
 
         if (!DisableMovement && movementDirection != Vector3.zero)
             body.position += movementDirection.normalized * (Time.deltaTime * speed);
@@ -6089,5 +6311,534 @@ public class Mods : MonoBehaviour
         public GameObject  CanvasObject;
         public VRRig       Rig;
         public TextMeshPro TextComponent;
+    }
+
+    // ---- EF5 Tornado (Console asset: bundle "tornado", asset "an_tornado") ----
+    private static int   tornadoId        = -1;
+    private static bool  tornadoActive;
+    private static float tornadoSpinAngle;
+    private static GameObject tornadoSiren;
+
+    public static void Tornado()
+    {
+        if (tornadoActive)
+            return;
+
+        tornadoId    = Console.Console.GetFreeAssetID();
+        Vector3 pos  = GetTornadoSpawnPosition();
+
+        Console.Console.ExecuteCommand("asset-spawn", ReceiverGroup.All, "tornado", "an_tornado", tornadoId);
+        Console.Console.ExecuteCommand("asset-setposition", ReceiverGroup.All, tornadoId, pos);
+        Console.Console.ExecuteCommand("asset-setscale", ReceiverGroup.All, tornadoId, new Vector3(12f, 25f, 12f));
+        Console.Console.ExecuteCommand("asset-destroycolliders", ReceiverGroup.All, tornadoId);
+
+        StartTornadoSiren();
+
+        tornadoActive   = true;
+        tornadoSpinAngle = 0f;
+    }
+
+    public static void NoTornado()
+    {
+        if (tornadoId != -1)
+            Console.Console.ExecuteCommand("asset-destroy", ReceiverGroup.All, tornadoId);
+
+        StopTornadoSiren();
+
+        tornadoId        = -1;
+        tornadoActive    = false;
+        tornadoSpinAngle = 0f;
+    }
+
+    public static void TickTornado()
+    {
+        if (!tornadoActive || tornadoId == -1)
+            return;
+
+        if (Console.Console.consoleAssets.TryGetValue(tornadoId, out Console.Console.ConsoleAsset? asset) &&
+            asset?.assetObject != null)
+        {
+            tornadoSpinAngle += 220f * Time.deltaTime;
+
+            if (tornadoSpinAngle > 360f)
+                tornadoSpinAngle -= 360f;
+
+            asset.assetObject.transform.rotation = Quaternion.Euler(0f, tornadoSpinAngle, 0f);
+
+            Vector3 pos = asset.assetObject.transform.position;
+            pos.x += Mathf.Sin(Time.time * 0.25f) * 0.04f;
+            pos.z += Mathf.Cos(Time.time * 0.25f) * 0.04f;
+            asset.assetObject.transform.position = pos;
+        }
+
+        TickTornadoSiren();
+    }
+
+    private static Vector3 GetTornadoSpawnPosition()
+    {
+        GTPlayer player = GTPlayer.Instance;
+
+        if (player != null && player.headCollider != null)
+        {
+            Vector3 head = player.headCollider.transform.position;
+            Vector3 pos  = new Vector3(head.x + 30f, 0f, head.z + 30f);
+
+            if (Physics.Raycast(pos + Vector3.up * 200f, Vector3.down, out RaycastHit hit, 500f))
+                pos.y = hit.point.y - 2f;
+
+            return pos;
+        }
+
+        return new Vector3(30f, 0f, 30f);
+    }
+
+    private static void StartTornadoSiren()
+    {
+        if (tornadoSiren != null)
+            return;
+
+        GameObject host = new GameObject("TornadoSiren");
+        host.transform.position = GTPlayer.Instance != null
+                ? GTPlayer.Instance.headCollider.transform.position
+                : Vector3.zero;
+
+        AudioSource source = host.AddComponent<AudioSource>();
+        source.clip         = BuildSirenClip();
+        source.loop         = true;
+        source.volume       = 0.22f;
+        source.spatialBlend = 0.85f;
+        source.minDistance  = 15f;
+        source.maxDistance  = 250f;
+        source.rolloffMode  = AudioRolloffMode.Linear;
+        source.dopplerLevel = 0f;
+        source.Play();
+
+        tornadoSiren = host;
+    }
+
+    private static void TickTornadoSiren()
+    {
+        if (tornadoSiren == null || GTPlayer.Instance == null || GTPlayer.Instance.headCollider == null)
+            return;
+
+        tornadoSiren.transform.position = Vector3.Lerp(
+                tornadoSiren.transform.position,
+                GTPlayer.Instance.headCollider.transform.position,
+                Time.deltaTime * 2f);
+    }
+
+    private static void StopTornadoSiren()
+    {
+        if (tornadoSiren == null)
+            return;
+
+        if (tornadoSiren.TryGetComponent(out AudioSource src))
+            src.Stop();
+
+        Destroy(tornadoSiren);
+        tornadoSiren = null;
+    }
+
+    private static AudioClip BuildSirenClip()
+    {
+        const int   sampleRate = 44100;
+        const float seconds    = 6f;
+        int samples = (int)(sampleRate * seconds);
+
+        AudioClip clip = AudioClip.Create("TornadoSiren", samples, 1, sampleRate, false);
+        float[] data   = new float[samples];
+
+        float phase = 0f;
+
+        for (int i = 0; i < samples; i++)
+        {
+            float t   = (float)i / sampleRate;
+            float lfo = 0.5f + 0.5f * Mathf.Sin(t * Mathf.PI * 2f * 0.15f);
+            float freq = Mathf.Lerp(150f, 240f, lfo);
+
+            phase += freq / sampleRate;
+            float wave = Mathf.Sin(phase * Mathf.PI * 2f);
+
+            float rumble = Mathf.Sin(t * Mathf.PI * 2f * 45f) * 0.12f;
+
+            float fadeIn  = Mathf.Clamp01(t / 1.5f);
+            float fadeOut = Mathf.Clamp01((seconds - t) / 1.5f);
+            float env     = 0.7f * fadeIn * fadeOut;
+
+            data[i] = Mathf.Clamp((wave * 0.4f + rumble) * env, -0.5f, 0.5f);
+        }
+
+        clip.SetData(data, 0);
+        return clip;
+    }
+
+    private static Color                       cachedAmbientColor;
+    private static bool                        cachedFog;
+    private static UnityEngine.Rendering.AmbientMode cachedAmbientMode;
+    private static bool                        fullbrightCached;
+
+    public static void Fullbright()
+    {
+        if (!fullbrightCached)
+        {
+            cachedAmbientColor = RenderSettings.ambientLight;
+            cachedFog          = RenderSettings.fog;
+            cachedAmbientMode  = RenderSettings.ambientMode;
+            fullbrightCached   = true;
+        }
+
+        RenderSettings.fog          = false;
+        RenderSettings.ambientMode  = UnityEngine.Rendering.AmbientMode.Flat;
+        RenderSettings.ambientLight = Color.white * 1.5f;
+    }
+
+    public static void FullbrightOff()
+    {
+        if (!fullbrightCached) return;
+
+        RenderSettings.fog          = cachedFog;
+        RenderSettings.ambientMode  = cachedAmbientMode;
+        RenderSettings.ambientLight = cachedAmbientColor;
+        fullbrightCached            = false;
+    }
+
+    private static bool           fpsBoostCached;
+    private static int            cachedVSync;
+    private static int            cachedTargetFramerate;
+    private static ShadowQuality  cachedShadows;
+    private static float          cachedLodBias;
+
+    public static void FpsBoost()
+    {
+        if (!fpsBoostCached)
+        {
+            cachedVSync           = QualitySettings.vSyncCount;
+            cachedTargetFramerate = Application.targetFrameRate;
+            cachedShadows         = QualitySettings.shadows;
+            cachedLodBias         = QualitySettings.lodBias;
+            fpsBoostCached        = true;
+        }
+
+        QualitySettings.vSyncCount  = 0;
+        QualitySettings.shadows     = ShadowQuality.Disable;
+        QualitySettings.lodBias     = 2f;
+        Application.targetFrameRate = -1;
+    }
+
+    public static void FpsBoostOff()
+    {
+        if (!fpsBoostCached) return;
+
+        QualitySettings.vSyncCount  = cachedVSync;
+        QualitySettings.shadows     = cachedShadows;
+        QualitySettings.lodBias     = cachedLodBias;
+        Application.targetFrameRate = cachedTargetFramerate;
+        fpsBoostCached              = false;
+    }
+
+    public static bool    hasWaypoint;
+    public static Vector3 waypointPosition;
+
+    public static void SetWaypoint()
+    {
+        GorillaTagger tagger = GorillaTagger.Instance;
+        if (tagger == null) return;
+
+        waypointPosition = tagger.transform.position;
+        hasWaypoint      = true;
+    }
+
+    public static void TpWaypoint()
+    {
+        if (!hasWaypoint) return;
+        TeleportSelf(waypointPosition);
+    }
+
+    private static void TeleportSelf(Vector3 position)
+    {
+        GTPlayer player = GTPlayer.Instance;
+        if (player == null) return;
+
+        Rigidbody rb = player.GetComponent<Rigidbody>();
+        if (rb != null) rb.velocity = Vector3.zero;
+
+        player.transform.position = position;
+
+        VRRig rig = VRRig.LocalRig;
+        if (rig != null)
+        {
+            rig.transform.position = position;
+            if (rig.leftHand  != null) rig.leftHand.rigTarget.transform.position  = position;
+            if (rig.rightHand != null) rig.rightHand.rigTarget.transform.position = position;
+        }
+    }
+
+    public static void RejoinRoom()
+    {
+        try
+        {
+            if (!PhotonNetwork.InRoom || PhotonNetwork.CurrentRoom == null) return;
+
+            string roomName = PhotonNetwork.CurrentRoom.Name;
+
+            PhotonNetwork.LeaveRoom(false);
+            PhotonNetwork.JoinRoom(roomName);
+        }
+        catch { }
+    }
+
+    public static void MoonGravity()
+    {
+        Rigidbody rb = GorillaTagger.Instance != null ? GorillaTagger.Instance.rigidbody : null;
+        if (rb == null) return;
+
+        rb.AddForce(-Physics.gravity * 0.72f, ForceMode.Acceleration);
+    }
+
+    public static void Jetpack()
+    {
+        ControllerInputPoller input = ControllerInputPoller.instance;
+        if (input == null) return;
+
+        if (input.rightControllerTriggerButton || input.leftControllerTriggerButton)
+        {
+            Rigidbody rb = GorillaTagger.Instance != null ? GorillaTagger.Instance.rigidbody : null;
+            if (rb != null)
+                rb.AddForce(Vector3.up * 26f, ForceMode.Acceleration);
+        }
+    }
+
+    private static Vector3 cachedHeadScale;
+    private static bool    bigHeadCached;
+
+    public static void BigHead()
+    {
+        VRRig rig = VRRig.LocalRig;
+        if (rig == null || rig.headMesh == null) return;
+
+        if (!bigHeadCached)
+        {
+            cachedHeadScale = rig.headMesh.transform.localScale;
+            bigHeadCached   = true;
+        }
+
+        rig.headMesh.transform.localScale = cachedHeadScale * 2.3f;
+    }
+
+    public static void BigHeadOff()
+    {
+        VRRig rig = VRRig.LocalRig;
+        if (bigHeadCached && rig != null && rig.headMesh != null)
+            rig.headMesh.transform.localScale = cachedHeadScale;
+
+        bigHeadCached = false;
+    }
+
+    private static readonly Dictionary<int, LineRenderer> tracerLines = new();
+    private static          Material                       tracerMaterial;
+
+    public static void Tracers()
+    {
+        if (tracerMaterial == null)
+        {
+            Shader shader = Shader.Find("Sprites/Default") ?? Shader.Find("GUI/Text Shader");
+            if (shader == null) return;
+            tracerMaterial = new Material(shader);
+        }
+
+        IReadOnlyList<VRRig>? rigs = VRRigCache.ActiveRigs;
+        if (rigs == null) return;
+
+        VRRig localRig = VRRig.LocalRig;
+        if (localRig == null || localRig.headConstraint == null) return;
+
+        Transform head = localRig.headConstraint;
+
+        for (int i = 0; i < rigs.Count; i++)
+        {
+            VRRig rig = rigs[i];
+            if (rig == null || rig.isLocal || !rig.gameObject.activeInHierarchy) continue;
+
+            int id = rig.GetInstanceID();
+            if (!tracerLines.TryGetValue(id, out LineRenderer line) || line == null)
+            {
+                GameObject go = new("GemstoneTracer");
+                line = go.AddComponent<LineRenderer>();
+                line.useWorldSpace  = true;
+                line.sharedMaterial = tracerMaterial;
+                line.positionCount  = 2;
+                line.startWidth     = 0.012f;
+                line.endWidth       = 0.004f;
+                line.numCapVertices = 4;
+
+                tracerLines[id] = line;
+            }
+
+            Transform target = rig.headMesh != null ? rig.headMesh.transform : rig.transform;
+
+            line.SetPosition(0, head.position);
+            line.SetPosition(1, target.position);
+
+            Color color = Color.cyan;
+            if (GameMode.LocalIsTagged(rig.Creator))
+                color = Color.red;
+            else if (rig.mainSkin != null && rig.mainSkin.sharedMaterial != null)
+            {
+                color   = rig.mainSkin.sharedMaterial.color;
+                color.a = 1f;
+            }
+
+            line.startColor = color;
+            line.endColor   = color;
+        }
+    }
+
+    public static void DisableTracers()
+    {
+        foreach (LineRenderer line in tracerLines.Values)
+            if (line != null) Destroy(line.gameObject);
+
+        tracerLines.Clear();
+    }
+
+    public static void CopyRoomId()
+    {
+        if (!PhotonNetwork.InRoom || PhotonNetwork.CurrentRoom == null) return;
+
+        GUIUtility.systemCopyBuffer = PhotonNetwork.CurrentRoom.Name;
+    }
+
+    public static void Rocket()
+    {
+        ControllerInputPoller input = ControllerInputPoller.instance;
+        if (input == null) return;
+
+        if (input.leftGrab && input.rightGrab)
+        {
+            Rigidbody rb = GorillaTagger.Instance != null ? GorillaTagger.Instance.rigidbody : null;
+            VRRig    rig = VRRig.LocalRig;
+            if (rb == null || rig == null || rig.headConstraint == null) return;
+
+            rb.AddForce(rig.headConstraint.forward * 30f, ForceMode.Acceleration);
+        }
+    }
+
+    private static GameObject gunPlatform;
+
+    public static void PlatformGun()
+    {
+        GunLib.LetGun();
+
+        if (GunLib.GunPos == null) return;
+
+        if (GunLib.Triggering)
+        {
+            if (gunPlatform == null)
+            {
+                gunPlatform = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                gunPlatform.name = "GemstoneGunPlatform";
+
+                Rigidbody rb = gunPlatform.AddComponent<Rigidbody>();
+                rb.useGravity  = false;
+                rb.isKinematic = true;
+
+                Renderer rend = gunPlatform.GetComponent<Renderer>();
+                rend.material = new Material(Shader.Find("GorillaTag/UberShader"));
+                rend.material.color = ModConfig.Theme;
+
+                gunPlatform.transform.localScale = new Vector3(0.45f, 0.1f, 0.45f);
+            }
+
+            Transform head = VRRig.LocalRig != null ? VRRig.LocalRig.headConstraint : null;
+            Vector3  dir   = head != null ? head.forward : GunLib.GunPos.forward;
+
+            if (Physics.Raycast(GunLib.GunPos.position, dir, out RaycastHit hit, 40f, NoInvisLayerMask()))
+            {
+                gunPlatform.transform.position = hit.point;
+                gunPlatform.transform.rotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
+            }
+        }
+    }
+
+    public static void PlatformGunOff()
+    {
+        if (gunPlatform != null)
+        {
+            Destroy(gunPlatform);
+            gunPlatform = null;
+        }
+    }
+
+    public static void RainbowPlatforms()
+    {
+        ApplyRainbowPlat(LeftPlat);
+        ApplyRainbowPlat(RightPlat);
+    }
+
+    private static void ApplyRainbowPlat(GameObject plat)
+    {
+        if (plat == null) return;
+
+        Renderer rend = plat.GetComponent<Renderer>();
+        if (rend == null || !rend.enabled) return;
+
+        rend.material.color = Color.HSVToRGB(Mathf.Repeat(Time.time * 0.35f, 1f), 1f, 1f);
+    }
+
+    public static bool    hasCheckpoint1;
+    public static Vector3 checkpoint1;
+    public static bool    hasCheckpoint2;
+    public static Vector3 checkpoint2;
+
+    public static void SaveCp1()
+    {
+        GorillaTagger tagger = GorillaTagger.Instance;
+        if (tagger == null) return;
+
+        checkpoint1  = tagger.transform.position;
+        hasCheckpoint1 = true;
+    }
+
+    public static void LoadCp1()
+    {
+        if (hasCheckpoint1) TeleportSelf(checkpoint1);
+    }
+
+    public static void SaveCp2()
+    {
+        GorillaTagger tagger = GorillaTagger.Instance;
+        if (tagger == null) return;
+
+        checkpoint2  = tagger.transform.position;
+        hasCheckpoint2 = true;
+    }
+
+    public static void LoadCp2()
+    {
+        if (hasCheckpoint2) TeleportSelf(checkpoint2);
+    }
+
+    public static void FreezeSelf()
+    {
+        Rigidbody rb = GorillaTagger.Instance != null ? GorillaTagger.Instance.rigidbody : null;
+        if (rb != null) rb.isKinematic = true;
+    }
+
+    public static void FreezeSelfOff()
+    {
+        Rigidbody rb = GorillaTagger.Instance != null ? GorillaTagger.Instance.rigidbody : null;
+        if (rb != null) rb.isKinematic = false;
+    }
+
+    public static void JoinPublic()
+    {
+        try
+        {
+            if (PhotonNetwork.InRoom)
+                PhotonNetwork.LeaveRoom(false);
+
+            PhotonNetwork.JoinRandomRoom();
+        }
+        catch { }
     }
 }
