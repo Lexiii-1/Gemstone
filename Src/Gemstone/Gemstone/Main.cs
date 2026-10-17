@@ -20,8 +20,6 @@ namespace Gemstone.Gemstone;
 public class Main : BaseUnityPlugin
 {
     public static int Pages;
-    
-    public static List<VRRig> BlockedList = new List<VRRig>();
 
     private static Coroutine activeSoundCoroutine;
     private static AudioClip currentlyPlayingClip;
@@ -36,6 +34,28 @@ public class Main : BaseUnityPlugin
     public float            globalClickCooldown;
     public int              currentCategoryIndex = -1;
     public int              currentPageIndex;
+    public bool             searchActive;
+    public bool             searchResultsMode;
+    public string           searchText = "";
+
+    private static readonly float[] searchKeyColumns = { -0.0146f, -0.00876f, -0.00292f, 0.00292f, 0.00876f, 0.0146f };
+    private static readonly float[] searchKeyRows    = { 0.006f, 0.0028f, -0.0004f, -0.0036f, -0.0068f };
+
+    private static readonly string[][] searchKeyboardViews =
+    {
+            new[]
+            {
+                    "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R",
+                    "S", "T", "U", "V", "W", "X", "Y", "Z", "DEL", "SPC", "CLR", "GO",
+            },
+    };
+
+    private int      searchReturnCategory = -1;
+    private int      searchReturnPage;
+    private Coroutine searchButtonAnimation;
+    private bool     searchButtonPopPending;
+    private static Material searchIconMaterial;
+    private static Texture2D searchIconTexture;
 
     public           AudioSource audioSource;
     public           bool        IsAdmin;
@@ -85,9 +105,9 @@ public class Main : BaseUnityPlugin
         gameObject.AddComponent<Cosmetx>();
         gameObject.AddComponent<InfoNotifs>();
         gameObject.AddComponent<Gui>();
+        gameObject.AddComponent<NowPlaying>();
         gameObject.AddComponent<ColoredBoards>();
         gameObject.AddComponent<EmoteManager>();
-        gameObject.AddComponent<BlockStuff>();
         GameObject arsobj = new("ARS");
         DontDestroyOnLoad(arsobj);
         arsobj.AddComponent<ARS.ARS>();
@@ -103,7 +123,8 @@ public class Main : BaseUnityPlugin
 
     private void Update()
     {
-        if (menuOpen && ModConfig.instance.IsJoystickNavigation.Value)
+        if (menuOpen && ModConfig.instance != null && ModConfig.instance.IsJoystickNavigation.Value &&
+            ControllerInputPoller.instance != null)
         {
             Vector2 joyl    = ControllerInputPoller.instance.leftControllerPrimary2DAxis;
             Vector2 joyr    = ControllerInputPoller.instance.rightControllerPrimary2DAxis;
@@ -161,7 +182,8 @@ public class Main : BaseUnityPlugin
 
             if (B && globalClickCooldown <= 0f)
             {
-                SwitchPage(-1, 0);
+                if (searchActive) CloseSearch();
+                else SwitchPage(-1, 0);
             }
             else if (trigger && globalClickCooldown <= 0f && selectedButtonIndex >= 0 &&
                      selectedButtonIndex            < btnObjs.Count)
@@ -176,94 +198,61 @@ public class Main : BaseUnityPlugin
             }
         }
 
-        foreach (VRRig rig in VRRigCache.ActiveRigs)
+        IReadOnlyList<VRRig>? activeRigs = VRRigCache.ActiveRigs;
+
+        if (activeRigs != null)
+        foreach (VRRig rig in activeRigs)
             if (rig != null && rig.Creator != null)
             {
                 Color gemstoneColorStart = new(0.6f, 0f, 1f);
-                Color gemstoneColorEnd = new(0f, 1f, 1f);
+                Color gemstoneColorEnd   = new(0f, 1f, 1f);
 
-                Color arsColorStart = new(1f, 0f, 0f);
-                Color arsColorEnd = new(0f, 0f, 0f);
-                string arsBaseTag = "[ON ARS]";
+                Color  arsColorStart  = new(1f, 0f, 0f);
+                Color  arsColorEnd    = new(0f, 0f, 0f);
+                string arsBaseTag     = "[ON ARS]";
                 string arsGradientTag = " ";
                 for (int i = 0; i < arsBaseTag.Length; i++)
                 {
-                    float t = (float)i / (arsBaseTag.Length - 1);
-                    Color currentColor = Color.Lerp(arsColorStart, arsColorEnd, t);
-                    string hexColor = ColorUtility.ToHtmlStringRGB(currentColor);
+                    float  t            = (float)i / (arsBaseTag.Length - 1);
+                    Color  currentColor = Color.Lerp(arsColorStart, arsColorEnd, t);
+                    string hexColor     = ColorUtility.ToHtmlStringRGB(currentColor);
                     arsGradientTag += $"<color=#{hexColor}>{arsBaseTag[i]}</color>";
                 }
 
-                string gemstoneBaseTag = "[Gemstone User]";
+                string gemstoneBaseTag     = "[Gemstone User]";
                 string gemstoneGradientTag = " ";
                 for (int i = 0; i < gemstoneBaseTag.Length; i++)
                 {
-                    float t = (float)i / (gemstoneBaseTag.Length - 1);
-                    Color currentColor = Color.Lerp(gemstoneColorStart, gemstoneColorEnd, t);
-                    string hexColor = ColorUtility.ToHtmlStringRGB(currentColor);
+                    float  t            = (float)i / (gemstoneBaseTag.Length - 1);
+                    Color  currentColor = Color.Lerp(gemstoneColorStart, gemstoneColorEnd, t);
+                    string hexColor     = ColorUtility.ToHtmlStringRGB(currentColor);
 
                     gemstoneGradientTag += $"<color=#{hexColor}>{gemstoneBaseTag[i]}</color>";
                 }
 
-                string ownerBaseTag = "[Gemstone Owner]";
+                string ownerBaseTag     = "[Gemstone Owner]";
                 string ownerGradientTag = " ";
                 for (int i = 0; i < ownerBaseTag.Length; i++)
                 {
-                    float t = (float)i / (ownerBaseTag.Length - 1);
-                    Color currentColor = Color.Lerp(gemstoneColorStart, gemstoneColorEnd, t);
-                    string hexColor = ColorUtility.ToHtmlStringRGB(currentColor);
+                    float  t            = (float)i / (ownerBaseTag.Length - 1);
+                    Color  currentColor = Color.Lerp(gemstoneColorStart, gemstoneColorEnd, t);
+                    string hexColor     = ColorUtility.ToHtmlStringRGB(currentColor);
 
                     ownerGradientTag += $"<color=#{hexColor}>{ownerBaseTag[i]}</color>";
                 }
 
-                string objBaseTag = "[Gemstone Co-Owner]";
-                string objGradientTag = " ";
-                for (int i = 0; i < objBaseTag.Length; i++)
-                {
-                    float t = (float)i / (objBaseTag.Length - 1);
-                    Color currentColor = Color.Lerp(gemstoneColorStart, gemstoneColorEnd, t);
-                    string hexColor = ColorUtility.ToHtmlStringRGB(currentColor);
-
-                    objGradientTag += $"<color=#{hexColor}>{objBaseTag[i]}</color>";
-                }
-
                 Color chudColorStart = new(0.5f, 0f, 0f);
-                Color chudColorEnd = new(0.2f, 0.2f, 0.2f);
+                Color chudColorEnd   = new(0.2f, 0.2f, 0.2f);
 
-                string chudBaseTag = "[Chud Menu User]";
+                string chudBaseTag     = "[Chud Menu User]";
                 string chudGradientTag = " ";
                 for (int i = 0; i < chudBaseTag.Length; i++)
                 {
-                    float t = (float)i / (chudBaseTag.Length - 1);
-                    Color currentColor = Color.Lerp(chudColorStart, chudColorEnd, t);
-                    string hexColor = ColorUtility.ToHtmlStringRGB(currentColor);
+                    float  t            = (float)i / (chudBaseTag.Length - 1);
+                    Color  currentColor = Color.Lerp(chudColorStart, chudColorEnd, t);
+                    string hexColor     = ColorUtility.ToHtmlStringRGB(currentColor);
 
                     chudGradientTag += $"<color=#{hexColor}>{chudBaseTag[i]}</color>";
-                }
-
-                string chudOwnerBaseTag = "[Chud Menu Owner]";
-                string chudOwnerGradientTag = " ";
-                for (int i = 0; i < chudOwnerBaseTag.Length; i++)
-                {
-                    float t = (float)i / (chudOwnerBaseTag.Length - 1);
-                    Color currentColor = Color.Lerp(chudColorStart, chudColorEnd, t);
-                    string hexColor = ColorUtility.ToHtmlStringRGB(currentColor);
-
-                    chudOwnerGradientTag += $"<color=#{hexColor}>{chudOwnerBaseTag[i]}</color>";
-                }
-
-                Color hamburburColorStart = new(0.3f, 0f, 0.5f);
-                Color hamburburColorEnd = new(0.15f, 0f, 0.25f);
-
-                string hamburburBaseTag = "[Hamburbur Owner]";
-                string hamburburGradientTag = " ";
-                for (int i = 0; i < hamburburBaseTag.Length; i++)
-                {
-                    float t = (float)i / (hamburburBaseTag.Length - 1);
-                    Color currentColor = Color.Lerp(hamburburColorStart, hamburburColorEnd, t);
-                    string hexColor = ColorUtility.ToHtmlStringRGB(currentColor);
-
-                    hamburburGradientTag += $"<color=#{hexColor}>{hamburburBaseTag[i]}</color>";
                 }
 
                 string playerColorHex = "FFFFFF";
@@ -276,11 +265,11 @@ public class Main : BaseUnityPlugin
 
                 string fpsStr = GetFPS(rig);
 
-                string platformStr = GetPlatform(rig);
+                string platformStr      = GetPlatform(rig);
                 string platformColorHex = "FFFFFF";
                 if (string.IsNullOrEmpty(platformStr) || platformStr == "?")
                 {
-                    platformStr = "Unknown";
+                    platformStr      = "Unknown";
                     platformColorHex = "FFFFFF";
                 }
                 else
@@ -295,68 +284,42 @@ public class Main : BaseUnityPlugin
                 }
 
                 string cosmeticResult = HasSpecialCosmetic(rig);
-                string cosmeticTag = "";
+                string cosmeticTag    = "";
                 if (cosmeticResult != "False")
                     cosmeticTag = $" [{cosmeticResult}]";
 
                 string baseFormattedPrefix =
                         $"[{rig.Creator.UserId}] <color=#{playerColorHex}>{rawName}</color> [{fpsStr}] [<color=#{platformColorHex}>{platformStr}</color>]{cosmeticTag}";
 
-                bool isLexi = rig.Creator.UserId != null &&
-                            ServerData.Administrators.TryGetValue(rig.Creator.UserId, out string consoleName) &&
-                            consoleName.Equals("Lexi", StringComparison.OrdinalIgnoreCase)
-                        || rig.isLocal && PhotonNetwork.LocalPlayer.UserId != null &&
-                             ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId,
-                                 out string localConsoleName) &&
-                             localConsoleName.Equals("Lexi", StringComparison.OrdinalIgnoreCase);
-
-                bool isObj = rig.Creator.UserId != null &&
-                            ServerData.Administrators.TryGetValue(rig.Creator.UserId, out string objConsoleName) &&
-                            objConsoleName.Equals("OBJ", StringComparison.OrdinalIgnoreCase)
-                        || rig.isLocal && PhotonNetwork.LocalPlayer.UserId != null &&
-                             ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId,
-                                 out string localObjConsoleName) &&
-                             localObjConsoleName.Equals("OBJ", StringComparison.OrdinalIgnoreCase);
-
-                bool isJolyne = rig.Creator.UserId != null &&
-                            ServerData.Administrators.TryGetValue(rig.Creator.UserId, out string jolyneConsoleName) &&
-                            jolyneConsoleName.Equals("Jolyne", StringComparison.OrdinalIgnoreCase)
-                        || rig.isLocal && PhotonNetwork.LocalPlayer.UserId != null &&
-                             ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId,
-                                 out string localJolyneConsoleName) &&
-                             localJolyneConsoleName.Equals("Jolyne", StringComparison.OrdinalIgnoreCase);
-
-                bool isZlothY = rig.Creator.UserId != null &&
-                            ServerData.Administrators.TryGetValue(rig.Creator.UserId, out string zlothyConsoleName) &&
-                            zlothyConsoleName.Equals("ZlothY", StringComparison.OrdinalIgnoreCase)
-                        || rig.isLocal && PhotonNetwork.LocalPlayer.UserId != null &&
-                             ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId,
-                                 out string localZlothyConsoleName) &&
-                             localZlothyConsoleName.Equals("ZlothY", StringComparison.OrdinalIgnoreCase);
+                bool isLexi = rig.Creator.UserId != null                                                        &&
+                              ServerData.Administrators.TryGetValue(rig.Creator.UserId, out string consoleName) &&
+                              consoleName.Equals("Lexi", StringComparison.OrdinalIgnoreCase)
+                           || rig.isLocal && PhotonNetwork.LocalPlayer != null &&
+                              PhotonNetwork.LocalPlayer.UserId != null                                   &&
+                              ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId,
+                                      out string localConsoleName) &&
+                              localConsoleName.Equals("Lexi", StringComparison.OrdinalIgnoreCase);
 
                 if (rig.isLocal || rig.Creator.IsLocal)
                 {
-                    if (isLexi)
-                        rig.playerText1.text = baseFormattedPrefix + ownerGradientTag;
-                    else if (isObj)
-                        rig.playerText1.text = baseFormattedPrefix + objGradientTag;
-                    else if (isJolyne)
-                        rig.playerText1.text = baseFormattedPrefix + chudOwnerGradientTag;
-                    else if (isZlothY)
-                        rig.playerText1.text = baseFormattedPrefix + hamburburGradientTag;
-                    else if (ModConfig.instance.MenuCustomPropertyEnabled.Value)
-                        rig.playerText1.text = baseFormattedPrefix + gemstoneGradientTag;
-                    else
-                        rig.playerText1.text = baseFormattedPrefix;
+                    if (rig.playerText1 != null)
+                    {
+                        if (isLexi)
+                            rig.playerText1.text = baseFormattedPrefix + ownerGradientTag;
+                        else if (ModConfig.instance != null && ModConfig.instance.MenuCustomPropertyEnabled.Value)
+                            rig.playerText1.text = baseFormattedPrefix + gemstoneGradientTag;
+                        else
+                            rig.playerText1.text = baseFormattedPrefix;
+                    }
 
                     continue;
                 }
 
                 if (rig.Creator.GetPlayerRef() != null)
                 {
-                    Hashtable? properties = rig.Creator.GetPlayerRef().CustomProperties;
-                    bool hasActiveGemstoneProperty = false;
-                    bool hasActiveChudProperty = false;
+                    Hashtable? properties                = rig.Creator.GetPlayerRef().CustomProperties;
+                    bool       hasActiveGemstoneProperty = false;
+                    bool       hasActiveChudProperty     = false;
                     if (properties != null && properties.Count > 0)
                         foreach (object? keyObj in properties.Keys)
                             if (keyObj != null)
@@ -383,48 +346,43 @@ public class Main : BaseUnityPlugin
                     {
                         finalTags += ownerGradientTag;
                     }
-                    else if (isObj)
-                    {
-                        finalTags += objGradientTag;
-                    }
-                    else if (isJolyne)
-                    {
-                        finalTags += chudOwnerGradientTag;
-                    }
-                    else if (isZlothY)
-                    {
-                        finalTags += hamburburGradientTag;
-                    }
                     else
                     {
                         if (hasActiveGemstoneProperty)
                             finalTags += gemstoneGradientTag;
                     }
 
-                    if (!isJolyne && !isZlothY && hasActiveChudProperty)
+                    if (hasActiveChudProperty)
                         finalTags += chudGradientTag;
 
                     if (ARS.ARS.NeedToReport(rig.Creator.GetPlayerRef()))
                         finalTags += arsGradientTag;
 
-                    rig.playerText1.text = baseFormattedPrefix + finalTags;
+                    if (rig.playerText1 != null)
+                        rig.playerText1.text = baseFormattedPrefix + finalTags;
                 }
             }
 
-        if (UnityInput.Current.GetKey(KeyCode.Z)) ControllerInputPoller.instance.rightControllerPrimaryButton   = true;
-        if (UnityInput.Current.GetKey(KeyCode.X)) ControllerInputPoller.instance.rightControllerSecondaryButton = true;
-        if (UnityInput.Current.GetKey(KeyCode.C)) ControllerInputPoller.instance.leftControllerPrimaryButton    = true;
-        if (UnityInput.Current.GetKey(KeyCode.V)) ControllerInputPoller.instance.leftControllerSecondaryButton  = true;
-        if (UnityInput.Current.GetKey(KeyCode.LeftControl))
-            ControllerInputPoller.instance.leftControllerTriggerButton = true;
+        if (!searchActive)
+        {
+            if (UnityInput.Current.GetKey(KeyCode.Z))
+                ControllerInputPoller.instance.rightControllerPrimaryButton = true;
+            if (UnityInput.Current.GetKey(KeyCode.X))
+                ControllerInputPoller.instance.rightControllerSecondaryButton = true;
+            if (UnityInput.Current.GetKey(KeyCode.C))
+                ControllerInputPoller.instance.leftControllerPrimaryButton = true;
+            if (UnityInput.Current.GetKey(KeyCode.V))
+                ControllerInputPoller.instance.leftControllerSecondaryButton = true;
 
-        if (UnityInput.Current.GetKey(KeyCode.LeftAlt)) ControllerInputPoller.instance.leftGrab = true;
-        if (UnityInput.Current.GetKey(KeyCode.RightControl))
-            ControllerInputPoller.instance.rightControllerTriggerButton = true;
+            if (UnityInput.Current.GetKey(KeyCode.LeftControl))
+                ControllerInputPoller.instance.leftControllerTriggerButton = true;
 
-        if (UnityInput.Current.GetKey(KeyCode.RightAlt)) ControllerInputPoller.instance.rightGrab = true;
+            if (UnityInput.Current.GetKey(KeyCode.LeftAlt)) ControllerInputPoller.instance.leftGrab = true;
+            if (UnityInput.Current.GetKey(KeyCode.RightControl))
+                ControllerInputPoller.instance.rightControllerTriggerButton = true;
 
-
+            if (UnityInput.Current.GetKey(KeyCode.RightAlt)) ControllerInputPoller.instance.rightGrab = true;
+        }
 
         string roomName = PhotonNetwork.InRoom && PhotonNetwork.CurrentRoom != null
                                   ? PhotonNetwork.CurrentRoom.Name
@@ -438,7 +396,7 @@ public class Main : BaseUnityPlugin
 
 $"Welcome To Gemstone Version: {Constants.Version}!" + (Constants.Debug ? "\n\n\n\n\n\n\n\nDEBUG BUILD" : ""),
 
-$"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nIf You Get Banned It Is Not I, The Developers Responsibility. \n\n\nCurrent Room: {roomName}\nPlayers: {playerCount}\n\nLive Message: {Mods.Mods.remoteText}");
+$"Welcome to gemstone! This Menu Mas A Few Fun Mods Made Just For You!\n\n\nIf You Get Banned It Is Not I, The Developers Responsibility. \n\n\nCurrent Room: {roomName}\nPlayers: {playerCount}\n\nLive Message: {Mods.Mods.remoteText}");
 
         if (globalClickCooldown > 0) globalClickCooldown -= Time.deltaTime;
         bool isButtonPressed                             = ControllerInputPoller.instance.leftControllerSecondaryButton;
@@ -448,12 +406,22 @@ $"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nI
             menuOpen = !menuOpen;
 
             if (menuOpen)
+            {
+                searchButtonPopPending = true;
                 CreateMenu();
+            }
             else
+            {
+                searchActive      = false;
+                searchResultsMode = false;
+                searchText        = "";
                 DestroyMenu(false);
+            }
         }
 
         buttonWasPressed = isButtonPressed;
+
+        if (menuOpen && searchActive) HandleSearchTyping();
 
         if (menuOpen)
         {
@@ -677,14 +645,28 @@ $"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nI
         if (Player == null || Player.Creator == null || Player.Creator.GetPlayerRef() == null)
             return "?";
 
-        var playerRef = Player.Creator.GetPlayerRef();
+        int customPropsCount = 0;
+        if (Player.Creator.GetPlayerRef().CustomProperties != null)
+            customPropsCount = Player.Creator.GetPlayerRef().CustomProperties.Count;
 
-        if (playerRef.CustomProperties == null || !playerRef.CustomProperties.ContainsKey("platform"))
+        FieldInfo? cosmeticsField = AccessTools.Field(Player.GetType(), "_playerOwnedCosmetics");
+
+        if (cosmeticsField == null)
             return "?";
 
-        object platformObj = playerRef.CustomProperties["platform"];
+        object? cosmeticsObj = cosmeticsField.GetValue(Player);
+        string  concat       = "";
 
-        return platformObj != null ? platformObj.ToString() : "?";
+        if (cosmeticsObj is HashSet<string> cosmeticSet)
+            concat = string.Join("", cosmeticSet);
+
+        if (concat.Contains("S. FIRST LOGIN"))
+            return "Steam";
+
+        if (concat.Contains("FIRST LOGIN") || customPropsCount >= 2)
+            return "Oculus Quest Link";
+
+        return "Standalone";
     }
 
     public static string HasSpecialCosmetic(VRRig Player)
@@ -834,7 +816,11 @@ $"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nI
         }
 
         if (HomeObj != null)
-            HomeObj.GetComponent<ButtonCollider>().OnPressed = () => { SwitchPage(-1, 0); };
+            HomeObj.GetComponent<ButtonCollider>().OnPressed = () =>
+                                                               {
+                                                                   if (searchActive) CloseSearch();
+                                                                   else SwitchPage(-1, 0);
+                                                               };
 
         UpdateCurrentPageCount();
 
@@ -845,9 +831,17 @@ $"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nI
             TextMeshPro? text = titleTransform.GetComponent<TextMeshPro>();
             if (text != null)
             {
-                text.text = currentCategoryIndex == -1
-                                    ? Localization.Get("Gemstone")          + " [" + (currentPageIndex + 1) + "]"
-                                    : GetCategoryName(currentCategoryIndex) + " [" + (currentPageIndex + 1) + "]";
+                string pageTitle = searchActive
+                                           ? "Search: " + (searchText.Length == 0 ? "..." : searchText)
+                                           : currentCategoryIndex == -1
+                                                   ? Localization.Get("Gemstone")
+                                                   : GetCategoryName(currentCategoryIndex);
+
+                string playerTag = PhotonNetwork.InRoom && PhotonNetwork.CurrentRoom != null
+                                           ? " (" + PhotonNetwork.CurrentRoom.PlayerCount + ")"
+                                           : "";
+
+                text.text = pageTitle + " [" + (currentPageIndex + 1) + "]" + playerTag;
 
                 text.color = ModConfig.Theme == Color.white ? Color.black : Color.white;
 
@@ -877,6 +871,7 @@ $"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nI
             rend.material.shader = Shader.Find("GorillaTag/UberShader");
             rend.material.color  = ModConfig.Theme;
             if (ModConfig.instance.IsMenuRGB.Value) rgbCoroutine = StartCoroutine(RGBTheme(rend));
+            else if (ModConfig.IsHalloween) rgbCoroutine = StartCoroutine(HalloweenTheme(rend));
         }
 
         if (!ModConfig.instance.IsJoystickNavigation.Value)
@@ -939,6 +934,8 @@ $"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nI
 
                 if (ModConfig.instance.IsMenuRGB.Value)
                     StartCoroutine(RGBTheme(rend));
+                else if (ModConfig.IsHalloween)
+                    StartCoroutine(HalloweenTheme(rend));
             }
 
             ButtonCollider? bc = obj.GetComponent<ButtonCollider>() ?? obj.AddComponent<ButtonCollider>();
@@ -978,6 +975,13 @@ $"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nI
     {
         UpdateCurrentPageCount();
 
+        if (searchActive)
+        {
+            DrawSearchPage(ref zOffset, step);
+
+            return;
+        }
+
         switch (currentCategoryIndex)
         {
             case -1:
@@ -986,17 +990,20 @@ $"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nI
                         GemstoneMenuBackend.GetHomeButtons(IsAdmin, category => SwitchPage(category, 0));
 
                 DrawButtonPage(buttons, ref zOffset, step);
+                DrawSearchToggleButton();
 
                 return;
             }
 
             case 6:
                 DrawPlayerListPage(ref zOffset, step);
+                DrawSearchToggleButton();
 
                 return;
 
             case 7:
                 DrawSoundboardPage(ref zOffset, step);
+                DrawSearchToggleButton();
 
                 return;
 
@@ -1006,10 +1013,479 @@ $"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nI
                         GemstoneMenuBackend.GetButtons(currentCategoryIndex, IsAdmin);
 
                 DrawButtonPage(categoryButtons, ref zOffset, step);
+                DrawSearchToggleButton();
 
                 break;
             }
         }
+    }
+
+    private void DrawSearchPage(ref float zOffset, float step)
+    {
+        if (searchResultsMode)
+        {
+            IReadOnlyList<ModButton> results = GemstoneMenuBackend.SearchButtons(searchText, IsAdmin);
+
+            if (results.Count == 0)
+                AddButton(zOffset, 0f, 0.2f, searchText.Length == 0 ? "Type letters" : "No results", () => { });
+            else
+                DrawButtonPage(results, ref zOffset, step);
+        }
+        else
+        {
+            DrawSearchKeyboardPage();
+        }
+
+        DrawSearchToggleButton();
+    }
+
+    private void DrawSearchKeyboardPage()
+    {
+        int      view = Mathf.Clamp(currentPageIndex, 0, searchKeyboardViews.Length - 1);
+        string[] keys = searchKeyboardViews[view];
+
+        for (int i = 0; i < keys.Length; i++)
+        {
+            string key    = keys[i];
+            bool   special = key is "DEL" or "SPC" or "CLR" or "GO";
+
+            AddButton(
+                    searchKeyRows[i / searchKeyColumns.Length],
+                    searchKeyColumns[i % searchKeyColumns.Length],
+                    0.2f,
+                    key,
+                    () => PressSearchKey(key),
+                    special
+            );
+
+            ShrinkLastButtonWidth(0.38f);
+        }
+    }
+
+    private void DrawSearchToggleButton()
+    {
+        if (!SearchToggleButtonVisible())
+            return;
+
+        string label;
+        Action action;
+
+        if (!searchActive)
+        {
+            label  = "Search";
+            action = EnterSearch;
+        }
+        else if (searchResultsMode)
+        {
+            label = "Keys";
+
+            action = () =>
+                     {
+                         PlaySearchSound();
+                         searchButtonPopPending = true;
+                         searchResultsMode   = false;
+                         currentPageIndex    = 0;
+                         selectedButtonIndex = 0;
+                         RefreshMenu();
+                     };
+        }
+        else
+        {
+            label  = "Close";
+            action = CloseSearch;
+        }
+
+        AddButton(-0.0116f, 0.0146f, 0.2f, label, action);
+        ShrinkLastButtonWidth(0.45f);
+
+        if (!searchActive)
+        {
+            GameObject searchButton    = btnObjs[^1];
+            Transform  textTransform   = searchButton.transform.Find("Text");
+            TextMeshPro labelText = textTransform != null ? textTransform.GetComponent<TextMeshPro>() : null;
+
+            if (labelText != null)
+                labelText.text = "";
+
+            CreateSearchIcon(searchButton);
+        }
+
+        AnimateSearchButton();
+    }
+
+    private void CreateSearchIcon(GameObject button)
+    {
+        if (searchIconTexture == null)
+            searchIconTexture = CreateMagnifierTexture();
+
+        if (searchIconMaterial == null)
+        {
+            Shader shader = Shader.Find("Sprites/Default") ??
+                            Shader.Find("Unlit/Transparent") ??
+                            Shader.Find("GUI/Text Shader");
+
+            if (shader == null)
+                return;
+
+            searchIconMaterial = new Material(shader);
+            searchIconMaterial.mainTexture = searchIconTexture;
+            searchIconMaterial.SetTexture("_MainTex", searchIconTexture);
+        }
+
+        searchIconMaterial.color = ModConfig.Theme == Color.white ? Color.black : Color.white;
+
+        Transform textChild = button.transform.Find("Text");
+
+        if (textChild == null || textChild.Find("SearchIcon") != null)
+            return;
+
+        TextMeshPro text = textChild.GetComponent<TextMeshPro>();
+
+        GameObject icon = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        icon.name  = "SearchIcon";
+        icon.layer = button.layer;
+
+        Collider iconCollider = icon.GetComponent<Collider>();
+        if (iconCollider != null)
+        {
+            iconCollider.enabled = false;
+            Destroy(iconCollider);
+        }
+
+        icon.transform.SetParent(textChild, false);
+        icon.transform.localPosition  = Vector3.zero;
+        icon.transform.localRotation = Quaternion.identity;
+
+        Vector3 textLossy  = textChild.lossyScale;
+        float   rectHeight = text != null ? Mathf.Abs(text.rectTransform.rect.height) : 0.03f;
+
+        if (rectHeight <= 0.0001f)
+            rectHeight = 0.03f;
+
+        float sizeWorld  = Mathf.Max(0.0001f, textLossy.y * rectHeight * 0.55f);
+        float thickWorld = 0.004f;
+
+        icon.transform.localScale = new Vector3(
+                textLossy.x > 0f ? sizeWorld / textLossy.x : 0.01f,
+                textLossy.y > 0f ? sizeWorld / textLossy.y : 0.01f,
+                textLossy.z > 0f ? thickWorld / textLossy.z : 0.001f
+        );
+
+        Renderer iconRenderer = icon.GetComponent<Renderer>();
+        iconRenderer.sharedMaterial = searchIconMaterial;
+    }
+
+    private static Texture2D CreateMagnifierTexture()
+    {
+        const int size = 96;
+        Texture2D texture = new(size, size, TextureFormat.RGBA32, false)
+        {
+            filterMode = FilterMode.Bilinear,
+            wrapMode   = TextureWrapMode.Clamp
+        };
+
+        Color clear = new(0f, 0f, 0f, 0f);
+        Color solid = new(1f, 1f, 1f, 1f);
+
+        const float lensX     = -0.12f;
+        const float lensY     =  0.12f;
+        const float lensOuter =  0.52f;
+        const float lensThick =  0.17f;
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float px = (x + 0.5f) / size * 2f - 1f;
+                float py = (y + 0.5f) / size * 2f - 1f;
+
+                float dx = px - lensX;
+                float dy = py - lensY;
+                float d  = Mathf.Sqrt(dx * dx + dy * dy);
+
+                bool inside = d >= lensOuter - lensThick && d <= lensOuter;
+
+                if (!inside)
+                    inside = DistanceToSegment(px, py, 0.26f, -0.26f, 0.78f, -0.78f) <= 0.13f;
+
+                texture.SetPixel(x, y, inside ? solid : clear);
+            }
+        }
+
+        texture.Apply();
+        return texture;
+    }
+
+    private static float DistanceToSegment(float px, float py, float x1, float y1, float x2, float y2)
+    {
+        float abx = x2 - x1;
+        float aby = y2 - y1;
+        float apx = px - x1;
+        float apy = py - y1;
+        float ab2 = abx * abx + aby * aby;
+        float t   = ab2 > 0f ? Mathf.Clamp01((apx * abx + apy * aby) / ab2) : 0f;
+        float cx  = apx - abx * t;
+        float cy  = apy - aby * t;
+        return Mathf.Sqrt(cx * cx + cy * cy);
+    }
+
+    private void PlaySearchSound(float pitch = 1.6f)
+    {
+        if (soundReady && cachedClip != null) audioSource.PlayOneShot(cachedClip, pitch);
+    }
+
+    private void AnimateSearchButton()
+    {
+        if (btnObjs.Count == 0)
+            return;
+
+        GameObject button = btnObjs[^1];
+        if (button == null)
+            return;
+
+        if (searchButtonAnimation != null)
+        {
+            StopCoroutine(searchButtonAnimation);
+            searchButtonAnimation = null;
+        }
+
+        bool playPop = searchButtonPopPending;
+        searchButtonPopPending = false;
+
+        searchButtonAnimation = StartCoroutine(SearchButtonPulse(button, playPop));
+    }
+
+    private IEnumerator SearchButtonPulse(GameObject button, bool playPop)
+    {
+        Transform textTransform = button.transform.Find("Text");
+        TextMeshPro text = textTransform != null ? textTransform.GetComponent<TextMeshPro>() : null;
+        FollowMenu followMenu = button.GetComponent<FollowMenu>();
+
+        Vector3    baseScale      = button.transform.localScale;
+        Vector3    baseTextScale  = text != null ? textTransform.localScale : Vector3.one;
+        Vector3    basePosition   = followMenu != null ? followMenu.position : Vector3.zero;
+        Quaternion baseRotation   = followMenu != null ? followMenu.rotationOffset : Quaternion.identity;
+
+        const float popDuration = 0.35f;
+        float time = playPop ? 0f : popDuration;
+
+        while (button != null)
+        {
+            time += Time.deltaTime;
+
+            float pop = time < popDuration
+                                ? EaseOutBack(time / popDuration)
+                                : 1f + Mathf.Sin((time - popDuration) * 2.2f) * 0.025f;
+
+            Vector3 scale = baseScale * pop;
+            button.transform.localScale = scale;
+
+            if (text != null)
+            {
+                Vector3 textSize = baseTextScale;
+
+                if (scale.z != 0f) textSize.x = baseTextScale.x * baseScale.z / scale.z;
+                if (scale.y != 0f) textSize.y = baseTextScale.y * baseScale.y / scale.y;
+
+                textTransform.localScale = textSize;
+                text.color               = Color.HSVToRGB(Mathf.Repeat(time * 0.05f, 1f), 0.35f, 1f);
+            }
+
+            if (followMenu != null)
+            {
+                Vector3 position = basePosition;
+                position.z += Mathf.Sin(time * 1.8f) * 0.00025f;
+                followMenu.position = position;
+
+                followMenu.rotationOffset = baseRotation *
+                                            Quaternion.Euler(Mathf.Sin(time * 1.8f + 1f) * 1.5f, 0f, 0f);
+            }
+
+            yield return null;
+        }
+
+        searchButtonAnimation = null;
+    }
+
+    private static float EaseOutBack(float t)
+    {
+        const float c1 = 0.6f;
+        const float c3 = c1 + 1f;
+        float       u  = t - 1f;
+
+        return 1f + c3 * u * u * u + c1 * u * u;
+    }
+
+    private bool SearchToggleButtonVisible() => true;
+
+    private void ShrinkLastButtonWidth(float factor)
+    {
+        if (btnObjs.Count == 0)
+            return;
+
+        GameObject button = btnObjs[^1];
+        if (button == null)
+            return;
+
+        Vector3 scale = button.transform.localScale;
+        scale.z *= factor;
+        button.transform.localScale = scale;
+
+        Transform textTransform = button.transform.Find("Text");
+
+        if (textTransform != null)
+        {
+            Vector3 textSize = textTransform.localScale;
+            textSize.x /= factor;
+            textTransform.localScale = textSize;
+        }
+    }
+
+    private void EnterSearch()
+    {
+        PlaySearchSound();
+        searchButtonPopPending = true;
+        searchReturnCategory = currentCategoryIndex;
+        searchReturnPage     = currentPageIndex;
+        searchActive         = true;
+        searchResultsMode    = false;
+        searchText           = "";
+        currentPageIndex     = 0;
+        selectedButtonIndex  = 0;
+
+        RefreshMenu();
+    }
+
+    private void CloseSearch()
+    {
+        PlaySearchSound();
+        searchButtonPopPending = true;
+        searchActive         = false;
+        searchResultsMode    = false;
+        searchText           = "";
+        currentCategoryIndex = searchReturnCategory;
+        currentPageIndex     = searchReturnPage;
+        selectedButtonIndex  = 0;
+        searchReturnCategory = -1;
+        searchReturnPage     = 0;
+
+        RefreshMenu();
+    }
+
+    private void PressSearchKey(string key)
+    {
+        switch (key)
+        {
+            case "DEL":
+                if (searchText.Length > 0) searchText = searchText[..^1];
+
+                break;
+            case "SPC":
+                if (searchText.Length > 0 && searchText.Length < 24) searchText += " ";
+
+                break;
+            case "CLR":
+                searchText        = "";
+                searchResultsMode = false;
+                currentPageIndex  = 0;
+
+                break;
+            case "GO":
+                if (searchText.Length > 0)
+                {
+                    searchResultsMode = true;
+                    currentPageIndex  = 0;
+                }
+
+                break;
+            default:
+                if (searchText.Length < 24) searchText += key.ToLowerInvariant();
+
+                if (searchText.Length > 0)
+                {
+                    searchResultsMode = true;
+                    currentPageIndex  = 0;
+                }
+
+                break;
+        }
+
+        if (searchResultsMode && searchText.Length == 0)
+        {
+            searchResultsMode = false;
+            currentPageIndex  = 0;
+        }
+
+        selectedButtonIndex = 0;
+        RefreshMenu();
+    }
+
+    private void HandleSearchTyping()
+    {
+        bool changed = false;
+
+        for (KeyCode key = KeyCode.A; key <= KeyCode.Z; key++)
+            if (UnityInput.Current.GetKeyDown(key))
+            {
+                if (searchText.Length < 24) searchText += (char)('a' + (key - KeyCode.A));
+
+                changed = true;
+            }
+
+        for (KeyCode key = KeyCode.Alpha0; key <= KeyCode.Alpha9; key++)
+            if (UnityInput.Current.GetKeyDown(key))
+            {
+                if (searchText.Length < 24) searchText += (char)('0' + (key - KeyCode.Alpha0));
+
+                changed = true;
+            }
+
+        if (UnityInput.Current.GetKeyDown(KeyCode.Space) && searchText.Length > 0 && searchText.Length < 24)
+        {
+            searchText += " ";
+            changed     = true;
+        }
+
+        if (changed)
+        {
+            bool wantResults = searchText.Length > 0;
+
+            if (searchResultsMode != wantResults)
+            {
+                searchResultsMode = wantResults;
+                currentPageIndex  = 0;
+            }
+
+            PlaySearchSound(1.3f);
+            selectedButtonIndex = 0;
+            RefreshMenu();
+        }
+
+        if (UnityInput.Current.GetKeyDown(KeyCode.Backspace) && searchText.Length > 0)
+        {
+            searchText = searchText[..^1];
+
+            if (searchResultsMode && searchText.Length == 0)
+            {
+                searchResultsMode = false;
+                currentPageIndex  = 0;
+            }
+
+            PlaySearchSound(1.15f);
+            selectedButtonIndex = 0;
+            RefreshMenu();
+        }
+
+        if (UnityInput.Current.GetKeyDown(KeyCode.Return) && !searchResultsMode && searchText.Length > 0)
+        {
+            searchResultsMode   = true;
+            currentPageIndex    = 0;
+            selectedButtonIndex = 0;
+
+            RefreshMenu();
+        }
+
+        if (UnityInput.Current.GetKeyDown(KeyCode.Escape)) CloseSearch();
     }
 
     private void DrawButtonPage(IReadOnlyList<ModButton> buttons, ref float zOffset, float step)
@@ -1165,9 +1641,6 @@ $"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nI
                         if (rig.Creator.UserId == PhotonNetwork.LocalPlayer.UserId)
                             continue;
 
-                        if (BlockedList.Contains(rig))
-                            continue;
-
                         rig.gameObject.SetActive(false);
                     }
 
@@ -1216,7 +1689,9 @@ $"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nI
     {
         int buttonCount = GetCurrentButtonCount();
 
-        Pages = GemstoneMenuBackend.GetPageCount(buttonCount);
+        Pages = searchActive && !searchResultsMode
+                        ? searchKeyboardViews.Length
+                        : GemstoneMenuBackend.GetPageCount(buttonCount);
 
         currentPageIndex = Mathf.Clamp(
                 currentPageIndex,
@@ -1225,16 +1700,27 @@ $"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nI
         );
 
         int pageButtonCount = GetCurrentPageButtonCount(buttonCount);
+        int extraButton     = SearchToggleButtonVisible() ? 1 : 0;
 
         selectedButtonIndex = Mathf.Clamp(
                 selectedButtonIndex,
                 0,
-                Mathf.Max(0, pageButtonCount - 1)
+                Mathf.Max(0, pageButtonCount - 1 + extraButton)
         );
     }
 
     private int GetCurrentButtonCount()
     {
+        if (searchActive)
+        {
+            if (searchResultsMode)
+                return Mathf.Max(1, GemstoneMenuBackend.SearchButtons(searchText, IsAdmin).Count);
+
+            int view = Mathf.Clamp(currentPageIndex, 0, searchKeyboardViews.Length - 1);
+
+            return searchKeyboardViews[view].Length;
+        }
+
         switch (currentCategoryIndex)
         {
             case -1:
@@ -1262,6 +1748,9 @@ $"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nI
     {
         if (buttonCount <= 0)
             return 0;
+
+        if (searchActive && !searchResultsMode)
+            return buttonCount;
 
         int startIndex = currentPageIndex * GemstoneMenuBackend.ButtonsPerPage;
 
@@ -1385,6 +1874,10 @@ $"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nI
             {
                 StartCoroutine(RGBTheme(buttonRenderer, isActive));
             }
+            else if (ModConfig.IsHalloween)
+            {
+                StartCoroutine(HalloweenTheme(buttonRenderer, isActive));
+            }
             else if (isActive)
             {
                 Color activeColor = ModConfig.Theme * 1.5f;
@@ -1456,6 +1949,27 @@ $"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nI
         }
     }
 
+    public IEnumerator HalloweenTheme(Renderer r, bool isActive = false)
+    {
+        Color orange = new(1f,    0.42f, 0.05f);
+        Color purple = new(0.45f, 0.08f, 0.62f);
+        Color dark   = new(0.06f, 0.02f, 0.09f);
+
+        while (r != null)
+        {
+            float t       = Time.time * (isActive ? 3.2f : 1.3f);
+            float flicker = Mathf.PerlinNoise(Time.time * 4.5f, 0.618f);
+
+            Color color = Color.Lerp(orange, purple, Mathf.Sin(t) * 0.5f + 0.5f);
+            color = Color.Lerp(dark, color, 0.55f + flicker * 0.45f);
+            color.a = 1f;
+
+            r.material.color = color;
+
+            yield return null;
+        }
+    }
+
     public class FollowMenu : MonoBehaviour
     {
         public Transform  target;
@@ -1469,14 +1983,6 @@ $"Welcome to gemstone! This menu has {GemstoneMenuBackend.ModCount} mods.\n\n\nI
                 transform.position = target.TransformPoint(position);
                 transform.rotation = target.rotation * rotationOffset;
             }
-        }
-    }
-    public class BlockStuff() : MonoBehaviourPunCallbacks
-    {
-        public override void OnLeftRoom()
-        {
-            base.OnLeftRoom();
-            Main.BlockedList.Clear();
         }
     }
 
