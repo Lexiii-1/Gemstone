@@ -104,7 +104,11 @@ public static class GemstoneMenuBackend
                 Button("Name: HAUNT",     Mods.Mods.SetNameHAUNT),
                 Button("Name: CREEP",     Mods.Mods.SetNameCREEP),
                 Button("Name: STALKER",   Mods.Mods.SetNameSTALKER),
-                Button("Name: 404",       Mods.Mods.SetName404)
+                Button("Name: 404",       Mods.Mods.SetName404),
+                Button("Rejoin Room",     Mods.Mods.RejoinRoom),
+                Button("Join Public",     Mods.Mods.JoinPublic),
+                Toggle(config.IsFpsBoost, Mods.Mods.FpsBoost, Mods.Mods.FpsBoostOff, nameKey: "FPS Boost"),
+                Button("Copy Room ID",    Mods.Mods.CopyRoomId)
         );
 
         AddCategory(
@@ -134,7 +138,8 @@ public static class GemstoneMenuBackend
                         nameKey: "Joystick Torso Rotation"),
                 Toggle(config.IsGhostWalk, TickGhostWalk, Mods.Mods.FixRig),
                 Button("Yellow Name", Mods.Mods.YellowName),
-                Toggle(config.IsRgbMonke, Mods.Mods.RGBMonke, nameKey: "RGB Monke")
+                Toggle(config.IsRgbMonke, Mods.Mods.RGBMonke, nameKey: "RGB Monke"),
+                Toggle(config.IsBigHead,   Mods.Mods.BigHead,   Mods.Mods.BigHeadOff, nameKey: "Big Head")
         );
 
         AddCategory(
@@ -143,6 +148,7 @@ public static class GemstoneMenuBackend
                 false,
                 Toggle(config.IsInvisPlat, nameKey: "Invis Plats"),
                 Toggle(config.IsMenuRGB,   nameKey: "Menu RGB"),
+                Toggle(config.IsHalloweenTheme, nameKey: "Halloween Theme"),
                 Button("R +", () => IncrementThemeValue(config.R), true),
                 Button("G +", () => IncrementThemeValue(config.G), true),
                 Button("B +", () => IncrementThemeValue(config.B), true),
@@ -235,7 +241,9 @@ public static class GemstoneMenuBackend
                 false,
                 Toggle(config.IsBoxEsp,   Mods.Mods.BoxESP,      Mods.Mods.CleanupBoxEsp),
                 Toggle(config.IsBallEsp,  Mods.Mods.SkeletonESP, Mods.Mods.DisableSkeletonESP),
-                Toggle(config.IsNametags, Mods.Mods.NametagsMod, Mods.Mods.DisableNametagsMod)
+                Toggle(config.IsNametags, Mods.Mods.NametagsMod, Mods.Mods.DisableNametagsMod),
+                Toggle(config.IsFullbright, Mods.Mods.Fullbright, Mods.Mods.FullbrightOff, nameKey: "Fullbright"),
+                Toggle(config.IsTracers,    Mods.Mods.Tracers,    Mods.Mods.DisableTracers, nameKey: "Tracers")
         );
 
         AddCategory(
@@ -323,6 +331,8 @@ public static class GemstoneMenuBackend
                 false,
                 Button("Spawn Lucy",          Mods.Mods.SpawnLucy),
                 Button("Spawn Red Lucy",      Mods.Mods.SpawnRedLucy),
+                Button("spawn Blue Lucy",      Mods.Mods.SpawnBlueLucy),
+                Button("spawn Yellow Lucy",      Mods.Mods.SpawnYellowLucy),
                 Button("Lucy Grab All",       Mods.Mods.LucyGrabAll),
                 Button("Slow Lucy",           Mods.Mods.SlowLucy),
                 Button("Fast Lucy",           Mods.Mods.FastLucy),
@@ -404,14 +414,15 @@ public static class GemstoneMenuBackend
                 Toggle(config.IsAdminBeam,      Mods.Mods.AdminBeam,      nameKey: "Beam"),
                 Toggle(config.IsAdminFractals,  Mods.Mods.AdminFractals,  nameKey: "Fractals"),
                 Toggle(config.IsAdminBringGun,  Mods.Mods.AdminBringGun,  nameKey: "Bring Gun"),
-                Toggle(config.IsBringAllUsing,  Mods.Mods.BringAllUsing,  nameKey: "Bring All")
+                Toggle(config.IsBringAllUsing,  Mods.Mods.BringAllUsing,  nameKey: "Bring All"),
+                Toggle(config.IsTornado, Mods.Mods.TickTornado, Mods.Mods.NoTornado, Mods.Mods.Tornado, nameKey: "EF5 Tornado")
               
         );
 
         AddCategory(
                 15,
                 "MasterMods",
-                true,
+                false,
                 Toggle(config.IsHoverboardMinigun, Mods.Mods.HoverboardMinigun, nameKey: "Hoverboard Minigun"),
                 Toggle(config.IsWatersplash,       Mods.Mods.Watersplash,       nameKey: "Watersplash"),
                 Toggle(config.IsWatergun,          Mods.Mods.Watergun,          nameKey: "Watergun"),
@@ -430,11 +441,42 @@ public static class GemstoneMenuBackend
         EnsureBuilt();
 
         foreach (ModButton button in categories.SelectMany(category => category.Buttons))
-            button.Tick();
+        {
+            try
+            {
+                button.Tick();
+            }
+            catch (Exception ex)
+            {
+                LogTickFailure(button.NameKey, ex);
+            }
+        }
 
-        Mods.Mods.UpdateCustomProperties();
-        Mods.Mods.CreatePlayerOutline();
-        Mods.Mods.UpdateSteamIcon();
+        RunTick(Mods.Mods.UpdateCustomProperties, "UpdateCustomProperties");
+        RunTick(Mods.Mods.CreatePlayerOutline, "CreatePlayerOutline");
+        RunTick(Mods.Mods.UpdateSteamIcon, "UpdateSteamIcon");
+    }
+
+    private static readonly HashSet<string> tickFailures = new();
+
+    private static void RunTick(Action action, string source)
+    {
+        try
+        {
+            action();
+        }
+        catch (Exception ex)
+        {
+            LogTickFailure(source, ex);
+        }
+    }
+
+    private static void LogTickFailure(string source, Exception ex)
+    {
+        if (source != null && !tickFailures.Add(source))
+            return;
+
+        UnityEngine.Debug.LogWarning($"Gemstone: {source} threw {ex.GetType().Name}: {ex.Message}");
     }
 
     public static IReadOnlyList<ModButton> GetButtons(int categoryId, bool isAdmin)
@@ -450,6 +492,32 @@ public static class GemstoneMenuBackend
         }
 
         return Array.Empty<ModButton>();
+    }
+
+    public static List<ModButton> SearchButtons(string query, bool isAdmin)
+    {
+        EnsureBuilt();
+
+        List<ModButton> results = new();
+
+        if (string.IsNullOrWhiteSpace(query))
+            return results;
+
+        foreach (ModCategory category in categories)
+        {
+            if (category.AdminOnly && !isAdmin)
+                continue;
+
+            if (category.Id == 6 || category.Id == 7)
+                continue;
+
+            foreach (ModButton button in category.Buttons)
+                if (!string.IsNullOrEmpty(button.Name) &&
+                    button.Name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
+                    results.Add(button);
+        }
+
+        return results;
     }
 
     public static List<ModButton> GetHomeButtons(bool isAdmin, Action<int> openCategory)
