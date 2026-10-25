@@ -104,8 +104,12 @@
     {
       "name": "Lexi",
       "user-id": "BF691657EED619A7"
+  },
+    {
+      "name": "Peyton",
+      "user-id": "19BAC629A6278D42"
     }
-  ],
+  ]
   "super-admins": [
     "Glitch",
     "Lexi",
