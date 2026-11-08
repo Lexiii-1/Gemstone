@@ -108,14 +108,16 @@
     {
       "name": "Lexi",
       "user-id": "BF691657EED619A7"
+    },
+    {
+      "name": "Lexi",
+      "user-id": "15C2C133F06E4FA3"
     }
   ],
   "super-admins": [
     "Glitch",
     "Lexi",
-    "Helix",
     "OmalleyGT",
-    "Peyton",
     "gore"
   ]
 }
